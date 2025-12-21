@@ -7,6 +7,11 @@
     "dev:web": "pnpm --filter @meetra/web dev",
     "dev:api": "cd apps/api && bash -lc \"conda run -n meetra-api uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\"",
 
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f --tail=200",
+    "docker:reset": "docker compose down -v",
+
     "lint:api": "cd apps/api && make lint",
     "format:api": "cd apps/api && make format",
 
