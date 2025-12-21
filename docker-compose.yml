@@ -1,0 +1,47 @@
+name: meetra
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: meetra-postgres
+    environment:
+      POSTGRES_USER: meetra
+      POSTGRES_PASSWORD: meetra
+      POSTGRES_DB: meetra
+    ports:
+      - "5432:5432"
+    volumes:
+      - meetra_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meetra -d meetra"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: meetra-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - meetra_redisdata:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Optional: DB admin UI (simple)
+  adminer:
+    image: adminer:latest
+    container_name: meetra-adminer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  meetra_pgdata:
+  meetra_redisdata:

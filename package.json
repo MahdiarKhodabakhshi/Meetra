@@ -1,0 +1,20 @@
+{
+  "name": "meetra",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "concurrently -n web,api -c auto \"pnpm --filter @meetra/web dev\" \"pnpm dev:api\"",
+    "dev:web": "pnpm --filter @meetra/web dev",
+    "dev:api": "cd apps/api && bash -lc \"conda run -n meetra-api uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\"",
+
+    "lint:api": "cd apps/api && make lint",
+    "format:api": "cd apps/api && make format",
+
+    "lint": "pnpm -r lint && pnpm lint:api",
+    "format": "pnpm -r format && pnpm format:api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.7.4"
+  }
+}
