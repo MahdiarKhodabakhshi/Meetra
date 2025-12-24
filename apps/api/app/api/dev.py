@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Event, EventAttendee, User
 from app.redis_client import get_redis
+from uuid import UUID
+from app.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/dev", tags=["dev"])
 
@@ -95,3 +97,22 @@ def dev_join_event(payload: JoinEventIn, db: DBSession):
         return {"status": "already_joined", "event_id": str(event.id), "user_id": str(user.id)}
 
     return {"status": "joined", "event_id": str(event.id), "user_id": str(user.id)}
+
+class IngestResumeTextIn(BaseModel):
+    user_id: UUID
+    text: str
+
+
+@router.post("/ingest/resume-text")
+def dev_ingest_resume_text(payload: IngestResumeTextIn, db: DBSession):
+    # Validate FK up-front (prevents Celery task from crashing with FK violation)
+    user = db.get(User, payload.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+
+    # enqueue task without importing tasks module
+    async_result = celery_app.send_task(
+        "ingest_resume_text",
+        args=[str(payload.user_id), payload.text],
+    )
+    return {"status": "queued", "task_id": async_result.id}
