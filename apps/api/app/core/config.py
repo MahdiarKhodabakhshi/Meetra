@@ -8,6 +8,8 @@ load_dotenv()  # reads apps/api/.env when running from apps/api
 
 @dataclass(frozen=True)
 class Settings:
+    env: str = os.getenv("ENV", "local")  # local | staging | prod
+
     database_url: str = os.getenv(
         "DATABASE_URL", "postgresql+psycopg://meetra:meetra@localhost:5432/meetra"
     )
