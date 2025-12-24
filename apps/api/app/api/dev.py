@@ -1,6 +1,7 @@
 import secrets
 import uuid
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -12,7 +13,6 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Event, EventAttendee, User
 from app.redis_client import get_redis
-from uuid import UUID
 from app.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/dev", tags=["dev"])
@@ -97,6 +97,7 @@ def dev_join_event(payload: JoinEventIn, db: DBSession):
         return {"status": "already_joined", "event_id": str(event.id), "user_id": str(user.id)}
 
     return {"status": "joined", "event_id": str(event.id), "user_id": str(user.id)}
+
 
 class IngestResumeTextIn(BaseModel):
     user_id: UUID
