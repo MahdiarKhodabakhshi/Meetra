@@ -16,7 +16,13 @@
     "format:api": "cd apps/api && make format",
 
     "lint": "pnpm -r lint && pnpm lint:api",
-    "format": "pnpm -r format && pnpm format:api"
+    "format": "pnpm -r format && pnpm format:api",
+
+    "db:upgrade": "cd apps/api && make db-upgrade",
+    "db:downgrade": "cd apps/api && make db-downgrade",
+    "db:revision": "cd apps/api && make db-revision m=\"$(msg)\"",
+    "db:current": "cd apps/api && make db-current",
+    "db:history": "cd apps/api && make db-history"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
