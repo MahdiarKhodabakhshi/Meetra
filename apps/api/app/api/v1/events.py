@@ -7,8 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.deps import CurrentUser
 from app.db import get_db
-from app.models import Event, EventAttendee, User
+from app.models import Event, EventAttendee
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -27,12 +28,14 @@ class CreateEventOut(BaseModel):
 
 
 @router.post("", response_model=CreateEventOut)
-def create_event(payload: CreateEventIn, db: DBSession):
+def create_event(payload: CreateEventIn, db: DBSession, user: CurrentUser):
     join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
     event = Event(name=payload.name, join_code=join_code, location=payload.location)
     db.add(event)
 
     try:
+        db.flush()  # get event.id without committing
+        db.add(EventAttendee(event_id=event.id, user_id=user.id, role="host"))
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -44,7 +47,6 @@ def create_event(payload: CreateEventIn, db: DBSession):
 
 class JoinEventIn(BaseModel):
     join_code: str
-    email: str
     name: str | None = None
 
 
@@ -55,16 +57,15 @@ class JoinEventOut(BaseModel):
 
 
 @router.post("/join", response_model=JoinEventOut)
-def join_event(payload: JoinEventIn, db: DBSession):
+def join_event(payload: JoinEventIn, db: DBSession, user: CurrentUser):
     event = db.scalar(select(Event).where(Event.join_code == payload.join_code))
     if not event:
         raise HTTPException(status_code=404, detail="event not found")
 
-    user = db.scalar(select(User).where(User.email == payload.email))
-    if not user:
-        user = User(email=payload.email, name=payload.name)
+    if payload.name and not user.name:
+        user.name = payload.name
         db.add(user)
-        db.flush()  # assigns user.id without committing yet
+        db.flush()
 
     attendee = EventAttendee(event_id=event.id, user_id=user.id, role="attendee")
     db.add(attendee)
