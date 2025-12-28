@@ -3,21 +3,39 @@ import uuid
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.db import get_db
 from app.models import Event, EventAttendee, User
 from app.redis_client import get_redis
 from app.worker.celery_app import celery_app
 
-router = APIRouter(prefix="/dev", tags=["dev"])
-
 DBSession = Annotated[Session, Depends(get_db)]
+RedisClient = Annotated[Redis, Depends(get_redis)]
+
+
+def require_dev_key(x_dev_key: str | None = Header(default=None)) -> None:
+    # Extra belt-and-suspenders: even if /dev were accidentally mounted elsewhere
+    if settings.env != "local":
+        raise HTTPException(status_code=404, detail="not found")
+
+    # Hard off-switch for dev routes
+    if not settings.dev_routes_enabled:
+        raise HTTPException(status_code=404, detail="not found")
+
+    # Optional shared secret
+    if settings.dev_api_key and x_dev_key != settings.dev_api_key:
+        raise HTTPException(status_code=403, detail="invalid dev key")
+
+
+router = APIRouter(prefix="/dev", tags=["dev"], dependencies=[Depends(require_dev_key)])
 
 
 class CreateEventIn(BaseModel):
@@ -27,19 +45,21 @@ class CreateEventIn(BaseModel):
 
 
 @router.post("/events")
-def dev_create_event(payload: CreateEventIn, db: DBSession):
+def dev_create_event(payload: CreateEventIn, db: DBSession, r: RedisClient):
     join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
     event = Event(name=payload.name, join_code=join_code, location=payload.location)
     db.add(event)
+
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="join_code already exists") from None
+
     db.refresh(event)
 
+    # Best-effort cache
     try:
-        r = get_redis()
         r.setex(f"event:join_code:{event.join_code}", 60, str(event.id))
     except RedisError:
         pass
@@ -54,16 +74,15 @@ class JoinEventIn(BaseModel):
 
 
 @router.post("/events/join")
-def dev_join_event(payload: JoinEventIn, db: DBSession):
+def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
     cache_key = f"event:join_code:{payload.join_code}"
     event = None
 
     # 1) Try cache (best effort)
     try:
-        r = get_redis()
         cached_event_id = r.get(cache_key)
         if cached_event_id:
-            event = db.get(Event, uuid.UUID(cached_event_id))
+            event = db.get(Event, uuid.UUID(cached_event_id.decode("utf-8")))
     except RedisError:
         event = None
 
@@ -72,7 +91,6 @@ def dev_join_event(payload: JoinEventIn, db: DBSession):
         event = db.scalar(select(Event).where(Event.join_code == payload.join_code))
         if event:
             try:
-                r = get_redis()
                 r.setex(cache_key, 60, str(event.id))
             except RedisError:
                 pass
@@ -110,7 +128,6 @@ def dev_ingest_resume_text(payload: IngestResumeTextIn, db: DBSession):
     if not user:
         raise HTTPException(status_code=404, detail="user not found")
 
-    # enqueue task without importing tasks module
     async_result = celery_app.send_task(
         "ingest_resume_text",
         args=[str(payload.user_id), payload.text],
