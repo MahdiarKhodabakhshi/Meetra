@@ -38,7 +38,6 @@ def dev_create_event(payload: CreateEventIn, db: DBSession):
         raise HTTPException(status_code=409, detail="join_code already exists") from None
     db.refresh(event)
 
-    # Optional: warm cache for faster immediate joins
     try:
         r = get_redis()
         r.setex(f"event:join_code:{event.join_code}", 60, str(event.id))
