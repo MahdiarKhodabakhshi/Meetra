@@ -3,8 +3,13 @@ node_modules
 .next
 dist
 .turbo
+
+# Local env files
 .env
-.env.*.local
+.env.*
+apps/api/.env
+apps/web/.env
+apps/web/.env.*
 
 # Python
 .venv
