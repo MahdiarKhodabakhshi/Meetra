@@ -48,16 +48,19 @@ class Settings:
         "redis://localhost:6379/1",
     )
 
-    # A7: CORS (MUST use default_factory because list is mutable)
+    # A7: CORS
     cors_allow_origins: list[str] = field(
         default_factory=lambda: _csv(
             os.getenv("CORS_ALLOW_ORIGINS"),
-            default=["http://localhost:3000"],
+            default=["http://localhost:3000", "http://127.0.0.1:3000"],
         )
     )
 
     # A7: security headers
-    security_headers_enabled: bool = _bool(os.getenv("SECURITY_HEADERS_ENABLED"), default=True)
+    security_headers_enabled: bool = _bool(
+        os.getenv("SECURITY_HEADERS_ENABLED"),
+        default=True,
+    )
 
     # A7: rate limiting
     rate_limit_enabled: bool = _bool(os.getenv("RATE_LIMIT_ENABLED"), default=True)
