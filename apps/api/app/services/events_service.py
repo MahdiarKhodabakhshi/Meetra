@@ -13,6 +13,7 @@ from app.models import Event, EventAttendee, User
 from app.models.event import EventStatus
 from app.models.event_attendee import EventAttendeeStatus
 from app.models.user import UserRole
+from app.services.error_codes import ErrorCode
 from app.services.exceptions import (
     ConflictError,
     NotFoundError,
@@ -42,7 +43,9 @@ def _require_manage_permission(user: User, event: Event) -> None:
     if _is_admin(user):
         return
     if event.organizer_id != user.id:
-        raise PermissionDeniedError("not organizer for this event")
+        raise PermissionDeniedError(
+            ErrorCode.FORBIDDEN.value, "not organizer for this event"
+        )
 
 
 def _current_rsvp_count(db: Session, event_id: Any) -> int:
@@ -61,21 +64,30 @@ def _current_rsvp_count(db: Session, event_id: Any) -> int:
 
 def create_event(db: Session, organizer: User, payload: EventCreate) -> Event:
     if not _is_organizer(organizer):
-        raise PermissionDeniedError("only organizers or admins can create events")
+        raise PermissionDeniedError(
+            ErrorCode.FORBIDDEN.value, "only organizers or admins can create events"
+        )
 
     join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
     title = payload.title or payload.name
     if not title:
-        raise ValidationError("title is required")
+        raise ValidationError(ErrorCode.VALIDATION_ERROR.value, "title is required")
 
     if payload.status == EventStatus.CANCELLED:
-        raise ValidationError("cannot create a cancelled event")
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value, "cannot create a cancelled event"
+        )
     if payload.status == EventStatus.PUBLISHED:
         if not payload.starts_at:
-            raise ValidationError("starts_at is required to publish")
+            raise ValidationError(
+                ErrorCode.VALIDATION_ERROR.value, "starts_at is required to publish"
+            )
         now = _now_for_dt(payload.starts_at)
         if payload.starts_at <= now:
-            raise ValidationError("starts_at must be in the future to publish")
+            raise ValidationError(
+                ErrorCode.VALIDATION_ERROR.value,
+                "starts_at must be in the future to publish",
+            )
 
     event = Event(
         title=title,
@@ -104,7 +116,9 @@ def create_event(db: Session, organizer: User, payload: EventCreate) -> Event:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise ConflictError("join_code already exists") from exc
+        raise ConflictError(
+            ErrorCode.EVENT_JOIN_CODE_EXISTS.value, "join_code already exists"
+        ) from exc
 
     db.refresh(event)
     return event
@@ -113,11 +127,11 @@ def create_event(db: Session, organizer: User, payload: EventCreate) -> Event:
 def update_event(db: Session, organizer: User, event_id: Any, patch: EventUpdate) -> Event:
     event = db.get(Event, event_id)
     if not event:
-        raise NotFoundError("event not found")
+        raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
 
     _require_manage_permission(organizer, event)
 
-    patch_data = patch.dict(exclude_unset=True)
+    patch_data = patch.model_dump(exclude_unset=True)
     if "name" in patch_data and "title" not in patch_data:
         patch_data["title"] = patch_data.pop("name")
 
@@ -131,7 +145,10 @@ def update_event(db: Session, organizer: User, event_id: Any, patch: EventUpdate
         if rsvp_count is None:
             rsvp_count = _current_rsvp_count(db, event.id)
         if patch_data["capacity"] < rsvp_count:
-            raise ConflictError("capacity cannot be below current RSVP count")
+            raise ConflictError(
+                ErrorCode.EVENT_CAPACITY_TOO_LOW.value,
+                "capacity cannot be below current RSVP count",
+            )
 
     if "starts_at" in patch_data and patch_data.get("starts_at") is not None:
         if rsvp_count is None:
@@ -139,16 +156,23 @@ def update_event(db: Session, organizer: User, event_id: Any, patch: EventUpdate
         if rsvp_count > 0:
             now = _now_for_dt(patch_data["starts_at"])
             if patch_data["starts_at"] < now + RSVP_STARTS_AT_BUFFER:
-                raise ConflictError("cannot move starts_at earlier with existing RSVPs")
+                raise ConflictError(
+                    ErrorCode.EVENT_STARTS_AT_TOO_SOON.value,
+                    "cannot move starts_at earlier with existing RSVPs",
+                )
 
     new_starts_at = patch_data.get("starts_at", event.starts_at)
     new_ends_at = patch_data.get("ends_at", event.ends_at)
     if new_starts_at and new_ends_at and new_ends_at <= new_starts_at:
-        raise ValidationError("ends_at must be after starts_at")
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value, "ends_at must be after starts_at"
+        )
 
     new_deadline = patch_data.get("rsvp_deadline", event.rsvp_deadline)
     if new_deadline and new_starts_at and new_deadline > new_starts_at:
-        raise ValidationError("rsvp_deadline must be <= starts_at")
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value, "rsvp_deadline must be <= starts_at"
+        )
 
     for key, value in patch_data.items():
         setattr(event, key, value)
@@ -162,19 +186,25 @@ def update_event(db: Session, organizer: User, event_id: Any, patch: EventUpdate
 def publish_event(db: Session, organizer: User, event_id: Any) -> Event:
     event = db.get(Event, event_id)
     if not event:
-        raise NotFoundError("event not found")
+        raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
 
     _require_manage_permission(organizer, event)
 
     if event.status == EventStatus.CANCELLED:
-        raise ConflictError("cannot publish a cancelled event")
+        raise ConflictError(
+            ErrorCode.EVENT_CANCELLED.value, "cannot publish a cancelled event"
+        )
 
     if not event.starts_at:
-        raise ValidationError("starts_at is required to publish")
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value, "starts_at is required to publish"
+        )
 
     now = _now_for_dt(event.starts_at)
     if event.starts_at <= now:
-        raise ValidationError("starts_at must be in the future to publish")
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value, "starts_at must be in the future to publish"
+        )
 
     event.status = EventStatus.PUBLISHED
     db.add(event)
@@ -186,7 +216,7 @@ def publish_event(db: Session, organizer: User, event_id: Any) -> Event:
 def cancel_event(db: Session, organizer: User, event_id: Any) -> Event:
     event = db.get(Event, event_id)
     if not event:
-        raise NotFoundError("event not found")
+        raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
 
     _require_manage_permission(organizer, event)
 
