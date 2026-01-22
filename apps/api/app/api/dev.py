@@ -9,6 +9,7 @@ from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.errors import http_error_from_service
 from app.api.v1.schemas.events import EventCreate, EventCreatedOut, RSVPOut, RSVPStatus
 from app.core.config import settings
 from app.db import get_db
@@ -16,12 +17,8 @@ from app.models import Event, User
 from app.models.user import UserRole
 from app.redis_client import get_redis
 from app.services import events_service, rsvp_service
-from app.services.exceptions import (
-    ConflictError,
-    NotFoundError,
-    PermissionDeniedError,
-    ValidationError,
-)
+from app.services.error_codes import ErrorCode
+from app.services.exceptions import NotFoundError, ServiceError
 from app.worker.celery_app import celery_app
 
 DBSession = Annotated[Session, Depends(get_db)]
@@ -69,12 +66,8 @@ def dev_create_event(payload: DevEventCreate, db: DBSession, r: RedisClient):
 
     try:
         event = events_service.create_event(db, organizer, payload)
-    except PermissionDeniedError as exc:
-        raise HTTPException(status_code=403, detail=str(exc)) from exc
-    except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except ConflictError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ServiceError as exc:
+        raise http_error_from_service(exc) from exc
 
     # Best-effort cache
     try:
@@ -115,7 +108,9 @@ def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
                 pass
 
     if not event:
-        raise HTTPException(status_code=404, detail="event not found")
+        raise http_error_from_service(
+            NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
+        )
 
     user = db.scalar(select(User).where(User.email == email))
     if not user:
@@ -125,12 +120,8 @@ def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
 
     try:
         _status, already_joined = rsvp_service.rsvp(db, user, event.id)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except ConflictError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ServiceError as exc:
+        raise http_error_from_service(exc) from exc
 
     return RSVPOut(
         status=RSVPStatus.ALREADY_JOINED if already_joined else RSVPStatus.JOINED,
