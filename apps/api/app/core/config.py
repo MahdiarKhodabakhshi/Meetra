@@ -31,6 +31,11 @@ class Settings:
     )
     dev_api_key: str | None = os.getenv("DEV_API_KEY") or None
 
+    # Auth tokens
+    access_token_ttl_seconds: int = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "900"))
+    refresh_token_ttl_days: int = int(os.getenv("REFRESH_TOKEN_TTL_DAYS", "30"))
+    refresh_token_pepper: str = os.getenv("REFRESH_TOKEN_PEPPER", "dev_pepper")
+
     # DB / Redis
     database_url: str = os.getenv(
         "DATABASE_URL",

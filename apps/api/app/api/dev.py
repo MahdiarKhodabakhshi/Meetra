@@ -75,6 +75,7 @@ class JoinEventIn(BaseModel):
 
 @router.post("/events/join")
 def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
+    email = payload.email.strip().lower()
     cache_key = f"event:join_code:{payload.join_code}"
     event = None
 
@@ -98,9 +99,9 @@ def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
     if not event:
         raise HTTPException(status_code=404, detail="event not found")
 
-    user = db.scalar(select(User).where(User.email == payload.email))
+    user = db.scalar(select(User).where(User.email == email))
     if not user:
-        user = User(email=payload.email, name=payload.name)
+        user = User(email=email, name=payload.name)
         db.add(user)
         db.flush()
 
