@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Callable
 
 import uuid
 
@@ -8,11 +8,11 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.jwt import verify_access_token
 from app.core.config import settings
 from app.db import get_db
 from app.models import User
-from app.redis_client import get_redis
-from app.auth.tokens import get_user_id_for_access_token
+from app.models.user import UserRole, UserStatus
 
 DBSession = Annotated[Session, Depends(get_db)]
 
@@ -51,21 +51,37 @@ def get_current_user(request: Request, db: DBSession) -> User:
 
         return user
 
-    if settings.auth_mode == "password":
-        r = get_redis()
-        user_id = get_user_id_for_access_token(r, token)
-        if not user_id:
-            raise _unauthorized("invalid access token")
+    if settings.auth_mode in {"password", "jwt"}:
         try:
-            user_uuid = uuid.UUID(str(user_id))
+            payload = verify_access_token(token)
         except ValueError:
             raise _unauthorized("invalid access token")
+
+        sub = payload.get("sub")
+        if not sub:
+            raise _unauthorized("invalid access token")
+        try:
+            user_uuid = uuid.UUID(str(sub))
+        except ValueError:
+            raise _unauthorized("invalid access token")
+
         user = db.get(User, user_uuid)
         if not user:
             raise _unauthorized("user not found")
+        if user.status != UserStatus.ACTIVE:
+            raise _unauthorized("user is not active")
         return user
 
     raise _unauthorized("auth not configured")
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def require_role(*roles: UserRole) -> Callable[[CurrentUser], User]:
+    def _check(user: CurrentUser) -> User:
+        if user.role not in roles:
+            raise HTTPException(status_code=403, detail="forbidden")
+        return user
+
+    return _check
