@@ -36,6 +36,18 @@ class Settings:
     refresh_token_ttl_days: int = int(os.getenv("REFRESH_TOKEN_TTL_DAYS", "30"))
     refresh_token_pepper: str = os.getenv("REFRESH_TOKEN_PEPPER", "dev_pepper")
 
+    jwt_secret: str = os.getenv("JWT_SECRET", "dev_jwt_secret")
+    jwt_algorithm: str = os.getenv("JWT_ALG", "HS256")
+    jwt_issuer: str = os.getenv("JWT_ISSUER", "meetra")
+    jwt_audience: str = os.getenv("JWT_AUDIENCE", "meetra")
+
+    refresh_cookie_name: str = os.getenv("REFRESH_COOKIE_NAME", "meetra_refresh")
+    refresh_cookie_samesite: str = os.getenv("REFRESH_COOKIE_SAMESITE", "lax")
+    refresh_cookie_secure: bool = _bool(
+        os.getenv("REFRESH_COOKIE_SECURE"),
+        default=(os.getenv("ENV", "local") != "local"),
+    )
+
     # DB / Redis
     database_url: str = os.getenv(
         "DATABASE_URL",
