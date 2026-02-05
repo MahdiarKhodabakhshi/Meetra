@@ -7,13 +7,15 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth.deps import CurrentUser
+from app.auth.deps import CurrentUser, require_role
 from app.db import get_db
-from app.models import Event, EventAttendee
+from app.models import Event, EventAttendee, User
+from app.models.user import UserRole
 
 router = APIRouter(prefix="/events", tags=["events"])
 
 DBSession = Annotated[Session, Depends(get_db)]
+OrganizerUser = Annotated[User, Depends(require_role(UserRole.ORGANIZER, UserRole.ADMIN))]
 
 
 class CreateEventIn(BaseModel):
@@ -28,7 +30,7 @@ class CreateEventOut(BaseModel):
 
 
 @router.post("", response_model=CreateEventOut)
-def create_event(payload: CreateEventIn, db: DBSession, user: CurrentUser):
+def create_event(payload: CreateEventIn, db: DBSession, user: OrganizerUser):
     join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
     event = Event(name=payload.name, join_code=join_code, location=payload.location)
     db.add(event)
