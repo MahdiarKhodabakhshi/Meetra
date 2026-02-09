@@ -1,4 +1,3 @@
-import secrets
 import uuid
 from typing import Annotated
 from uuid import UUID
@@ -8,13 +7,21 @@ from pydantic import BaseModel
 from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.v1.schemas.events import EventCreate, EventCreatedOut, RSVPOut, RSVPStatus
 from app.core.config import settings
 from app.db import get_db
-from app.models import Event, EventAttendee, User
+from app.models import Event, User
+from app.models.user import UserRole
 from app.redis_client import get_redis
+from app.services import events_service, rsvp_service
+from app.services.exceptions import (
+    ConflictError,
+    NotFoundError,
+    PermissionDeniedError,
+    ValidationError,
+)
 from app.worker.celery_app import celery_app
 
 DBSession = Annotated[Session, Depends(get_db)]
@@ -38,25 +45,36 @@ def require_dev_key(x_dev_key: str | None = Header(default=None)) -> None:
 router = APIRouter(prefix="/dev", tags=["dev"], dependencies=[Depends(require_dev_key)])
 
 
-class CreateEventIn(BaseModel):
-    name: str
-    join_code: str | None = None
-    location: str | None = None
+class DevEventCreate(EventCreate):
+    organizer_email: str | None = None
+    organizer_name: str | None = None
 
 
-@router.post("/events")
-def dev_create_event(payload: CreateEventIn, db: DBSession, r: RedisClient):
-    join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
-    event = Event(name=payload.name, join_code=join_code, location=payload.location)
-    db.add(event)
+@router.post("/events", response_model=EventCreatedOut)
+def dev_create_event(payload: DevEventCreate, db: DBSession, r: RedisClient):
+    organizer_email = (payload.organizer_email or "dev-organizer@local").strip().lower()
+    organizer = db.scalar(select(User).where(User.email == organizer_email))
+    if not organizer:
+        organizer = User(
+            email=organizer_email,
+            name=payload.organizer_name or "Dev Organizer",
+            role=UserRole.ORGANIZER,
+        )
+        db.add(organizer)
+        db.flush()
+    elif organizer.role == UserRole.ATTENDEE:
+        organizer.role = UserRole.ORGANIZER
+        db.add(organizer)
+        db.flush()
 
     try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=409, detail="join_code already exists") from None
-
-    db.refresh(event)
+        event = events_service.create_event(db, organizer, payload)
+    except PermissionDeniedError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     # Best-effort cache
     try:
@@ -64,7 +82,7 @@ def dev_create_event(payload: CreateEventIn, db: DBSession, r: RedisClient):
     except RedisError:
         pass
 
-    return {"event_id": str(event.id), "join_code": event.join_code}
+    return EventCreatedOut(event_id=event.id, join_code=event.join_code)
 
 
 class JoinEventIn(BaseModel):
@@ -73,7 +91,7 @@ class JoinEventIn(BaseModel):
     name: str | None = None
 
 
-@router.post("/events/join")
+@router.post("/events/join", response_model=RSVPOut)
 def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
     email = payload.email.strip().lower()
     cache_key = f"event:join_code:{payload.join_code}"
@@ -105,16 +123,20 @@ def dev_join_event(payload: JoinEventIn, db: DBSession, r: RedisClient):
         db.add(user)
         db.flush()
 
-    attendee = EventAttendee(event_id=event.id, user_id=user.id, role="attendee")
-    db.add(attendee)
-
     try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        return {"status": "already_joined", "event_id": str(event.id), "user_id": str(user.id)}
+        _status, already_joined = rsvp_service.rsvp(db, user, event.id)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    return {"status": "joined", "event_id": str(event.id), "user_id": str(user.id)}
+    return RSVPOut(
+        status=RSVPStatus.ALREADY_JOINED if already_joined else RSVPStatus.JOINED,
+        event_id=event.id,
+        user_id=user.id,
+    )
 
 
 class IngestResumeTextIn(BaseModel):
