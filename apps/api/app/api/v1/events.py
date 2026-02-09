@@ -1,16 +1,22 @@
-import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.v1.schemas.events import EventCreate, EventCreatedOut, RSVPOut, RSVPStatus
 from app.auth.deps import CurrentUser, require_role
 from app.db import get_db
-from app.models import Event, EventAttendee, User
+from app.models import Event, User
 from app.models.user import UserRole
+from app.services import events_service, rsvp_service
+from app.services.exceptions import (
+    ConflictError,
+    NotFoundError,
+    PermissionDeniedError,
+    ValidationError,
+)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -18,33 +24,18 @@ DBSession = Annotated[Session, Depends(get_db)]
 OrganizerUser = Annotated[User, Depends(require_role(UserRole.ORGANIZER, UserRole.ADMIN))]
 
 
-class CreateEventIn(BaseModel):
-    name: str
-    join_code: str | None = None
-    location: str | None = None
-
-
-class CreateEventOut(BaseModel):
-    event_id: str
-    join_code: str
-
-
-@router.post("", response_model=CreateEventOut)
-def create_event(payload: CreateEventIn, db: DBSession, user: OrganizerUser):
-    join_code = payload.join_code or secrets.token_urlsafe(6).replace("-", "").replace("_", "")
-    event = Event(name=payload.name, join_code=join_code, location=payload.location)
-    db.add(event)
-
+@router.post("", response_model=EventCreatedOut)
+def create_event(payload: EventCreate, db: DBSession, user: OrganizerUser):
     try:
-        db.flush()  # get event.id without committing
-        db.add(EventAttendee(event_id=event.id, user_id=user.id, role="host"))
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=409, detail="join_code already exists") from None
+        event = events_service.create_event(db, user, payload)
+    except PermissionDeniedError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    db.refresh(event)
-    return CreateEventOut(event_id=str(event.id), join_code=event.join_code)
+    return EventCreatedOut(event_id=event.id, join_code=event.join_code)
 
 
 class JoinEventIn(BaseModel):
@@ -52,16 +43,10 @@ class JoinEventIn(BaseModel):
     name: str | None = None
 
 
-class JoinEventOut(BaseModel):
-    status: str
-    event_id: str
-    user_id: str
-
-
-@router.post("/join", response_model=JoinEventOut)
+@router.post("/join", response_model=RSVPOut)
 def join_event(payload: JoinEventIn, db: DBSession, user: CurrentUser):
-    event = db.scalar(select(Event).where(Event.join_code == payload.join_code))
-    if not event:
+    event_id = db.scalar(select(Event.id).where(Event.join_code == payload.join_code))
+    if not event_id:
         raise HTTPException(status_code=404, detail="event not found")
 
     if payload.name and not user.name:
@@ -69,13 +54,17 @@ def join_event(payload: JoinEventIn, db: DBSession, user: CurrentUser):
         db.add(user)
         db.flush()
 
-    attendee = EventAttendee(event_id=event.id, user_id=user.id, role="attendee")
-    db.add(attendee)
-
     try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        return JoinEventOut(status="already_joined", event_id=str(event.id), user_id=str(user.id))
+        _status, already_joined = rsvp_service.rsvp(db, user, event_id)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    return JoinEventOut(status="joined", event_id=str(event.id), user_id=str(user.id))
+    return RSVPOut(
+        status=RSVPStatus.ALREADY_JOINED if already_joined else RSVPStatus.JOINED,
+        event_id=event_id,
+        user_id=user.id,
+    )
