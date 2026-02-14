@@ -1,15 +1,5 @@
-import { ProfileSchema } from '@meetra/shared';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  const parsed = ProfileSchema.safeParse({
-    fullName: 'Ada Lovelace',
-    skills: ['Python', 'FastAPI'],
-  });
-
-  return (
-    <main style={{ padding: 24 }}>
-      <h1>Meetra</h1>
-      <pre>{JSON.stringify(parsed, null, 2)}</pre>
-    </main>
-  );
+  redirect('/events');
 }
