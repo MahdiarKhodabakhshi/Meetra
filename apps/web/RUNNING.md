@@ -126,11 +126,11 @@ Then open **http://localhost:3000**.
 
 ## Quick reference
 
-| What              | URL or command              |
-|-------------------|-----------------------------|
-| Web app           | http://localhost:3000       |
-| API               | http://localhost:8000       |
+| What               | URL or command              |
+| ------------------ | --------------------------- |
+| Web app            | http://localhost:3000       |
+| API                | http://localhost:8000       |
 | API docs (Swagger) | http://localhost:8000/docs  |
-| Start everything  | `pnpm dev` (from repo root) |
-| DB + Redis        | `pnpm docker:up`            |
-| Migrations        | `pnpm db:upgrade`           |
+| Start everything   | `pnpm dev` (from repo root) |
+| DB + Redis         | `pnpm docker:up`            |
+| Migrations         | `pnpm db:upgrade`           |

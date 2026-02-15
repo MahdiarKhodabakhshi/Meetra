@@ -75,12 +75,30 @@ body {
   border-radius: 9999px;
 }
 
-.badge-draft { background: var(--muted-bg); color: var(--muted); }
-.badge-published { background: var(--success-bg); color: var(--success); }
-.badge-closed { background: var(--muted-bg); color: var(--muted); }
-.badge-cancelled { background: var(--destructive-bg); color: var(--destructive); }
-.badge-waitlisted { background: var(--warning-bg); color: var(--warning); }
-.badge-joined { background: var(--success-bg); color: var(--success); }
+.badge-draft {
+  background: var(--muted-bg);
+  color: var(--muted);
+}
+.badge-published {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.badge-closed {
+  background: var(--muted-bg);
+  color: var(--muted);
+}
+.badge-cancelled {
+  background: var(--destructive-bg);
+  color: var(--destructive);
+}
+.badge-waitlisted {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.badge-joined {
+  background: var(--success-bg);
+  color: var(--success);
+}
 
 .input-base {
   width: 100%;
@@ -91,7 +109,9 @@ body {
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .input-base::placeholder {
@@ -113,7 +133,10 @@ body {
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: var(--radius);
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   cursor: pointer;
   border: none;
 }

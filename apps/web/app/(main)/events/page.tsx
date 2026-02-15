@@ -87,7 +87,8 @@ export default function EventsListPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-[var(--muted)] mt-3">
-                    {event.capacity != null ? `Capacity ${event.capacity}` : 'No capacity limit'} · View details &amp; RSVP
+                    {event.capacity != null ? `Capacity ${event.capacity}` : 'No capacity limit'} ·
+                    View details &amp; RSVP
                   </p>
                 </Card>
               </Link>
@@ -98,11 +99,7 @@ export default function EventsListPage() {
 
       {total > 20 && (
         <div className="flex justify-center gap-2">
-          <Button
-            variant="secondary"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
+          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
           <span className="flex items-center px-4 text-sm text-[var(--muted)]">

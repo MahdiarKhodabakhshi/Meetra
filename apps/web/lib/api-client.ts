@@ -17,7 +17,7 @@ async function parseResponse<T>(res: Response): Promise<T> {
 
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit & { token?: string | null } = {}
+  options: RequestInit & { token?: string | null } = {},
 ): Promise<{ data?: T; error?: ApiError }> {
   const { token, ...init } = options;
   const url = `${API_BASE}${API_PREFIX}${path}`;
@@ -40,9 +40,10 @@ export async function apiRequest<T>(
   }
   const data = await parseResponse<T>(res);
   if (!res.ok) {
-    const detail = typeof data === 'object' && data && 'detail' in data
-      ? (data as { detail: ApiError['detail'] }).detail
-      : res.statusText;
+    const detail =
+      typeof data === 'object' && data && 'detail' in data
+        ? (data as { detail: ApiError['detail'] }).detail
+        : res.statusText;
     return {
       error: {
         detail: detail as ApiError['detail'],

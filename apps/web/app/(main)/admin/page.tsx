@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { listAdminUsers, updateAdminUser, revokeUserSessions, type UpdateUserIn } from '@/lib/admin-api';
+import {
+  listAdminUsers,
+  updateAdminUser,
+  revokeUserSessions,
+  type UpdateUserIn,
+} from '@/lib/admin-api';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
@@ -49,7 +54,11 @@ export default function AdminDashboardPage() {
     const { error: err } = await updateAdminUser(accessToken, userId, payload);
     setUpdatingId(null);
     if (err) {
-      setActionError(typeof err.detail === 'string' ? err.detail : (err.detail as { message?: string })?.message ?? 'Update failed');
+      setActionError(
+        typeof err.detail === 'string'
+          ? err.detail
+          : ((err.detail as { message?: string })?.message ?? 'Update failed'),
+      );
       return;
     }
     load();
@@ -81,7 +90,8 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
-            Search by email or name. Change role (attendee, organizer, admin) or status (active, inactive, suspended). You cannot change your own role.
+            Search by email or name. Change role (attendee, organizer, admin) or status (active,
+            inactive, suspended). You cannot change your own role.
           </CardDescription>
         </CardHeader>
         <div className="flex flex-wrap gap-3 mb-4">
@@ -155,9 +165,7 @@ export default function AdminDashboardPage() {
                       </select>
                     </td>
                     <td className="py-2 text-[var(--muted)]">
-                      {u.last_login_at
-                        ? new Date(u.last_login_at).toLocaleString()
-                        : '—'}
+                      {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '—'}
                     </td>
                     <td className="py-2">
                       {u.user_id !== user?.user_id && (
@@ -183,11 +191,13 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle>Events moderation</CardTitle>
           <CardDescription>
-            Event-level moderation (e.g. hide or feature events) can be added when the backend exposes admin event endpoints.
+            Event-level moderation (e.g. hide or feature events) can be added when the backend
+            exposes admin event endpoints.
           </CardDescription>
         </CardHeader>
         <p className="text-sm text-[var(--muted)]">
-          For now, use the Events list and event detail; admins can open any event and organizers can cancel their own.
+          For now, use the Events list and event detail; admins can open any event and organizers
+          can cancel their own.
         </p>
       </Card>
     </div>

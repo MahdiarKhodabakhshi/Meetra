@@ -34,7 +34,11 @@ export async function createEvent(token: string | null, payload: EventCreatePayl
   });
 }
 
-export async function updateEvent(token: string | null, eventId: string, payload: EventUpdatePayload) {
+export async function updateEvent(
+  token: string | null,
+  eventId: string,
+  payload: EventUpdatePayload,
+) {
   return apiRequest<Event>(`/events/${eventId}`, {
     method: 'PATCH',
     token,

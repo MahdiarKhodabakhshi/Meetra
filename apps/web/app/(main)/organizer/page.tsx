@@ -50,7 +50,11 @@ export default function OrganizerDashboardPage() {
     });
     setLoading(false);
     if (err) {
-      setError(typeof err.detail === 'string' ? err.detail : (err.detail as { message?: string })?.message ?? 'Failed to create event');
+      setError(
+        typeof err.detail === 'string'
+          ? err.detail
+          : ((err.detail as { message?: string })?.message ?? 'Failed to create event'),
+      );
       return;
     }
     if (data) {
@@ -70,7 +74,8 @@ export default function OrganizerDashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">Organizer dashboard</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Create and manage events. Events start as draft; publish when ready. You can close registration or cancel an event.
+          Create and manage events. Events start as draft; publish when ready. You can close
+          registration or cancel an event.
         </p>
       </div>
 
@@ -78,7 +83,8 @@ export default function OrganizerDashboardPage() {
         <CardHeader>
           <CardTitle>Create event</CardTitle>
           <CardDescription>
-            New events are created in draft. After creating, open the event and use Publish to make it visible and open for RSVPs.
+            New events are created in draft. After creating, open the event and use Publish to make
+            it visible and open for RSVPs.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleCreate} className="space-y-4">
@@ -90,7 +96,9 @@ export default function OrganizerDashboardPage() {
             required
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Description (optional)</label>
+            <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">
+              Description (optional)
+            </label>
             <textarea
               className="input-base min-h-[100px]"
               placeholder="Description"
@@ -145,7 +153,9 @@ export default function OrganizerDashboardPage() {
         {created && (
           <div className="mt-4 p-4 rounded-lg bg-[var(--success-bg)] text-[var(--success)]">
             <p className="font-medium">Event created.</p>
-            <p className="text-sm mt-1">Join code: <code className="bg-black/10 px-1 rounded">{created.joinCode}</code></p>
+            <p className="text-sm mt-1">
+              Join code: <code className="bg-black/10 px-1 rounded">{created.joinCode}</code>
+            </p>
             <Link href={`/events/${created.eventId}`} className="link text-sm mt-2 inline-block">
               Open event →
             </Link>
@@ -157,7 +167,9 @@ export default function OrganizerDashboardPage() {
         <CardHeader>
           <CardTitle>Your events</CardTitle>
           <CardDescription>
-            Manage draft, published, and closed events. Listing your events by organizer requires a backend endpoint (e.g. GET /events?organizer=me). For now, open an event via its link after creating, or from the Events list if it’s published.
+            Manage draft, published, and closed events. Listing your events by organizer requires a
+            backend endpoint (e.g. GET /events?organizer=me). For now, open an event via its link
+            after creating, or from the Events list if it’s published.
           </CardDescription>
         </CardHeader>
         <Link href="/events">

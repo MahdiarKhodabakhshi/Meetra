@@ -9,9 +9,14 @@ export function CardHeader({ className = '', ...props }: React.HTMLAttributes<HT
 }
 
 export function CardTitle({ className = '', ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={`text-lg font-semibold text-[var(--foreground)] ${className}`} {...props} />;
+  return (
+    <h2 className={`text-lg font-semibold text-[var(--foreground)] ${className}`} {...props} />
+  );
 }
 
-export function CardDescription({ className = '', ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function CardDescription({
+  className = '',
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={`text-sm text-[var(--muted)] ${className}`} {...props} />;
 }

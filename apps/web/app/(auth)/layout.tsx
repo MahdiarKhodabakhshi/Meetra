@@ -21,7 +21,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" className="font-semibold text-[var(--foreground)]">
             Meetra
           </Link>
-          <Link href="/events" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]">
+          <Link
+            href="/events"
+            className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
+          >
             Events
           </Link>
         </div>

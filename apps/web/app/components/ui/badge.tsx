@@ -1,6 +1,16 @@
 'use client';
 
-type Status = 'draft' | 'published' | 'closed' | 'cancelled' | 'joined' | 'waitlisted' | 'failed' | 'parsed' | 'uploaded' | 'scanned';
+type Status =
+  | 'draft'
+  | 'published'
+  | 'closed'
+  | 'cancelled'
+  | 'joined'
+  | 'waitlisted'
+  | 'failed'
+  | 'parsed'
+  | 'uploaded'
+  | 'scanned';
 
 const statusClass: Record<Status, string> = {
   draft: 'badge-draft',
@@ -20,8 +30,15 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | Status;
 }
 
-export function Badge({ status, variant = 'default', className = '', children, ...props }: BadgeProps) {
-  const c = variant !== 'default' ? statusClass[variant] : status ? statusClass[status] : 'badge-draft';
+export function Badge({
+  status,
+  variant = 'default',
+  className = '',
+  children,
+  ...props
+}: BadgeProps) {
+  const c =
+    variant !== 'default' ? statusClass[variant] : status ? statusClass[status] : 'badge-draft';
   return (
     <span className={`badge ${c} ${className}`} {...props}>
       {children}

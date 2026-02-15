@@ -24,11 +24,16 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rsvpStatus, setRsvpStatus] = useState<'idle' | 'joined' | 'already_joined' | 'cancelled' | null>(null);
+  const [rsvpStatus, setRsvpStatus] = useState<
+    'idle' | 'joined' | 'already_joined' | 'cancelled' | null
+  >(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const isOrganizer = user && (user.role === 'organizer' || user.role === 'admin') && event?.organizer_id === user.user_id;
+  const isOrganizer =
+    user &&
+    (user.role === 'organizer' || user.role === 'admin') &&
+    event?.organizer_id === user.user_id;
 
   useEffect(() => {
     if (!accessToken || !eventId) return;
@@ -50,7 +55,10 @@ export default function EventDetailPage() {
     const { data, error: err } = await rsvpEvent(accessToken, eventId);
     setActionLoading(false);
     if (err) {
-      const msg = typeof err.detail === 'object' && err.detail?.message ? err.detail.message : String(err.detail);
+      const msg =
+        typeof err.detail === 'object' && err.detail?.message
+          ? err.detail.message
+          : String(err.detail);
       setActionError(msg);
       return;
     }
@@ -77,14 +85,19 @@ export default function EventDetailPage() {
     const { data, error: err } = await publishEvent(accessToken, eventId);
     setActionLoading(false);
     if (err) {
-      setActionError(typeof err.detail === 'string' ? err.detail : (err.detail as { message?: string })?.message ?? 'Failed to publish');
+      setActionError(
+        typeof err.detail === 'string'
+          ? err.detail
+          : ((err.detail as { message?: string })?.message ?? 'Failed to publish'),
+      );
       return;
     }
     if (data) setEvent(data);
   };
 
   const handleCancelEvent = async () => {
-    if (!accessToken || !eventId || !confirm('Cancel this event? Registration will be closed.')) return;
+    if (!accessToken || !eventId || !confirm('Cancel this event? Registration will be closed.'))
+      return;
     setActionError(null);
     setActionLoading(true);
     const { data, error: err } = await cancelEvent(accessToken, eventId);
@@ -107,7 +120,9 @@ export default function EventDetailPage() {
   if (error || !event) {
     return (
       <div className="space-y-4">
-        <Link href="/events" className="link text-sm">← Back to events</Link>
+        <Link href="/events" className="link text-sm">
+          ← Back to events
+        </Link>
         <Card>
           <p className="text-[var(--destructive)]">{error ?? 'Event not found.'}</p>
         </Card>
@@ -121,7 +136,9 @@ export default function EventDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/events" className="link text-sm">← Events</Link>
+        <Link href="/events" className="link text-sm">
+          ← Events
+        </Link>
         <span className="text-[var(--muted)]">/</span>
         <span className="text-sm font-medium truncate">{event.title}</span>
       </div>

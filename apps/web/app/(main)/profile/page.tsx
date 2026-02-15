@@ -40,7 +40,10 @@ export default function ProfilePage() {
   const handleFile = useCallback(
     async (file: File) => {
       if (!file || uploading) return;
-      const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowed = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
       if (!allowed.includes(file.type)) {
         setUploadError('Please upload a PDF or DOCX file.');
         return;
@@ -55,7 +58,7 @@ export default function ProfilePage() {
       setResumeState('parsed');
       setUploading(false);
     },
-    [uploading]
+    [uploading],
   );
 
   const onDrop = useCallback(
@@ -65,7 +68,7 @@ export default function ProfilePage() {
       const f = e.dataTransfer.files[0];
       if (f) handleFile(f);
     },
-    [handleFile]
+    [handleFile],
   );
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -85,7 +88,9 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
-          <CardDescription>Your email is used to sign in. Name is visible to matches.</CardDescription>
+          <CardDescription>
+            Your email is used to sign in. Name is visible to matches.
+          </CardDescription>
         </CardHeader>
         <div className="space-y-4">
           <Input label="Email" value={user?.email ?? ''} disabled />
@@ -108,8 +113,9 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>Resume</CardTitle>
           <CardDescription>
-            Upload a PDF or DOCX. We scan for security, extract text, and parse skills and experience for matching.
-            You can re-upload if a previous attempt failed; your last successful resume stays active.
+            Upload a PDF or DOCX. We scan for security, extract text, and parse skills and
+            experience for matching. You can re-upload if a previous attempt failed; your last
+            successful resume stays active.
           </CardDescription>
         </CardHeader>
         <div className="space-y-4">
@@ -137,7 +143,9 @@ export default function ProfilePage() {
               <p className="text-sm text-[var(--muted)] mb-2">
                 Drag and drop your resume here, or click to browse.
               </p>
-              <span className="btn btn-secondary inline-flex">{uploading ? 'Processing…' : 'Choose file'}</span>
+              <span className="btn btn-secondary inline-flex">
+                {uploading ? 'Processing…' : 'Choose file'}
+              </span>
             </label>
           </div>
 
@@ -163,8 +171,9 @@ export default function ProfilePage() {
           )}
 
           <p className="text-xs text-[var(--muted)]">
-            Pipeline: Upload → Malware scan → Text extraction → Field extraction &amp; normalization.
-            Low-confidence fields will be flagged for your review on this page when available.
+            Pipeline: Upload → Malware scan → Text extraction → Field extraction &amp;
+            normalization. Low-confidence fields will be flagged for your review on this page when
+            available.
           </p>
         </div>
       </Card>
@@ -173,7 +182,8 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>Profile fields (from resume)</CardTitle>
           <CardDescription>
-            Skills, titles, and industries we extract. Review and correct any low-confidence items here.
+            Skills, titles, and industries we extract. Review and correct any low-confidence items
+            here.
           </CardDescription>
         </CardHeader>
         <p className="text-sm text-[var(--muted)]">

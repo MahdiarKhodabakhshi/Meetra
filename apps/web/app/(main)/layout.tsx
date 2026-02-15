@@ -15,20 +15,32 @@ function NavLinks() {
     <nav className="flex flex-wrap items-center gap-4 text-sm">
       <Link
         href="/events"
-        className={path === '/events' ? 'font-medium text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}
+        className={
+          path === '/events'
+            ? 'font-medium text-[var(--accent)]'
+            : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+        }
       >
         Events
       </Link>
       <Link
         href="/profile"
-        className={path === '/profile' ? 'font-medium text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}
+        className={
+          path === '/profile'
+            ? 'font-medium text-[var(--accent)]'
+            : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+        }
       >
         Profile
       </Link>
       {isOrganizer && (
         <Link
           href="/organizer"
-          className={path === '/organizer' ? 'font-medium text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}
+          className={
+            path === '/organizer'
+              ? 'font-medium text-[var(--accent)]'
+              : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+          }
         >
           Organizer
         </Link>
@@ -36,7 +48,11 @@ function NavLinks() {
       {isAdmin && (
         <Link
           href="/admin"
-          className={path === '/admin' ? 'font-medium text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}
+          className={
+            path === '/admin'
+              ? 'font-medium text-[var(--accent)]'
+              : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+          }
         >
           Admin
         </Link>

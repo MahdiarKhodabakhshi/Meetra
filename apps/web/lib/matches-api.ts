@@ -7,9 +7,11 @@ import type { Match } from './types';
  */
 export async function fetchMatchesForEvent(
   _token: string | null,
-  eventId: string
+  eventId: string,
 ): Promise<{ data?: Match[]; error?: { detail: unknown; statusCode: number } }> {
-  const { data, error } = await apiRequest<Match[]>(`/events/${eventId}/matches`, { token: _token });
+  const { data, error } = await apiRequest<Match[]>(`/events/${eventId}/matches`, {
+    token: _token,
+  });
   if (error && error.statusCode !== 404) return { error };
   if (data) return { data };
   return { data: [] };
@@ -18,14 +20,14 @@ export async function fetchMatchesForEvent(
 export async function fetchMatchDetail(
   _token: string | null,
   eventId: string,
-  matchId: string
+  matchId: string,
 ): Promise<{
   data?: Match & { profile_summary?: string; strategy?: string; explanation?: string };
   error?: { detail: unknown; statusCode: number };
 }> {
   const { data, error } = await apiRequest<Match & { profile_summary?: string; strategy?: string }>(
     `/events/${eventId}/matches/${matchId}`,
-    { token: _token }
+    { token: _token },
   );
   if (error && error.statusCode !== 404) return { error };
   return { data: data ?? undefined };

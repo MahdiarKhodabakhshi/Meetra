@@ -53,11 +53,13 @@ export default function LoginPage() {
           autoComplete="current-password"
           error={error && error.toLowerCase().includes('password') ? error : undefined}
         />
-        {error && !error.toLowerCase().includes('email') && !error.toLowerCase().includes('password') && (
-          <p className="text-sm text-[var(--destructive)]" role="alert">
-            {error}
-          </p>
-        )}
+        {error &&
+          !error.toLowerCase().includes('email') &&
+          !error.toLowerCase().includes('password') && (
+            <p className="text-sm text-[var(--destructive)]" role="alert">
+              {error}
+            </p>
+          )}
         <Button type="submit" fullWidth loading={loading} disabled={isLoading}>
           Sign in
         </Button>

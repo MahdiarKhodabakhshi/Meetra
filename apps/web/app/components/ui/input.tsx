@@ -14,7 +14,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-[var(--foreground)]">
+          <label
+            htmlFor={inputId}
+            className="mb-1 block text-sm font-medium text-[var(--foreground)]"
+          >
             {label}
           </label>
         )}
@@ -23,13 +26,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={`input-base ${error ? 'border-[var(--destructive)]' : ''} ${className}`}
           aria-invalid={!!error}
-          aria-describedby={
-            error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
-          }
+          aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
           {...props}
         />
         {error && (
-          <p id={`${inputId}-error`} className="mt-1 text-sm text-[var(--destructive)]" role="alert">
+          <p
+            id={`${inputId}-error`}
+            className="mt-1 text-sm text-[var(--destructive)]"
+            role="alert"
+          >
             {error}
           </p>
         )}
@@ -40,6 +45,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 Input.displayName = 'Input';

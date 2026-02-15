@@ -14,7 +14,11 @@ interface AuthState {
 
 interface AuthActions {
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  register: (email: string, password: string, name?: string) => Promise<{ ok: boolean; error?: string }>;
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
   setUserFromTokens: (auth: AuthUser) => void;
@@ -77,7 +81,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       apiRequest<MeUser>('/auth/me', { token })
         .then(({ data, error }) => {
           if (data) setUser(data);
-          else if (error?.statusCode === 401) refresh().then((ok) => { if (!ok) setUser(null); });
+          else if (error?.statusCode === 401)
+            refresh().then((ok) => {
+              if (!ok) setUser(null);
+            });
           else setUser(null);
         })
         .finally(() => setIsLoading(false));
@@ -104,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/events');
       return { ok: true };
     },
-    [router, setUserFromTokens]
+    [router, setUserFromTokens],
   );
 
   const register = useCallback(
@@ -124,11 +131,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/events');
       return { ok: true };
     },
-    [router, setUserFromTokens]
+    [router, setUserFromTokens],
   );
 
   const logout = useCallback(async () => {
-    await apiRequest('/auth/logout', { method: 'POST', credentials: 'include', token: accessToken });
+    await apiRequest('/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      token: accessToken,
+    });
     setUser(null);
     setAccessToken(null);
     persistToken(null);
@@ -147,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refresh,
       setUserFromTokens,
     }),
-    [user, accessToken, isLoading, login, register, logout, refresh, setUserFromTokens]
+    [user, accessToken, isLoading, login, register, logout, refresh, setUserFromTokens],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

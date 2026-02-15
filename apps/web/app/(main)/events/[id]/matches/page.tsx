@@ -45,7 +45,9 @@ export default function EventMatchesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/events" className="link text-sm">Events</Link>
+        <Link href="/events" className="link text-sm">
+          Events
+        </Link>
         <span className="text-[var(--muted)]">/</span>
         <Link href={`/events/${eventId}`} className="link text-sm truncate">
           {event?.title ?? eventId}
@@ -57,7 +59,8 @@ export default function EventMatchesPage() {
       <div>
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">My matches</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Event-first: matches for {event?.title ?? 'this event'}. Click a match for profile summary and approach suggestions.
+          Event-first: matches for {event?.title ?? 'this event'}. Click a match for profile summary
+          and approach suggestions.
         </p>
       </div>
 

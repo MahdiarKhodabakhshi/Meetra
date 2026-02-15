@@ -16,7 +16,9 @@ export default function MatchDetailPage() {
   const eventId = params.id as string;
   const matchId = params.matchId as string;
   const [event, setEvent] = useState<Event | null>(null);
-  const [match, setMatch] = useState<(Match & { profile_summary?: string; strategy?: string; explanation?: string }) | null>(null);
+  const [match, setMatch] = useState<
+    (Match & { profile_summary?: string; strategy?: string; explanation?: string }) | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,13 +48,17 @@ export default function MatchDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/events" className="link text-sm">Events</Link>
+        <Link href="/events" className="link text-sm">
+          Events
+        </Link>
         <span className="text-[var(--muted)]">/</span>
         <Link href={`/events/${eventId}`} className="link text-sm truncate">
           {event?.title ?? eventId}
         </Link>
         <span className="text-[var(--muted)]">/</span>
-        <Link href={`/events/${eventId}/matches`} className="link text-sm">Matches</Link>
+        <Link href={`/events/${eventId}/matches`} className="link text-sm">
+          Matches
+        </Link>
         <span className="text-[var(--muted)]">/</span>
         <span className="text-sm font-medium truncate">Match detail</span>
       </div>
@@ -99,7 +105,9 @@ export default function MatchDetailPage() {
               {match.strategy ? (
                 <p className="whitespace-pre-wrap">{match.strategy}</p>
               ) : (
-                <p className="text-[var(--muted)]">Suggestions will appear when the strategy is generated.</p>
+                <p className="text-[var(--muted)]">
+                  Suggestions will appear when the strategy is generated.
+                </p>
               )}
             </div>
           </Card>
@@ -128,7 +136,9 @@ export default function MatchDetailPage() {
       {!error && !match && !loading && (
         <Card>
           <p className="text-[var(--muted)]">Match not found.</p>
-          <Link href={`/events/${eventId}/matches`} className="link mt-2 inline-block">Back to matches</Link>
+          <Link href={`/events/${eventId}/matches`} className="link mt-2 inline-block">
+            Back to matches
+          </Link>
         </Card>
       )}
     </div>

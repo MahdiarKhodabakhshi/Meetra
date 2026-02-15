@@ -3,7 +3,7 @@ import type { AdminUserOut } from './types';
 
 export async function listAdminUsers(
   token: string | null,
-  params?: { query?: string; limit?: number }
+  params?: { query?: string; limit?: number },
 ) {
   const sp = new URLSearchParams();
   if (params?.query) sp.set('query', params.query);
@@ -17,11 +17,7 @@ export interface UpdateUserIn {
   status?: 'active' | 'inactive' | 'suspended';
 }
 
-export async function updateAdminUser(
-  token: string | null,
-  userId: string,
-  payload: UpdateUserIn
-) {
+export async function updateAdminUser(token: string | null, userId: string, payload: UpdateUserIn) {
   return apiRequest<AdminUserOut>(`/admin/users/${userId}`, {
     method: 'PATCH',
     token,

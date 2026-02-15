@@ -3,7 +3,7 @@ import type { Event, EventListResponse, EventStatus, RSVPResponse } from './type
 
 export async function fetchEvents(
   token: string | null,
-  params?: { page?: number; page_size?: number; starts_after?: string; starts_before?: string }
+  params?: { page?: number; page_size?: number; starts_after?: string; starts_before?: string },
 ) {
   const sp = new URLSearchParams();
   if (params?.page) sp.set('page', String(params.page));
@@ -33,7 +33,10 @@ export async function cancelRsvp(token: string | null, eventId: string) {
 }
 
 /** Registration allowed if published and (no deadline or now < deadline) */
-export function isRegistrationOpen(event: { status: EventStatus; rsvp_deadline: string | null }): boolean {
+export function isRegistrationOpen(event: {
+  status: EventStatus;
+  rsvp_deadline: string | null;
+}): boolean {
   if (event.status !== 'published') return false;
   if (!event.rsvp_deadline) return true;
   return new Date(event.rsvp_deadline) > new Date();
