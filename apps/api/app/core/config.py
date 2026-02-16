@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -16,6 +17,12 @@ def _csv(val: str | None, default: list[str]) -> list[str]:
     if not val:
         return default
     return [v.strip() for v in val.split(",") if v.strip()]
+
+
+def _default_storage_root() -> str:
+    # apps/api/app/core/config.py -> repo root is parents[4]
+    repo_root = Path(__file__).resolve().parents[4]
+    return str(repo_root / "data")
 
 
 @dataclass(frozen=True)
@@ -54,6 +61,11 @@ class Settings:
         "postgresql+psycopg://meetra:meetra@localhost:5432/meetra",
     )
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+    # Storage
+    storage_backend: str = os.getenv("MEETRA_STORAGE_BACKEND", "local").strip().lower()
+    storage_root: str = os.getenv("MEETRA_STORAGE_ROOT", _default_storage_root())
+    resume_max_upload_bytes: int = int(os.getenv("MEETRA_RESUME_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 
     # Celery
     celery_broker_url: str = os.getenv(
