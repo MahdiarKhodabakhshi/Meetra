@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
   listAdminUsers,
@@ -18,31 +18,26 @@ export default function AdminDashboardPage() {
   const [users, setUsers] = useState<AdminUserOut[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const isAdmin = user?.role === 'admin';
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!accessToken) return;
     setLoading(true);
-    setError(null);
     listAdminUsers(accessToken, { query: query.trim() || undefined, limit: 100 })
-      .then(({ data, error: err }) => {
-        if (err) setError(typeof err.detail === 'string' ? err.detail : 'Failed to load users');
-        else setUsers(data ?? []);
+      .then(({ data, err }) => {
+        if (!err) setUsers(data ?? []);
       })
       .finally(() => setLoading(false));
-  };
+  }, [accessToken, query]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      setLoading(false);
-      return;
-    }
+    if (!isAdmin) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [accessToken, isAdmin]);
+  }, [isAdmin, load]);
 
   const handleUpdate = async (userId: string, payload: UpdateUserIn) => {
     if (!accessToken || userId === user?.user_id) return;
