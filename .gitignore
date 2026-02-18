@@ -24,3 +24,4 @@ __pycache__/
 .vscode
 apps/api/migrations/versions/
 apps/api/pyproject.toml.bak.2026-01-20-193848
+data/
