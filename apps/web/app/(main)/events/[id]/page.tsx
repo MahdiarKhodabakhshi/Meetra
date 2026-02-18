@@ -37,13 +37,20 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!accessToken || !eventId) return;
-    setLoading(true);
+    let mounted = true;
     fetchEvent(accessToken, eventId)
       .then(({ data, error: err }) => {
+        if (!mounted) return;
         if (err) setError(err.detail?.message ?? 'Event not found');
         else setEvent(data ?? null);
+        setLoading(false);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, [accessToken, eventId]);
 
   const registrationOpen = event ? isRegistrationOpen(event) : false;

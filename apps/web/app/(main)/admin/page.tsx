@@ -23,13 +23,6 @@ export default function AdminDashboardPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const isAdmin = user?.role === 'admin';
-  if (!isAdmin) {
-    return (
-      <Card>
-        <p className="text-[var(--muted)]">You need admin role to access this page.</p>
-      </Card>
-    );
-  }
 
   const load = () => {
     if (!accessToken) return;
@@ -44,8 +37,12 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     load();
-  }, [accessToken]);
+  }, [accessToken, isAdmin]);
 
   const handleUpdate = async (userId: string, payload: UpdateUserIn) => {
     if (!accessToken || userId === user?.user_id) return;
@@ -76,6 +73,14 @@ export default function AdminDashboardPage() {
     }
     load();
   };
+
+  if (!isAdmin) {
+    return (
+      <Card>
+        <p className="text-[var(--muted)]">You need admin role to access this page.</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-8">

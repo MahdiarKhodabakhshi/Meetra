@@ -20,16 +20,23 @@ export default function EventsListPage() {
 
   useEffect(() => {
     if (!accessToken) return;
-    setLoading(true);
+    let mounted = true;
     fetchEvents(accessToken, { page, page_size: 20 })
       .then(({ data, error }) => {
+        if (!mounted) return;
         if (error) setError(error.detail?.message ?? 'Failed to load events');
         else if (data) {
           setEvents(data.items);
           setTotal(data.total);
         }
+        setLoading(false);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, [accessToken, page]);
 
   if (loading && events.length === 0) {

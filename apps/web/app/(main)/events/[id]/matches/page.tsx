@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { fetchEvent, formatEventDate } from '@/lib/events-api';
+import { fetchEvent } from '@/lib/events-api';
 import { fetchMatchesForEvent } from '@/lib/matches-api';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 import type { Event } from '@/lib/types';
@@ -21,17 +21,27 @@ export default function EventMatchesPage() {
 
   useEffect(() => {
     if (!accessToken || !eventId) return;
-    setLoading(true);
+    let mounted = true;
     Promise.all([
       fetchEvent(accessToken, eventId).then((r) => r.data),
       fetchMatchesForEvent(accessToken, eventId).then((r) => r.data ?? []),
     ])
       .then(([ev, list]) => {
-        setEvent(ev ?? null);
-        setMatches(Array.isArray(list) ? list : []);
+        if (mounted) {
+          setEvent(ev ?? null);
+          setMatches(Array.isArray(list) ? list : []);
+          setLoading(false);
+        }
       })
-      .catch(() => setError('Failed to load'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mounted) {
+          setError('Failed to load');
+          setLoading(false);
+        }
+      });
+    return () => {
+      mounted = false;
+    };
   }, [accessToken, eventId]);
 
   if (loading && !event) {

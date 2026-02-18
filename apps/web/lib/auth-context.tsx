@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiRequest, getApiErrorMessage, type ApiError } from './api-client';
+import { apiRequest, getApiErrorMessage } from './api-client';
 import type { AuthUser, MeUser } from './types';
 
 interface AuthState {
@@ -26,7 +26,6 @@ interface AuthActions {
 
 const AuthContext = createContext<(AuthState & AuthActions) | null>(null);
 
-const ME_KEY = 'me';
 const TOKEN_KEY = 'access_token';
 
 function persistToken(token: string | null) {
@@ -75,27 +74,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [setUserFromTokens]);
 
   useEffect(() => {
-    const token = getStoredToken();
-    if (token) {
-      setAccessToken(token);
-      apiRequest<MeUser>('/auth/me', { token })
-        .then(({ data, error }) => {
-          if (data) setUser(data);
-          else if (error?.statusCode === 401)
-            refresh().then((ok) => {
-              if (!ok) setUser(null);
-            });
-          else setUser(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      apiRequest<AuthUser>('/auth/refresh', { method: 'POST', credentials: 'include' })
-        .then(({ data }) => {
-          if (data) setUserFromTokens(data);
-          else setUser(null);
-        })
-        .finally(() => setIsLoading(false));
-    }
+    let mounted = true;
+    const initAuth = async () => {
+      const token = getStoredToken();
+      try {
+        if (token) {
+          if (mounted) setAccessToken(token);
+          const { data, error } = await apiRequest<MeUser>('/auth/me', { token });
+          if (mounted) {
+            if (data) setUser(data);
+            else if (error?.statusCode === 401) {
+              const ok = await refresh();
+              if (!ok && mounted) setUser(null);
+            } else setUser(null);
+          }
+        } else {
+          const { data } = await apiRequest<AuthUser>('/auth/refresh', {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (mounted) {
+            if (data) setUserFromTokens(data);
+            else setUser(null);
+          }
+        }
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+    initAuth();
+    return () => {
+      mounted = false;
+    };
   }, [refresh, setUserFromTokens]);
 
   const login = useCallback(

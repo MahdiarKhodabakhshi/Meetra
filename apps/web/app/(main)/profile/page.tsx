@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { apiRequest } from '@/lib/api-client';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
@@ -18,7 +17,7 @@ const RESUME_STATE_LABELS: Record<ResumeState, string> = {
 };
 
 export default function ProfilePage() {
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [nameSaving, setNameSaving] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
