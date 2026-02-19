@@ -30,9 +30,10 @@ export default function EventDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const role = user?.role?.toLowerCase();
   const isOrganizer =
     user &&
-    (user.role === 'organizer' || user.role === 'admin') &&
+    (role === 'organizer' || role === 'admin') &&
     event?.organizer_id === user.user_id;
 
   useEffect(() => {

@@ -21,7 +21,8 @@ export default function OrganizerDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ eventId: string; joinCode: string } | null>(null);
 
-  const isOrganizer = user?.role === 'organizer' || user?.role === 'admin';
+  const role = user?.role?.toLowerCase();
+  const isOrganizer = role === 'organizer' || role === 'admin';
   if (!isOrganizer) {
     return (
       <Card>

@@ -8,8 +8,9 @@ import { Button } from '@/app/components/ui/button';
 function NavLinks() {
   const path = usePathname();
   const { user } = useAuth();
-  const isOrganizer = user?.role === 'organizer' || user?.role === 'admin';
-  const isAdmin = user?.role === 'admin';
+  const role = user?.role?.toLowerCase();
+  const isOrganizer = role === 'organizer' || role === 'admin';
+  const isAdmin = role === 'admin';
 
   return (
     <nav className="flex flex-wrap items-center gap-4 text-sm">

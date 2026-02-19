@@ -21,7 +21,7 @@ export default function AdminDashboardPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   const load = useCallback(() => {
     if (!accessToken) return;
