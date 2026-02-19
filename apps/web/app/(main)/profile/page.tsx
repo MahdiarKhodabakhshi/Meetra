@@ -1,127 +1,269 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
-import { Badge } from '@/app/components/ui/badge';
-import type { ResumeState } from '@/lib/types';
+import { TagList } from '@/app/components/ui/tag-list';
+import {
+  uploadResume,
+  getResumeStatus,
+  getLatestResume,
+  pollResumeUntilDone,
+  isAllowedFile,
+  resumeErrorCodeMessage,
+  POLL_INTERVAL_MS,
+} from '@/lib/resumes-api';
+import { getMyProfile, updateMyProfile } from '@/lib/profiles-api';
+import { getApiErrorMessage } from '@/lib/api-client';
+import type {
+  ResumeVersionStatus,
+  ResumeStatusOut,
+  ProfileOut,
+  ConfidenceJson,
+} from '@/lib/types';
 
-/** Resume pipeline states per design: UPLOADED → SCANNED → PARSED | FAILED */
-const RESUME_STATE_LABELS: Record<ResumeState, string> = {
-  uploaded: 'Uploaded',
-  scanned: 'Scanned',
-  parsed: 'Parsed',
-  failed: 'Failed',
+const RESUME_STATUS_STEPS: Record<ResumeVersionStatus, string> = {
+  UPLOADED: 'Queued',
+  SCANNING: 'Security scan',
+  PARSING: 'Extracting',
+  PARSED: 'Done',
+  FAILED: 'Failed',
 };
 
+function ProvenanceBadge({
+  confidence,
+  field,
+}: {
+  confidence: ConfidenceJson;
+  field: string;
+}) {
+  const manual = confidence?.manual_overrides?.includes(field);
+  const fieldMeta = confidence?.[field];
+  const source =
+    typeof fieldMeta === 'object' && fieldMeta && 'source' in fieldMeta
+      ? String((fieldMeta as { source?: string }).source)
+      : null;
+  const value =
+    typeof fieldMeta === 'object' && fieldMeta && 'value' in fieldMeta
+      ? Number((fieldMeta as { value?: number }).value)
+      : null;
+
+  if (manual || source === 'USER_CONFIRMED') {
+    return (
+      <span className="text-xs text-[var(--success)] font-medium" title="You edited this">
+        Confirmed
+      </span>
+    );
+  }
+  if (source && value != null) {
+    return (
+      <span className="text-xs text-[var(--muted)]" title={`From resume (confidence ${Math.round(value * 100)}%)`}>
+        From resume
+      </span>
+    );
+  }
+  return null;
+}
+
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const [name, setName] = useState(user?.name ?? '');
-  const [nameSaving, setNameSaving] = useState(false);
-  const [nameSaved, setNameSaved] = useState(false);
-  const [resumeState, setResumeState] = useState<ResumeState | null>(null);
+  const { user, accessToken } = useAuth();
+  const [profile, setProfile] = useState<ProfileOut | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+
+  const [headline, setHeadline] = useState('');
+  const [summary, setSummary] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
+  const [titles, setTitles] = useState<string[]>([]);
+  const [industries, setIndustries] = useState<string[]>([]);
+
+  const [latestResume, setLatestResume] = useState<Awaited<ReturnType<typeof getLatestResume>>['data']>(null);
+  const [latestResumeLoading, setLatestResumeLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pollingStatus, setPollingStatus] = useState<ResumeStatusOut | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const saveName = useCallback(async () => {
-    setNameSaving(true);
-    setNameSaved(false);
-    // Backend PATCH /me for name not yet implemented; persist when available
-    await new Promise((r) => setTimeout(r, 300));
-    setNameSaving(false);
-    setNameSaved(true);
-    setTimeout(() => setNameSaved(false), 2000);
-  }, []);
+  const loadProfile = useCallback(async () => {
+    if (!accessToken) return;
+    setProfileLoading(true);
+    setProfileError(null);
+    const { data, error } = await getMyProfile(accessToken);
+    setProfileLoading(false);
+    if (error) {
+      setProfileError(getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }));
+      return;
+    }
+    if (data) {
+      setProfile(data);
+      setHeadline(data.headline ?? '');
+      setSummary(data.summary ?? '');
+      setSkills(data.skills ?? []);
+      setTitles(data.titles ?? []);
+      setIndustries(data.industries ?? []);
+    }
+  }, [accessToken]);
 
-  const handleFile = useCallback(
+  const loadLatestResume = useCallback(async () => {
+    if (!accessToken) return;
+    setLatestResumeLoading(true);
+    const { data } = await getLatestResume(accessToken);
+    setLatestResumeLoading(false);
+    setLatestResume(data ?? null);
+  }, [accessToken]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    loadLatestResume();
+  }, [loadLatestResume]);
+
+  const saveProfile = async () => {
+    if (!accessToken || !profile) return;
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSaveSuccess(false);
+    const payload: Parameters<typeof updateMyProfile>[1] = {};
+    if ((headline.trim() || '') !== (profile.headline ?? '')) {
+      payload.headline = headline.trim() || null;
+    }
+    if ((summary.trim() || '') !== (profile.summary ?? '')) {
+      payload.summary = summary.trim() || null;
+    }
+    if (JSON.stringify(skills) !== JSON.stringify(profile.skills ?? [])) {
+      payload.skills = skills;
+    }
+    if (JSON.stringify(titles) !== JSON.stringify(profile.titles ?? [])) {
+      payload.titles = titles;
+    }
+    if (JSON.stringify(industries) !== JSON.stringify(profile.industries ?? [])) {
+      payload.industries = industries;
+    }
+    if (Object.keys(payload).length === 0) {
+      setProfileSaving(false);
+      return;
+    }
+    const { data, error } = await updateMyProfile(accessToken, payload);
+    setProfileSaving(false);
+    if (error) {
+      setProfileError(getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }));
+      return;
+    }
+    if (data) {
+      setProfile(data);
+      setProfileSaveSuccess(true);
+      setTimeout(() => setProfileSaveSuccess(false), 3000);
+      loadLatestResume();
+    }
+  };
+
+  const handleFileSelect = useCallback(
     async (file: File) => {
-      if (!file || uploading) return;
-      const allowed = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      ];
-      if (!allowed.includes(file.type)) {
-        setUploadError('Please upload a PDF or DOCX file.');
+      if (!accessToken || uploading) return;
+      const allowed = isAllowedFile(file);
+      if (!allowed.ok) {
+        setUploadError(allowed.reason);
         return;
       }
       setUploadError(null);
       setUploading(true);
-      setResumeState('uploaded');
-      // MVP: simulate pipeline; replace with real API when P1 (Upload Resume API) is available
-      await new Promise((r) => setTimeout(r, 600));
-      setResumeState('scanned');
-      await new Promise((r) => setTimeout(r, 800));
-      setResumeState('parsed');
-      setUploading(false);
+      setPollingStatus(null);
+      const { data, error } = await uploadResume(accessToken, file);
+      if (error) {
+        setUploading(false);
+        const code = typeof error.detail === 'object' && error.detail && 'code' in error.detail
+          ? String((error.detail as { code?: string }).code)
+          : null;
+        setUploadError(resumeErrorCodeMessage(code, getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode })));
+        return;
+      }
+      if (!data) {
+        setUploading(false);
+        setUploadError('Upload did not return a resume.');
+        return;
+      }
+      setPollingStatus({
+        id: data.id,
+        status: data.status,
+        error_code: data.error_code,
+        error_message: data.error_message,
+        parsed_at: data.parsed_at,
+        progress_stage: data.status.toLowerCase(),
+      });
+      try {
+        const final = await pollResumeUntilDone(accessToken, data.id, (s) => {
+          setPollingStatus(s);
+        });
+        if (final.status === 'PARSED') {
+          setUploadError(null);
+          loadProfile();
+          loadLatestResume();
+        } else {
+          setUploadError(
+            resumeErrorCodeMessage(
+              final.error_code,
+              final.error_message || 'Processing failed.',
+            ),
+          );
+        }
+      } catch (e) {
+        setUploadError(e instanceof Error ? e.message : 'Status check failed.');
+      } finally {
+        setUploading(false);
+        setPollingStatus(null);
+      }
     },
-    [uploading],
+    [accessToken, uploading, loadProfile, loadLatestResume],
   );
 
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const f = e.dataTransfer.files[0];
-      if (f) handleFile(f);
-    },
-    [handleFile],
-  );
-  const onDragOver = useCallback((e: React.DragEvent) => {
+  const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(true);
-  }, []);
-  const onDragLeave = useCallback(() => setDragOver(false), []);
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f) handleFileSelect(f);
+  };
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">Profile</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Manage your account and resume for event matching.
+          Manage your resume, profile fields, and matching data.
         </p>
       </div>
 
+      {/* Account (email / name) */}
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
-          <CardDescription>
-            Your email is used to sign in. Name is visible to matches.
-          </CardDescription>
+          <CardDescription>Your email is used to sign in.</CardDescription>
         </CardHeader>
         <div className="space-y-4">
           <Input label="Email" value={user?.email ?? ''} disabled />
-          <div className="flex gap-3 items-end">
-            <Input
-              label="Display name"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-            />
-            <Button variant="secondary" onClick={saveName} loading={nameSaving} type="button">
-              {nameSaved ? 'Saved' : 'Save'}
-            </Button>
-          </div>
         </div>
       </Card>
 
+      {/* Resume upload */}
       <Card>
         <CardHeader>
           <CardTitle>Resume</CardTitle>
           <CardDescription>
-            Upload a PDF or DOCX. We scan for security, extract text, and parse skills and
-            experience for matching. You can re-upload if a previous attempt failed; your last
-            successful resume stays active.
+            Upload a PDF or DOCX (max 10 MB). We scan for security, extract text, and parse your
+            profile. You can re-upload anytime; your last successful parse stays active if a new one
+            fails.
           </CardDescription>
         </CardHeader>
         <div className="space-y-4">
           <div
             onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragOver ? 'border-[var(--accent)] bg-[var(--muted-bg)]' : 'border-[var(--border)]'
             }`}
@@ -133,7 +275,7 @@ export default function ProfilePage() {
               id="resume-upload"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) handleFile(f);
+                if (f) handleFileSelect(f);
                 e.target.value = '';
               }}
               disabled={uploading}
@@ -148,47 +290,202 @@ export default function ProfilePage() {
             </label>
           </div>
 
-          {resumeState && (
-            <div className="flex items-center gap-2 flex-wrap">
+          {pollingStatus && (
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-[var(--muted)]">Status:</span>
-              <Badge status={resumeState}>{RESUME_STATE_LABELS[resumeState]}</Badge>
-              {resumeState === 'parsed' && (
+              <span
+                className={`badge ${
+                  pollingStatus.status === 'PARSED'
+                    ? 'badge-published'
+                    : pollingStatus.status === 'FAILED'
+                      ? 'badge-cancelled'
+                      : 'badge-waitlisted'
+                }`}
+              >
+                {RESUME_STATUS_STEPS[pollingStatus.status]}
+              </span>
+              {pollingStatus.status === 'UPLOADED' && <span className="text-sm text-[var(--muted)]">Queued…</span>}
+              {pollingStatus.status === 'SCANNING' && <span className="text-sm text-[var(--muted)]">Scanning…</span>}
+              {pollingStatus.status === 'PARSING' && <span className="text-sm text-[var(--muted)]">Extracting…</span>}
+              {pollingStatus.status === 'PARSED' && (
                 <span className="text-sm text-[var(--success)]">Ready for matching.</span>
               )}
-              {resumeState === 'failed' && (
+              {pollingStatus.status === 'FAILED' && (
                 <span className="text-sm text-[var(--destructive)]">
-                  You can re-upload. Your last successful resume remains active.
+                  {resumeErrorCodeMessage(pollingStatus.error_code, pollingStatus.error_message || 'Failed.')}
                 </span>
               )}
             </div>
           )}
 
           {uploadError && (
-            <p className="text-sm text-[var(--destructive)]" role="alert">
-              {uploadError}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-[var(--destructive)]" role="alert">
+                {uploadError}
+              </p>
+              <Button variant="secondary" size="sm" onClick={() => setUploadError(null)}>
+                Dismiss
+              </Button>
+              {uploadError.includes('try again') || uploadError.includes('Try again') ? (
+                <Button variant="primary" size="sm" onClick={() => setUploadError(null)}>
+                  Try again
+                </Button>
+              ) : null}
+            </div>
           )}
 
           <p className="text-xs text-[var(--muted)]">
-            Pipeline: Upload → Malware scan → Text extraction → Field extraction &amp;
-            normalization. Low-confidence fields will be flagged for your review on this page when
-            available.
+            Pipeline: Upload → Security scan → Text extraction → Field extraction. Polling every{' '}
+            {POLL_INTERVAL_MS / 1000}s until done.
           </p>
         </div>
       </Card>
 
+      {/* View last resume parse job */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile fields (from resume)</CardTitle>
+          <CardTitle>Last resume</CardTitle>
           <CardDescription>
-            Skills, titles, and industries we extract. Review and correct any low-confidence items
-            here.
+            Most recent resume version and parse status.
           </CardDescription>
         </CardHeader>
-        <p className="text-sm text-[var(--muted)]">
-          Extracted fields will appear here after a successful parse. This section scales to show
-          confidence scores and per-field review in a future iteration.
-        </p>
+        {latestResumeLoading ? (
+          <p className="text-sm text-[var(--muted)]">Loading…</p>
+        ) : latestResume ? (
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="text-[var(--muted)]">File:</span>{' '}
+              {latestResume.original_filename}
+            </p>
+            <p>
+              <span className="text-[var(--muted)]">Status:</span>{' '}
+              <span
+                className={
+                  latestResume.status === 'PARSED'
+                    ? 'text-[var(--success)]'
+                    : latestResume.status === 'FAILED'
+                      ? 'text-[var(--destructive)]'
+                      : 'text-[var(--muted)]'
+                }
+              >
+                {RESUME_STATUS_STEPS[latestResume.status]}
+              </span>
+            </p>
+            {latestResume.status === 'FAILED' && latestResume.error_code && (
+              <p className="text-[var(--destructive)]">
+                {resumeErrorCodeMessage(latestResume.error_code, latestResume.error_message || '')}
+              </p>
+            )}
+            <p className="text-[var(--muted)]">
+              Uploaded {new Date(latestResume.created_at).toLocaleString()}
+              {latestResume.parsed_at &&
+                ` · Parsed ${new Date(latestResume.parsed_at).toLocaleString()}`}
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => document.getElementById('resume-upload')?.click()}>
+              Re-upload & re-parse
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--muted)]">No resume uploaded yet.</p>
+        )}
+      </Card>
+
+      {/* Profile fields */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile fields</CardTitle>
+          <CardDescription>
+            Edit headline, summary, skills, titles, and industries. Manual edits are kept when we
+            re-parse your resume. Last updated and source resume are shown below.
+          </CardDescription>
+        </CardHeader>
+        {profileLoading ? (
+          <p className="text-sm text-[var(--muted)]">Loading profile…</p>
+        ) : (
+          <div className="space-y-6">
+            {profileError && (
+              <p className="text-sm text-[var(--destructive)]" role="alert">
+                {profileError}
+              </p>
+            )}
+            {profile && (
+              <>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+                  <span>Last updated: {new Date(profile.updated_at).toLocaleString()}</span>
+                  {profile.source_resume_id && (
+                    <span>· Source resume: {profile.source_resume_id.slice(0, 8)}…</span>
+                  )}
+                </div>
+                <div className="grid gap-4">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <label className="text-sm font-medium text-[var(--foreground)]">Headline</label>
+                      <ProvenanceBadge confidence={profile.confidence_json} field="headline" />
+                    </div>
+                    <Input
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      placeholder="e.g. Senior Software Engineer"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <label className="text-sm font-medium text-[var(--foreground)]">Summary</label>
+                      <ProvenanceBadge confidence={profile.confidence_json} field="summary" />
+                    </div>
+                    <textarea
+                      className="input-base min-h-[100px]"
+                      value={summary}
+                      onChange={(e) => setSummary(e.target.value)}
+                      placeholder="Short professional summary"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-sm font-medium text-[var(--foreground)]">Skills</span>
+                      <ProvenanceBadge confidence={profile.confidence_json} field="skills" />
+                    </div>
+                    <TagList
+                      values={skills}
+                      onChange={setSkills}
+                      placeholder="Add a skill…"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-sm font-medium text-[var(--foreground)]">Job titles</span>
+                      <ProvenanceBadge confidence={profile.confidence_json} field="titles" />
+                    </div>
+                    <TagList
+                      values={titles}
+                      onChange={setTitles}
+                      placeholder="Add a title…"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-sm font-medium text-[var(--foreground)]">Industries</span>
+                      <ProvenanceBadge confidence={profile.confidence_json} field="industries" />
+                    </div>
+                    <TagList
+                      values={industries}
+                      onChange={setIndustries}
+                      placeholder="Add an industry…"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button onClick={saveProfile} loading={profileSaving}>
+                    {profileSaveSuccess ? 'Saved' : 'Save profile'}
+                  </Button>
+                  {profileSaveSuccess && (
+                    <span className="text-sm text-[var(--success)]">Changes saved.</span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );
