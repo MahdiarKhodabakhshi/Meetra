@@ -58,3 +58,46 @@ export function getApiErrorMessage(error: ApiError): string {
   if (typeof error.detail === 'string') return error.detail;
   return error.detail?.message ?? error.detail?.code ?? 'Something went wrong';
 }
+
+/** Multipart upload (e.g. file). Do not set Content-Type; browser sets it with boundary. */
+export async function apiRequestMultipart<T>(
+  path: string,
+  body: FormData,
+  options: { token?: string | null; method?: string } = {},
+): Promise<{ data?: T; error?: ApiError }> {
+  const { token, method = 'POST' } = options;
+  const url = `${API_BASE}${API_PREFIX}${path}`;
+  const headers: HeadersInit = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body,
+      credentials: 'include',
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch';
+    return {
+      error: {
+        detail: `Network error. (${message})`,
+        statusCode: 0,
+      },
+    };
+  }
+  const data = await parseResponse<T>(res);
+  if (!res.ok) {
+    const detail =
+      typeof data === 'object' && data && 'detail' in data
+        ? (data as { detail: ApiError['detail'] }).detail
+        : res.statusText;
+    return {
+      error: {
+        detail: detail as ApiError['detail'],
+        statusCode: res.status,
+      },
+    };
+  }
+  return { data: data as T };
+}
