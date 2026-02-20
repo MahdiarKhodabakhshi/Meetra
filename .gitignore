@@ -10,6 +10,11 @@ dist
 apps/api/.env
 apps/web/.env
 apps/web/.env.*
+apps/auth-service/.env
+
+# JWT Keys (never commit private keys)
+keys/*.pem
+keys/
 
 # Python
 .venv
