@@ -1,6 +1,24 @@
 name: meetra
 
 services:
+  # API Gateway (Traefik)
+  traefik:
+    image: traefik:v3.0
+    container_name: meetra-gateway
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "8088:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - meetra-net
+
   postgres:
     image: postgres:16-alpine
     container_name: meetra-postgres
@@ -17,6 +35,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - meetra-net
 
   redis:
     image: redis:7-alpine
@@ -31,6 +51,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    networks:
+      - meetra-net
 
   # Optional: DB admin UI (simple)
   adminer:
@@ -40,7 +62,13 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "8082:8080"
+    networks:
+      - meetra-net
+
+networks:
+  meetra-net:
+    driver: bridge
 
 volumes:
   meetra_pgdata:
