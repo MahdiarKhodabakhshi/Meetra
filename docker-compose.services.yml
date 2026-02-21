@@ -1,0 +1,70 @@
+# Local development overrides
+# This file is automatically loaded by docker-compose
+# It adds Traefik labels for API and auth-service routing
+
+name: meetra
+
+services:
+  # Auth Service (microservice)
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    container_name: meetra-auth
+    environment:
+      - ENV=local
+      - AUTH_DATABASE_URL=postgresql+psycopg://meetra:meetra@postgres:5432/meetra
+      - AUTH_DB_SCHEMA=auth
+      - JWT_PRIVATE_KEY_PATH=/keys/jwt-private.pem
+      - JWT_PUBLIC_KEY_PATH=/keys/jwt-public.pem
+      - JWT_ISSUER=meetra-auth
+      - JWT_AUDIENCE=meetra
+      - REFRESH_TOKEN_PEPPER=auth_service_pepper_local
+      - CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:80,http://127.0.0.1:3000
+    volumes:
+      - ./keys:/keys:ro
+      - ./apps/auth-service:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/v1/auth`)"
+      - "traefik.http.routers.auth.entrypoints=web"
+      - "traefik.http.routers.auth.priority=100"
+      - "traefik.http.services.auth.loadbalancer.server.port=8000"
+    networks:
+      - meetra-net
+
+  # Core API (existing monolith)
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: meetra-api
+    environment:
+      - ENV=local
+      - DATABASE_URL=postgresql+psycopg://meetra:meetra@postgres:5432/meetra
+      - REDIS_URL=redis://redis:6379/0
+      - AUTH_MODE=jwt
+      - JWT_PUBLIC_KEY_PATH=/keys/jwt-public.pem
+      - JWT_ISSUER=meetra-auth
+      - JWT_AUDIENCE=meetra
+      - CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:80,http://127.0.0.1:3000
+    volumes:
+      - ./keys:/keys:ro
+      - ./apps/api:/app
+      - ./data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/v1`) || PathPrefix(`/health`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.priority=1"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+    networks:
+      - meetra-net
