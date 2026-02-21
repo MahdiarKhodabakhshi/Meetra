@@ -25,12 +25,22 @@ def _default_storage_root() -> str:
     return str(repo_root / "data")
 
 
+def _load_key_file(path: str | None) -> str | None:
+    """Load a key from a PEM file."""
+    if not path:
+        return None
+    p = Path(path)
+    if p.exists():
+        return p.read_text().strip()
+    return None
+
+
 @dataclass(frozen=True)
 class Settings:
     env: str = os.getenv("ENV", "local")
 
-    # A4: dev auth + dev-route gating
-    auth_mode: str = os.getenv("AUTH_MODE", "dev")
+    # Auth mode: "dev" for local dev tokens, "jwt" for RS256 JWT from auth-service
+    auth_mode: str = os.getenv("AUTH_MODE", "jwt")
     dev_auth_prefix: str = os.getenv("DEV_AUTH_PREFIX", "dev_")
     dev_routes_enabled: bool = _bool(
         os.getenv("DEV_ROUTES_ENABLED"),
@@ -38,15 +48,21 @@ class Settings:
     )
     dev_api_key: str | None = os.getenv("DEV_API_KEY") or None
 
-    # Auth tokens
+    # JWT verification (RS256 public key from auth-service)
+    jwt_public_key_path: str = os.getenv("JWT_PUBLIC_KEY_PATH", "")
+    jwt_public_key: str = field(default="")
+    jwt_algorithm: str = os.getenv("JWT_ALG", "RS256")
+    jwt_issuer: str = os.getenv("JWT_ISSUER", "meetra-auth")
+    jwt_audience: str = os.getenv("JWT_AUDIENCE", "meetra")
+
+    # Legacy HS256 support (for backward compatibility during migration)
+    jwt_secret: str = os.getenv("JWT_SECRET", "")
+    jwt_use_legacy_hs256: bool = _bool(os.getenv("JWT_USE_LEGACY_HS256"), default=False)
+
+    # Token settings (for reference, actual tokens issued by auth-service)
     access_token_ttl_seconds: int = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "900"))
     refresh_token_ttl_days: int = int(os.getenv("REFRESH_TOKEN_TTL_DAYS", "30"))
     refresh_token_pepper: str = os.getenv("REFRESH_TOKEN_PEPPER", "dev_pepper")
-
-    jwt_secret: str = os.getenv("JWT_SECRET", "dev_jwt_secret")
-    jwt_algorithm: str = os.getenv("JWT_ALG", "HS256")
-    jwt_issuer: str = os.getenv("JWT_ISSUER", "meetra")
-    jwt_audience: str = os.getenv("JWT_AUDIENCE", "meetra")
 
     refresh_cookie_name: str = os.getenv("REFRESH_COOKIE_NAME", "meetra_refresh")
     refresh_cookie_samesite: str = os.getenv("REFRESH_COOKIE_SAMESITE", "lax")
@@ -100,6 +116,13 @@ class Settings:
             default=["/health", "/metrics"],
         )
     )
+
+    def __post_init__(self) -> None:
+        # Load public key from file if path provided
+        public_key = _load_key_file(self.jwt_public_key_path) or os.getenv(
+            "JWT_PUBLIC_KEY", ""
+        )
+        object.__setattr__(self, "jwt_public_key", public_key)
 
 
 settings = Settings()
