@@ -1,3 +1,16 @@
+"""
+Admin user management endpoints.
+
+MIGRATION NOTE (microservices):
+These endpoints currently manage users directly in the database.
+After full migration to auth-service, these should:
+1. Read operations: Can stay here (using local user cache or auth-service API)
+2. Write operations (role, status changes): Should proxy to auth-service API
+   at POST /v1/auth/admin/users/{id}
+
+For now, this module remains functional for backward compatibility.
+The auth-service has equivalent endpoints at /v1/auth/admin/users/*.
+"""
 from __future__ import annotations
 
 import uuid
@@ -9,7 +22,7 @@ from pydantic import BaseModel
 from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
-from app.auth.deps import CurrentUser, require_role
+from app.auth.deps import CurrentTokenUser, require_role
 from app.db import get_db
 from app.models import RefreshToken, User
 from app.models.user import UserRole, UserStatus
@@ -20,8 +33,10 @@ router = APIRouter(
     dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 
+from app.auth.deps import TokenUser
+
 DBSession = Annotated[Session, Depends(get_db)]
-AdminUser = Annotated[User, Depends(require_role(UserRole.ADMIN))]
+AdminUser = Annotated[TokenUser, Depends(require_role(UserRole.ADMIN))]
 
 
 class UserOut(BaseModel):
@@ -85,7 +100,7 @@ def update_user(user_id: str, payload: UpdateUserIn, db: DBSession, admin: Admin
         raise HTTPException(status_code=404, detail="user not found")
 
     if payload.role is not None:
-        if user.id == admin.id:
+        if target_id == admin.id:
             raise HTTPException(status_code=400, detail="cannot change own role")
         user.role = payload.role
 
