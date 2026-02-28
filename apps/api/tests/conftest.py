@@ -14,6 +14,7 @@ os.environ.setdefault("ACCESS_TOKEN_TTL_SECONDS", "900")
 os.environ.setdefault("REFRESH_TOKEN_TTL_DAYS", "30")
 os.environ.setdefault("ENV", "local")
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+os.environ.setdefault("CORE_LEGACY_AUTH_ROUTES_ENABLED", "true")
 
 from app.main import app  # noqa: E402
 from app.db import SessionLocal  # noqa: E402

@@ -59,6 +59,13 @@ class Settings:
     jwt_secret: str = os.getenv("JWT_SECRET", "")
     jwt_use_legacy_hs256: bool = _bool(os.getenv("JWT_USE_LEGACY_HS256"), default=False)
 
+    # When False (default): core API does not expose /v1/auth/* or monolith-only admin
+    # session/role writes. Enable for rollback to monolith auth on the same process.
+    core_legacy_auth_routes_enabled: bool = _bool(
+        os.getenv("CORE_LEGACY_AUTH_ROUTES_ENABLED"),
+        default=False,
+    )
+
     # Token settings (for reference, actual tokens issued by auth-service)
     access_token_ttl_seconds: int = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "900"))
     refresh_token_ttl_days: int = int(os.getenv("REFRESH_TOKEN_TTL_DAYS", "30"))

@@ -18,6 +18,18 @@ from app.models.user import UserRole, UserStatus
 DBSession = Annotated[Session, Depends(get_db)]
 
 
+def require_core_legacy_auth_routes() -> None:
+    """Raise if monolith auth routes/admin writes on core are disabled (auth-service mode)."""
+    if not settings.core_legacy_auth_routes_enabled:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "core legacy auth is disabled; use auth-service. "
+                "Set CORE_LEGACY_AUTH_ROUTES_ENABLED=1 for monolith rollback."
+            ),
+        )
+
+
 def _unauthorized(detail: str = "unauthorized") -> HTTPException:
     return HTTPException(
         status_code=401,
@@ -62,7 +74,6 @@ def get_token_user(request: Request) -> TokenUser:
 
     token = auth.removeprefix("Bearer ").strip()
 
-    # Local dev auth mode
     if settings.auth_mode == "dev" and settings.env == "local":
         prefix = settings.dev_auth_prefix
         if not token.startswith(prefix):
@@ -72,7 +83,6 @@ def get_token_user(request: Request) -> TokenUser:
         if "@" not in email:
             raise _unauthorized("invalid email in token")
 
-        # In dev mode, create a fake TokenUser
         return TokenUser(
             id=uuid.uuid5(uuid.NAMESPACE_DNS, email),
             email=email,
@@ -80,7 +90,6 @@ def get_token_user(request: Request) -> TokenUser:
             status=UserStatus.ACTIVE,
         )
 
-    # JWT mode (RS256 from auth-service)
     try:
         payload = verify_access_token(token)
     except ValueError:
@@ -95,7 +104,6 @@ def get_token_user(request: Request) -> TokenUser:
     except ValueError:
         raise _unauthorized("invalid token: invalid sub format")
 
-    # Extract claims
     role_str = payload.get("role", "ATTENDEE")
     status_str = payload.get("status", "ACTIVE")
     email = payload.get("email")
@@ -146,10 +154,36 @@ def get_current_user(request: Request, db: DBSession) -> User:
             db.refresh(user)
         return user
 
-    # In JWT mode, load user from DB
+    # In JWT mode: public.users is domain cache (profiles FK). Provision/sync from JWT
+    # so auth-service remains the issuer of identity while core stays consistent.
     user = db.get(User, token_user.id)
     if not user:
-        raise _unauthorized("user not found in database")
+        user = User(
+            id=token_user.id,
+            email=token_user.email,
+            role=token_user.role,
+            status=token_user.status,
+            password_hash=None,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    changed = False
+    if token_user.email and user.email != token_user.email:
+        user.email = token_user.email
+        changed = True
+    if user.role != token_user.role:
+        user.role = token_user.role
+        changed = True
+    if user.status != token_user.status:
+        user.status = token_user.status
+        changed = True
+    if changed:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     return user
 
