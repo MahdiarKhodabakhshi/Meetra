@@ -22,7 +22,11 @@ from pydantic import BaseModel
 from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
-from app.auth.deps import CurrentTokenUser, require_role
+from app.auth.deps import (
+    CurrentTokenUser,
+    require_core_legacy_auth_routes,
+    require_role,
+)
 from app.db import get_db
 from app.models import RefreshToken, User
 from app.models.user import UserRole, UserStatus
@@ -85,7 +89,11 @@ class UpdateUserIn(BaseModel):
     status: UserStatus | None = None
 
 
-@router.patch("/{user_id}", response_model=UserOut)
+@router.patch(
+    "/{user_id}",
+    response_model=UserOut,
+    dependencies=[Depends(require_core_legacy_auth_routes)],
+)
 def update_user(user_id: str, payload: UpdateUserIn, db: DBSession, admin: AdminUser):
     if payload.role is None and payload.status is None:
         raise HTTPException(status_code=400, detail="no changes provided")
@@ -122,7 +130,10 @@ def update_user(user_id: str, payload: UpdateUserIn, db: DBSession, admin: Admin
     )
 
 
-@router.post("/{user_id}/revoke-sessions")
+@router.post(
+    "/{user_id}/revoke-sessions",
+    dependencies=[Depends(require_core_legacy_auth_routes)],
+)
 def revoke_sessions(user_id: str, db: DBSession):
     try:
         target_id = uuid.UUID(user_id)
