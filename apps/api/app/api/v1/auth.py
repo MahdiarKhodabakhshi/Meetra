@@ -1,3 +1,9 @@
+"""
+Monolith auth HTTP handlers (register, login, refresh, logout, /me).
+
+Inactive unless CORE_LEGACY_AUTH_ROUTES_ENABLED=1 on the core API. In the default
+microservice setup, auth runs in apps/auth-service; this module remains for rollback.
+"""
 from __future__ import annotations
 
 import uuid
@@ -10,7 +16,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth.deps import CurrentUser
+from app.auth.deps import CurrentUser, require_core_legacy_auth_routes
 from app.auth.jwt import create_access_token, create_refresh_token, hash_refresh_token
 from app.auth.password import hash_password, verify_password
 from app.core.config import settings
@@ -18,7 +24,11 @@ from app.db import get_db
 from app.models import RefreshToken, User
 from app.models.user import UserStatus
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+    dependencies=[Depends(require_core_legacy_auth_routes)],
+)
 
 DBSession = Annotated[Session, Depends(get_db)]
 
