@@ -42,6 +42,8 @@ class Settings:
         ),
     )
     db_schema: str = os.getenv("AUTH_DB_SCHEMA", "auth")
+    # Off by default; set SQLALCHEMY_ECHO=1 only when debugging SQL.
+    sqlalchemy_echo: bool = _bool(os.getenv("SQLALCHEMY_ECHO"), default=False)
 
     # RS256 JWT signing
     jwt_private_key_path: str = os.getenv("JWT_PRIVATE_KEY_PATH", "")
