@@ -140,11 +140,11 @@ export interface Match {
   profile_summary?: string;
 }
 
-/** Admin user list item */
+/** Admin user list item (auth-service; name lives in core profile, often omitted) */
 export interface AdminUserOut {
   user_id: string;
   email: string | null;
-  name: string | null;
+  name?: string | null;
   role: string;
   status: string;
   created_at: string;
