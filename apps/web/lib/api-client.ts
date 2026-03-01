@@ -1,4 +1,4 @@
-import { API_BASE, API_PREFIX } from './config';
+import { API_BASE, API_PREFIX, AUTH_API_BASE } from './config';
 
 export type ApiError = {
   detail: string | { code?: string; message?: string };
@@ -15,12 +15,20 @@ async function parseResponse<T>(res: Response): Promise<T> {
   }
 }
 
+function getBaseUrl(path: string): string {
+  if (path.startsWith('/auth/')) {
+    return AUTH_API_BASE;
+  }
+  return API_BASE;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit & { token?: string | null } = {},
 ): Promise<{ data?: T; error?: ApiError }> {
   const { token, ...init } = options;
-  const url = `${API_BASE}${API_PREFIX}${path}`;
+  const baseUrl = getBaseUrl(path);
+  const url = `${baseUrl}${API_PREFIX}${path}`;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(init.headers as Record<string, string>),
