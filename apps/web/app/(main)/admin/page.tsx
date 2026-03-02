@@ -27,8 +27,8 @@ export default function AdminDashboardPage() {
     if (!accessToken) return;
     setLoading(true);
     listAdminUsers(accessToken, { query: query.trim() || undefined, limit: 100 })
-      .then(({ data, err }) => {
-        if (!err) setUsers(data ?? []);
+      .then(({ data, error }) => {
+        if (!error) setUsers(data ?? []);
       })
       .finally(() => setLoading(false));
   }, [accessToken, query]);
@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
                     <td className="py-2">
                       <select
                         className="input-base py-1 text-sm max-w-[120px]"
-                        value={u.role}
+                        value={u.role.toLowerCase()}
                         disabled={u.user_id === user?.user_id}
                         onChange={(e) =>
                           handleUpdate(u.user_id, {
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
                     <td className="py-2">
                       <select
                         className="input-base py-1 text-sm max-w-[120px]"
-                        value={u.status}
+                        value={u.status.toLowerCase()}
                         disabled={u.user_id === user?.user_id}
                         onChange={(e) =>
                           handleUpdate(u.user_id, {
@@ -162,6 +162,7 @@ export default function AdminDashboardPage() {
                         <option value="active">active</option>
                         <option value="inactive">inactive</option>
                         <option value="suspended">suspended</option>
+                        <option value="deleted">deleted</option>
                       </select>
                     </td>
                     <td className="py-2 text-[var(--muted)]">
