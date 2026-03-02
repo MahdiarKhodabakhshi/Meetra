@@ -47,6 +47,7 @@ services:
       - DATABASE_URL=postgresql+psycopg://meetra:meetra@postgres:5432/meetra
       - REDIS_URL=redis://redis:6379/0
       - AUTH_MODE=jwt
+      - CORE_LEGACY_AUTH_ROUTES_ENABLED=false
       - JWT_PUBLIC_KEY_PATH=/keys/jwt-public.pem
       - JWT_ISSUER=meetra-auth
       - JWT_AUDIENCE=meetra
