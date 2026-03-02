@@ -4,16 +4,71 @@ Follow these steps in order. All commands assume you are in the **Meetra repo ro
 
 ---
 
-## Fresh terminal quickstart (full capability)
+## Architecture Overview
 
-This section is the **do-this-every-time** playbook from a **brand new terminal** to run everything you’ve implemented:
+Meetra uses a **microservices architecture** with separate services:
 
-- DB + Redis (Docker)
-- API (FastAPI/Uvicorn)
-- Web (Next.js)
-- Resume parsing worker (Celery) for queued resume jobs
 
-It also includes **preflight checks** with the **expected results** so you can quickly spot what’s wrong before starting.
+| Service           | Port | Description                              |
+| ----------------- | ---- | ---------------------------------------- |
+| **Auth Service**  | 8002 | Authentication (login, register, tokens) |
+| **Core API**      | 9000 | Events, profiles, resumes, admin         |
+| **Web Frontend**  | 3000 | Next.js UI                               |
+| **Celery Worker** | —    | Resume parsing (background)              |
+| **PostgreSQL**    | 5432 | Database (Docker)                        |
+| **Redis**         | 6379 | Cache/queue (Docker)                     |
+
+
+---
+
+## Quick Start (4 terminals)
+
+### Terminal 1: Start Infrastructure
+
+```bash
+cd ~/src/Meetra
+pnpm docker:up
+pnpm db:upgrade
+pnpm auth:db:upgrade
+```
+
+### Terminal 2: Core API (port 9000)
+
+```bash
+cd ~/src/Meetra/apps/api
+conda activate meetra-api
+uvicorn app.main:app --reload --host 0.0.0.0 --port 9000
+```
+
+### Terminal 3: Auth Service (port 8002)
+
+```bash
+cd ~/src/Meetra/apps/auth-service
+conda activate meetra-api
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
+```
+
+### Terminal 4: Resume Parser (Celery)
+
+```bash
+cd ~/src/Meetra/apps/api
+conda activate meetra-api
+celery -A app.worker.celery_app worker --loglevel=info
+```
+
+### Terminal 5: Web Frontend (optional, needs Node 20+)
+
+```bash
+source ~/.nvm/nvm.sh
+nvm use 20
+node -v
+npm run devVerify Services
+```
+
+```bash
+curl http://localhost:9000/health   # Core API
+curl http://localhost:8002/health   # Auth Service
+```
 
 ---
 
@@ -80,25 +135,30 @@ If this fails, start Docker (or ensure the Docker daemon is running) and retry.
 - The browser will NOT be able to reach `http://localhost:<PORT>` on the server
 - Frontend API URL MUST be `http://<SERVER_IP>:<API_PORT>`
 
-This is the #1 reason you see **“Network error… (Failed to fetch)”** on Register/Login.
+This is the #1 reason you see **"Network error… (Failed to fetch)"** on Register/Login.
 
 ---
 
-### 5) Check ports are free (or know what’s using them)
+### 5) Check ports are free (or know what's using them)
 
 Default ports used:
 
 - Web: **3000**
 - API: **9000** (recommended; avoids conflicts with 8000)
-- Adminer: **8080**
+- Auth Service: **8002**
+- Adminer: **8082**
 
 ```bash
-lsof -i:3000 -i:9000 -i:8080 || true
+lsof -i:3000 -i:9000 -i:8002 || true
 ```
 
 **Expected (before starting):** no output for those ports.
 
-If you see something listening (especially on **9000**), stop it or choose a different API port (see below).
+If you see something listening, stop it or choose a different port.
+
+```bash
+fuser -k 9000/tcp 8002/tcp  # Force kill processes on these ports
+```
 
 ---
 
@@ -113,49 +173,57 @@ If you see something listening (especially on **9000**), stop it or choose a dif
 
 ## Authentication configuration (important!)
 
-The API uses **JWT authentication** for the login/register flow. You must configure this in `apps/api/.env`.
+Meetra uses **RS256 JWT tokens** issued by the Auth Service.
 
-### 1. Copy the example env file (if you haven't already)
+### Database Setup
+
+The auth service uses a separate `auth` schema in PostgreSQL:
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+# Run auth-service migrations (creates auth.users, auth.refresh_tokens)
+pnpm auth:db:upgrade
+
+# Run core API migrations
+pnpm db:upgrade
 ```
 
-### 2. Set secure values for secrets
+### JWT Keys (RS256)
 
-Open `apps/api/.env` and replace the placeholder values:
+JWT keys are in the `keys/` folder:
+
+- `keys/jwt-private.pem` - Used by Auth Service to sign tokens
+- `keys/jwt-public.pem` - Used by Core API to verify tokens
+
+If keys don't exist, generate them:
+
+```bash
+cd keys
+openssl genrsa -out jwt-private.pem 2048
+openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
+chmod 600 jwt-private.pem
+```
+
+### Environment Files
+
+**Auth Service** (`apps/auth-service/.env`):
 
 ```env
-# REQUIRED: Set these to secure random values
-JWT_SECRET=<generate-a-strong-random-string>
-REFRESH_TOKEN_PEPPER=<generate-another-random-string>
+AUTH_DATABASE_URL=postgresql+psycopg://meetra:meetra@localhost:5432/meetra
+AUTH_DB_SCHEMA=auth
+JWT_PRIVATE_KEY_PATH=../../keys/jwt-private.pem
+JWT_PUBLIC_KEY_PATH=../../keys/jwt-public.pem
+JWT_ISSUER=meetra-auth
+JWT_AUDIENCE=meetra
 ```
 
-You can generate secure values with:
-
-```bash
-openssl rand -base64 32
-```
-
-### 3. Verify AUTH_MODE is set to jwt
+**Core API** (`apps/api/.env`):
 
 ```env
 AUTH_MODE=jwt
+JWT_PUBLIC_KEY_PATH=../../keys/jwt-public.pem
+JWT_ISSUER=meetra-auth
+JWT_AUDIENCE=meetra
 ```
-
-If `AUTH_MODE` is missing or set to `dev`, the API will expect dev tokens (like `dev_user@example.com`) instead of real JWTs, and login/register will fail.
-
-### Key JWT settings in `.env`
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `AUTH_MODE` | `jwt` | Must be `jwt` for real authentication |
-| `JWT_SECRET` | — | Secret key for signing JWTs (required) |
-| `JWT_ISSUER` | `meetra` | JWT issuer claim |
-| `JWT_AUDIENCE` | `meetra` | JWT audience claim |
-| `ACCESS_TOKEN_TTL_SECONDS` | `900` | Access token lifetime (15 min) |
-| `REFRESH_TOKEN_TTL_DAYS` | `30` | Refresh token lifetime |
-| `REFRESH_COOKIE_SECURE` | `false` | Set to `true` in production (HTTPS) |
 
 ---
 
@@ -169,10 +237,11 @@ From the **repo root**:
 pnpm docker:up
 ```
 
-Wait until you see the containers running (postgres, redis, adminer). Then run migrations:
+Wait until you see the containers running (postgres, redis, adminer, traefik). Then run migrations:
 
 ```bash
-pnpm db:upgrade
+pnpm db:upgrade        # Core API migrations
+pnpm auth:db:upgrade   # Auth Service migrations
 ```
 
 You should see Alembic migration messages and no errors.
@@ -189,87 +258,68 @@ The frontend must know the API URL. From the **repo root**:
 echo "NEXT_PUBLIC_API_URL=http://localhost:9000" > apps/web/.env.local
 ```
 
-**Expected:** `apps/web/.env.local` contains exactly that line.
-
 #### Option B: browser is on another device (use server IP)
 
-Replace the IP below with your server’s network IP:
+Replace the IP below with your server's network IP:
 
 ```bash
 echo "NEXT_PUBLIC_API_URL=http://131.234.29.111:9000" > apps/web/.env.local
 ```
 
-**Expected:** when you open `http://131.234.29.111:3000`, Register/Login can reach the API.
-
 ---
 
-### Step 3: Free port 9000 (required if you see "Address already in use")
+### Step 3: Start the services
 
-The **"Network error. Check API URL and CORS settings. (Failed to fetch)"** on login/register usually means the **API did not start** because port 9000 was already in use. Free it first:
+You need **4 terminals** (all with `conda activate meetra-api`):
 
-```bash
-fuser -k 9000/tcp
-```
-
-Or find and kill the process:
+**Terminal 1 – Core API:**
 
 ```bash
-lsof -i :9000
-kill <PID>
-```
-
-Then start the app again (Step 4).
-
----
-
-### Step 4: Start the API and the web app (recommended)
-
-From the **repo root**, with your **conda environment activated** (e.g. `meetra-api`):
-
-```bash
+cd ~/src/Meetra/apps/api
 conda activate meetra-api
-PORT=9000 pnpm dev
+uvicorn app.main:app --reload --host 0.0.0.0 --port 9000
 ```
 
-This starts:
-
-- **API** at **[http://localhost:9000](http://localhost:9000)**
-- **Web app** at **[http://localhost:3000](http://localhost:3000)**
-
-Wait until you see something like:
-
-- `[api] INFO:     Uvicorn running on http://0.0.0.0:9000`
-- `[web] ✓ Ready in ...`
-
-**Quick verification (optional):**
+**Terminal 2 – Auth Service:**
 
 ```bash
-curl -sS http://localhost:9000/health
-```
-
-**Expected:** `{"status":"ok"}`
-
----
-
-### Step 5 (optional): Start the Celery worker (resume parsing)
-
-Resume uploads are queued; a **Celery worker** must be running for them to be parsed (Queued → Scanning → Extracting → Done). In a **separate terminal**, from the repo root with the same conda env:
-
-```bash
+cd ~/src/Meetra/apps/auth-service
 conda activate meetra-api
-pnpm dev:worker
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
-Leave this running. Resume jobs will then be processed; the profile page will show status updates as they move from Queued to Done.
+**Terminal 3 – Celery Worker (resume parsing):**
+
+```bash
+cd ~/src/Meetra/apps/api
+conda activate meetra-api
+celery -A app.worker.celery_app worker --loglevel=info
+```
+
+**Terminal 4 – Web Frontend (needs Node 20+):**
+
+```bash
+cd ~/src/Meetra/apps/web
+npm run dev
+```
 
 ---
 
-### Step 6: Open the app in your browser
+### Step 4: Verify services are running
+
+```bash
+curl http://localhost:9000/health   # Should return {"status":"ok"}
+curl http://localhost:8002/health   # Should return {"status":"ok","service":"auth-service"}
+```
+
+---
+
+### Step 5: Open the app in your browser
 
 Open **one** of these (depending on where your browser is):
 
 - If the browser is on the same machine: **[http://localhost:3000](http://localhost:3000)**
-- If the browser is on another device: **http://****:3000** (example: **[http://131.234.29.111:3000](http://131.234.29.111:3000)**)
+- If the browser is on another device: **http://SERVER_IP:3000** (example: **[http://131.234.29.111:3000](http://131.234.29.111:3000)**)
 
 You will be redirected to `/events`.
 
@@ -278,155 +328,167 @@ You will be redirected to `/events`.
 
 ---
 
-## Optional: run API and web in separate terminals
-
-**Terminal 1 – API** (with conda env active):
-
-```bash
-cd ~/src/Meetra
-conda activate meetra-api
-PORT=9000 pnpm dev:api
-```
-
-**Terminal 2 – Web** (Node 20):
-
-```bash
-cd ~/src/Meetra
-pnpm dev:web
-```
-
-Then open **[http://localhost:3000](http://localhost:3000)** (or **[http://131.234.29.111:3000](http://131.234.29.111:3000)** if you use the network IP).
-
-**If you open the site via the network IP** (e.g. `http://131.234.29.111:3000`) from the same machine, the app still calls the API at `localhost:9000`, which is correct. If you open it from **another device** (e.g. your laptop), set the API URL to the server IP so the browser can reach the API:
-
-```bash
-echo "NEXT_PUBLIC_API_URL=http://131.234.29.111:9000" > apps/web/.env.local
-```
-
-Restart the web app after changing `.env.local`. The API already allows CORS for `http://131.234.29.111:3000` when configured in `apps/api/.env`.
-
----
-
-## Optional: run the API on a different port (if 9000 is busy)
-
-If **9000 is busy** (or you want multiple environments), you can run the API on another port.
-
-### Start API on a custom port
-
-In an API terminal:
-
-```bash
-cd /home/mahdiar/src/Meetra
-conda activate meetra-api
-PORT=9100 pnpm dev:api
-```
-
-**Expected:** `Uvicorn running on http://0.0.0.0:9100`
-
-### Point the web app to that port
-
-If the browser is on the same machine:
-
-```bash
-echo "NEXT_PUBLIC_API_URL=http://localhost:9100" > apps/web/.env.local
-```
-
-If the browser is on another device:
-
-```bash
-echo "NEXT_PUBLIC_API_URL=http://131.234.29.111:9100" > apps/web/.env.local
-```
-
-Then restart the web app (`pnpm dev:web` or `pnpm dev`).
-
----
-
 ## Stopping the app
 
-- If you ran `pnpm dev`: press **Ctrl+C** in the terminal where it is running.
-- To stop Docker (database and Redis): from repo root run `pnpm docker:down` (or `docker compose down`).
-
----
+- Press **Ctrl+C** in each terminal to stop that service
+- To stop Docker: `pnpm docker:down`
 
 ---
 
 ## Checking users (who has signed in)
 
-Users are stored in the **PostgreSQL** database in the `**users`** table.
+Users are stored in **two schemas**:
+
+- `auth.users` - Identity data (email, password_hash, role, status)
+- `public.users` - Profile data (name, avatar_url)
 
 ### Option A: Adminer (web UI)
 
-With Docker running (`pnpm docker:up`), open **[http://localhost:8080](http://localhost:8080)**. Log in:
+With Docker running (`pnpm docker:up`), open **[http://localhost:8082](http://localhost:8082)**. Log in:
 
-- **System:** PostgreSQL  
-- **Server:** postgres (or leave blank)  
-- **Username:** meetra  
-- **Password:** meetra  
+- **System:** PostgreSQL
+- **Server:** postgres (or leave blank)
+- **Username:** meetra
+- **Password:** meetra
 - **Database:** meetra
 
-Then open the `**users`** table. Columns include `id`, `email`, `name`, `role`, `status`, `last_login_at`, `created_at`, `updated_at`.
+Then select the `auth` schema and open the `users` table.
 
 ### Option B: psql (command line)
 
 ```bash
-# If using Docker (default credentials)
-docker exec -it meetra-postgres psql -U meetra -d meetra -c "SELECT id, email, name, role, status, last_login_at FROM users ORDER BY created_at DESC;"
-```
+# List auth users (identity)
+docker exec -it meetra-postgres psql -U meetra -d meetra \
+  -c "SELECT id, email, role, status FROM auth.users;"
 
-To list only emails and roles:
-
-```bash
-docker exec -it meetra-postgres psql -U meetra -d meetra -c "SELECT email, role, status FROM users;"
+# List public users (profile)
+docker exec -it meetra-postgres psql -U meetra -d meetra \
+  -c "SELECT id, email, name FROM public.users;"
 ```
 
 ### Making a user an admin
 
-The **Admin** link in the nav and the **Admin dashboard** at `/admin` are only visible when the logged-in user has **role = admin**. New registrations get **attendee** by default.
-
-To promote a user to admin in the database:
-
-**Via Adminer:** Edit the `users` row, set **role** to `ADMIN`, save.
-
-**Via psql:**
-
 ```bash
-docker exec -it meetra-postgres psql -U meetra -d meetra -c "UPDATE users SET role = 'ADMIN' WHERE email = 'your@email.com';"
+docker exec -it meetra-postgres psql -U meetra -d meetra \
+  -c "UPDATE auth.users SET role = 'ADMIN' WHERE email = 'your@email.com';"
 ```
-
-Replace `your@email.com` with the account you use to sign in. Then refresh the app (or log out and log in). The **Admin** link will appear in the nav and **[http://localhost:3000/admin](http://localhost:3000/admin)** will load the Admin dashboard.
 
 ---
 
 ## Admin dashboard
 
 - **URL:** **[http://localhost:3000/admin](http://localhost:3000/admin)**
-- **Access:** Only if you are logged in with **role = admin** (see “Making a user an admin” above). Otherwise you get “You need admin role to access this page.”
-
-On the Admin dashboard you can:
-
-- Search users by email or name
-- Change a user’s **role** (attendee, organizer, admin) and **status** (active, suspended, deleted)
-- Revoke a user’s sessions
-
-The **Admin** link in the top navigation is only shown when your user has the admin role.
+- **Access:** Only if you are logged in with **role = ADMIN**
 
 ---
 
 ## Quick reference
 
 
-| What                | URL or command                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Web app (local)     | [http://localhost:3000](http://localhost:3000)                                              |
-| Web app (network)   | http://:3000 (e.g. [http://131.234.29.111:3000](http://131.234.29.111:3000))                |
-| API (recommended)   | [http://localhost:9000](http://localhost:9000)                                              |
-| API (custom port)   | [http://localhost](http://localhost): (e.g. [http://localhost:9100](http://localhost:9100)) |
-| API docs (Swagger)  | [http://localhost](http://localhost):/docs                                                  |
-| Admin dashboard     | [http://localhost:3000/admin](http://localhost:3000/admin)                                  |
-| DB admin (Adminer)  | [http://localhost:8080](http://localhost:8080)                                              |
-| Start web + API     | `PORT=9000 pnpm dev` (from repo root)                                                       |
-| Start Celery worker | `pnpm dev:worker` (separate terminal)                                                       |
-| DB + Redis          | `pnpm docker:up`                                                                            |
-| Migrations          | `pnpm db:upgrade`                                                                           |
+| What                | URL or command                                             |
+| ------------------- | ---------------------------------------------------------- |
+| Web app (local)     | [http://localhost:3000](http://localhost:3000)             |
+| Web app (network)   | http://SERVER_IP:3000                                      |
+| Core API            | [http://localhost:9000](http://localhost:9000)             |
+| Auth Service        | [http://localhost:8002](http://localhost:8002)             |
+| API docs (Swagger)  | [http://localhost:9000/docs](http://localhost:9000/docs)   |
+| Auth docs (Swagger) | [http://localhost:8002/docs](http://localhost:8002/docs)   |
+| Admin dashboard     | [http://localhost:3000/admin](http://localhost:3000/admin) |
+| DB admin (Adminer)  | [http://localhost:8082](http://localhost:8082)             |
+| Start Core API      | `uvicorn app.main:app --reload --port 9000`                |
+| Start Auth Service  | `uvicorn app.main:app --reload --port 8002`                |
+| Start Celery worker | `celery -A app.worker.celery_app worker --loglevel=info`   |
+| DB + Redis          | `pnpm docker:up`                                           |
+| Core migrations     | `pnpm db:upgrade`                                          |
+| Auth migrations     | `pnpm auth:db:upgrade`                                     |
 
+
+---
+
+## API Endpoints (curl examples)
+
+The frontend uses microservices mode: **Auth Service (8002)** for authentication, **Core API (9000)** for everything else.
+
+### Authentication (Auth Service - port 8002)
+
+```bash
+# Login
+curl -X POST http://localhost:8002/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "password123"}'
+
+# Register
+curl -X POST http://localhost:8002/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "password123", "name": "User"}'
+
+# Get current user
+curl http://localhost:8002/v1/auth/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Refresh token
+curl -X POST http://localhost:8002/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Logout
+curl -X POST http://localhost:8002/v1/auth/logout \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Core API (port 9000)
+
+```bash
+# List events
+curl http://localhost:9000/v1/events \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Get profile
+curl http://localhost:9000/v1/profiles/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Upload resume
+curl -X POST http://localhost:9000/v1/resumes \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@resume.pdf"
+
+```
+
+### Auth service — admin (identity)
+
+```bash
+# List users (admin JWT)
+curl 'http://localhost:8002/v1/auth/admin/users?limit=50' \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
+```
+
+---
+
+## Troubleshooting
+
+### "Address already in use"
+
+```bash
+fuser -k 9000/tcp 8002/tcp  # Kill processes on these ports
+```
+
+### "invalid access token"
+
+- Ensure both services use the same `JWT_ISSUER` and `JWT_AUDIENCE`
+- Check that JWT keys exist in `keys/` folder
+
+### "ModuleNotFoundError: No module named 'bcrypt'"
+
+```bash
+conda activate meetra-api
+pip install bcrypt cryptography
+```
+
+### Node.js version error
+
+Next.js requires Node 20+:
+
+```bash
+nvm install 20 && nvm use 20
+```
 
