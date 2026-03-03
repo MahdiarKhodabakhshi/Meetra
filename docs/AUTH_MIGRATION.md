@@ -130,23 +130,40 @@ JWT_PUBLIC_KEY_PATH=../../keys/jwt-public.pem
 JWT_ALG=RS256
 JWT_ISSUER=meetra-auth
 JWT_AUDIENCE=meetra
+
+# Default false: core does not serve /v1/auth/* or monolith-only admin session/role writes.
+# Set to true only for rollback to monolith auth on the core process.
+CORE_LEGACY_AUTH_ROUTES_ENABLED=false
 ```
+
+### Core vs auth-service responsibilities
+
+| Concern | Auth-service | Core API |
+| ------- | ------------ | -------- |
+| Login, register, refresh, logout | `auth` schema (`auth.users`, `auth.refresh_tokens`) | **Disabled by default** (`CORE_LEGACY_AUTH_ROUTES_ENABLED=false`): same paths return 404 with a pointer to auth-service |
+| JWT validation | Issues tokens | Verifies RS256 with public key; **no DB read** for `CurrentTokenUser` |
+| `public.users` | Not used | **Cache** for FKs (profiles, events, etc.): first JWT request **creates or syncs** a row from token claims (`email`, `role`, `status`) so domain tables stay aligned with auth |
+| Admin: PATCH user role/status, revoke refresh via `public.refresh_tokens` | Use `/v1/auth/admin/*` | **Gated** by the same legacy flag (those endpoints only affect monolith tables; in microservice mode refresh tokens live in `auth.refresh_tokens`) |
 
 ### Frontend (`apps/web/.env.local`)
 ```env
-# Through gateway (recommended)
-NEXT_PUBLIC_API_URL=http://localhost:80
+# Core API (domain routes)
+NEXT_PUBLIC_API_URL=http://localhost:9000
 
-# Direct to core API (bypass auth-service)
-# NEXT_PUBLIC_API_URL=http://localhost:9000
+# Auth microservice — required so /auth/* and /auth/admin/* (login, refresh, admin users, …) hit auth-service
+NEXT_PUBLIC_AUTH_API_URL=http://localhost:8002
+
+# Through Traefik gateway both can target port 80 with path-based routing instead.
 ```
+
+The web client routes any path starting with `/auth/` to `NEXT_PUBLIC_AUTH_API_URL` (see `apps/web/lib/api-client.ts`), including identity admin APIs under `/auth/admin/users`.
 
 ## Rollback Procedure
 
 If issues occur, you can rollback to monolith mode:
 
-1. **Core API**: Set `JWT_USE_LEGACY_HS256=true` and restore `JWT_SECRET`
-2. **Frontend**: Point directly to core API instead of gateway
+1. **Core API**: Set `CORE_LEGACY_AUTH_ROUTES_ENABLED=true` so `/v1/auth/*` and monolith admin session endpoints work again; optionally set `JWT_USE_LEGACY_HS256=true` and restore `JWT_SECRET`
+2. **Frontend**: Unset `NEXT_PUBLIC_AUTH_API_URL` (or set it equal to core) so `/auth/*` goes to core
 3. **Stop auth-service**: `docker stop meetra-auth` or kill the process
 
 ## Troubleshooting
