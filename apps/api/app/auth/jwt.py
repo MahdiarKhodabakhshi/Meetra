@@ -21,13 +21,7 @@ def create_access_token(
     status: str = "ACTIVE",
     email: str | None = None,
     ttl_seconds: int | None = None,
-) -> str:
-    """
-    Create a JWT access token (legacy HS256 mode for core API).
-    
-    NOTE: In production, tokens should be created by auth-service using RS256.
-    This function exists for backward compatibility during migration.
-    """
+):
     if not settings.jwt_secret:
         raise RuntimeError("JWT_SECRET not configured for token creation")
     
@@ -47,16 +41,10 @@ def create_access_token(
 
 
 def create_refresh_token() -> str:
-    """Generate a cryptographically secure refresh token."""
     return secrets.token_urlsafe(48)
 
 
 def verify_access_token(token: str) -> dict:
-    """
-    Verify and decode a JWT access token.
-    
-    During migration, tries RS256 (auth-service) first, then HS256 (legacy).
-    """
     errors = []
     
     # Try RS256 first (tokens from auth-service)
@@ -89,6 +77,5 @@ def verify_access_token(token: str) -> dict:
 
 
 def hash_refresh_token(raw_token: str) -> str:
-    """Hash a refresh token with pepper for storage lookup."""
     data = f"{raw_token}{settings.refresh_token_pepper}".encode("utf-8")
     return hashlib.sha256(data).hexdigest()

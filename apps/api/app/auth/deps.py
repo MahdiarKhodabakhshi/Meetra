@@ -1,3 +1,5 @@
+#get_token_user, get_current_user, require_role
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,7 +21,6 @@ DBSession = Annotated[Session, Depends(get_db)]
 
 
 def require_core_legacy_auth_routes() -> None:
-    """Raise if monolith auth routes/admin writes on core are disabled (auth-service mode)."""
     if not settings.core_legacy_auth_routes_enabled:
         raise HTTPException(
             status_code=404,
@@ -40,12 +41,6 @@ def _unauthorized(detail: str = "unauthorized") -> HTTPException:
 
 @dataclass
 class TokenUser:
-    """
-    User identity from JWT claims (stateless).
-    
-    This is the primary identity object for microservices architecture.
-    Does NOT require database lookup - trusts auth-service JWT claims.
-    """
 
     id: uuid.UUID
     email: str | None
@@ -62,12 +57,6 @@ class TokenUser:
 
 
 def get_token_user(request: Request) -> TokenUser:
-    """
-    Extract and validate user identity from JWT (stateless).
-    
-    This is the preferred dependency for microservices architecture.
-    Trusts JWT claims issued by auth-service without DB lookup.
-    """
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise _unauthorized("missing bearer token")
@@ -125,23 +114,11 @@ def get_token_user(request: Request) -> TokenUser:
     return TokenUser(id=user_id, email=email, role=role, status=status)
 
 
-# Primary dependency for stateless auth
 CurrentTokenUser = Annotated[TokenUser, Depends(get_token_user)]
 
 
 def get_current_user(request: Request, db: DBSession) -> User:
-    """
-    Get full User model from database (legacy).
-    
-    DEPRECATED for new code. Use get_token_user instead.
-    
-    This function exists for backward compatibility with code that needs
-    the full User ORM object. It first validates the JWT, then loads
-    the User from database.
-    
-    For new endpoints, prefer CurrentTokenUser which is stateless.
-    """
-    # First validate JWT and get identity
+
     token_user = get_token_user(request)
 
     # For dev mode, ensure user exists in DB
@@ -193,8 +170,6 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def require_role(*roles: UserRole) -> Callable[[CurrentTokenUser], TokenUser]:
-    """Dependency that requires the user to have one of the specified roles."""
-
     def _check(user: CurrentTokenUser) -> TokenUser:
         if user.role not in roles:
             raise HTTPException(status_code=403, detail="forbidden")
@@ -204,10 +179,6 @@ def require_role(*roles: UserRole) -> Callable[[CurrentTokenUser], TokenUser]:
 
 
 def require_role_orm(*roles: UserRole) -> Callable[[CurrentUser], User]:
-    """
-    Dependency that requires the user to have one of the specified roles (ORM version).
-    DEPRECATED: Use require_role with CurrentTokenUser for new code.
-    """
 
     def _check(user: CurrentUser) -> User:
         if user.role not in roles:

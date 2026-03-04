@@ -1,3 +1,11 @@
+# Just the endpoints to:
+#admin_users.py (admin user management)
+#auth.py (legacy monolith auth routes; disabled by default)
+#events.py (events + RSVP)
+#profiles.py (profile editing)
+#resumes.py (resume upload + status)
+
+
 from fastapi import APIRouter
 
 from app.api.v1.admin_users import router as admin_users_router

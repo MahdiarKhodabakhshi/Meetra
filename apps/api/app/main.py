@@ -13,13 +13,6 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 configure_logging()
 
 app = FastAPI(title="Meetra API")
-
-# Middleware ordering matters.
-# Starlette runs the LAST added middleware FIRST (outermost).
-# We want:
-# - RequestId + SecurityHeaders to apply even to CORS preflight + rate limit responses
-# - CORS to handle preflight properly
-# - RateLimit to be closest to the app (innermost)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
