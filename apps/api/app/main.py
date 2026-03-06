@@ -37,6 +37,11 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/version")
+def version():
+    return {"service": "core-api", "env": settings.env}
+
+
 app.include_router(v1_router, prefix="/v1")
 
 if settings.env == "local":
