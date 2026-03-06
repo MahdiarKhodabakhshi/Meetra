@@ -17,3 +17,6 @@ bcrypt>=4.2.0
 # Utils
 python-dotenv>=1.0.1
 httpx>=0.28.0
+
+# Observability
+prometheus-fastapi-instrumentator>=7.0.0

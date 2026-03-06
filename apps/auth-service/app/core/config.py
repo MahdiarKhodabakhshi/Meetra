@@ -75,10 +75,22 @@ class Settings:
         )
     )
 
+    # Security headers (baseline hardening)
+    security_headers_enabled: bool = _bool(os.getenv("SECURITY_HEADERS_ENABLED"), default=True)
+
     # Rate limiting
     rate_limit_enabled: bool = _bool(os.getenv("RATE_LIMIT_ENABLED"), default=True)
     rate_limit_login: str = os.getenv("RATE_LIMIT_LOGIN", "10/minute")
     rate_limit_register: str = os.getenv("RATE_LIMIT_REGISTER", "5/minute")
+    rate_limit_refresh: str = os.getenv("RATE_LIMIT_REFRESH", "30/minute")
+    rate_limit_default: str = os.getenv("RATE_LIMIT_DEFAULT", "60/minute")
+
+    rate_limit_exempt_paths: list[str] = field(
+        default_factory=lambda: _csv(
+            os.getenv("RATE_LIMIT_EXEMPT_PATHS"),
+            default=["/health", "/metrics", "/docs", "/openapi.json"],
+        )
+    )
 
     def __post_init__(self) -> None:
         # Load keys from files if paths provided
