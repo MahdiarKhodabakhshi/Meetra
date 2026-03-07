@@ -4,6 +4,8 @@ from pydantic import BaseModel, EmailStr, Field
 class RegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
+    # Compatibility only: identity does not own display/profile fields.
+    # Core service owns profile data (including name/display_name).
     name: str | None = None
 
 
@@ -26,6 +28,8 @@ class AuthTokensOut(BaseModel):
     expires_in: int
     user_id: str
     email: str
+    # Deprecated: auth-service does not store/return profile display fields.
+    # Kept temporarily for compatibility with older clients.
     name: str | None = None
     role: str
     status: str

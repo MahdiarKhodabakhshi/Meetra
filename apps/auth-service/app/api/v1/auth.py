@@ -29,13 +29,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 DBSession = Annotated[Session, Depends(get_db)]
 
 
-def _get_user_name_from_core(user_id: uuid.UUID) -> str | None:
-    """
-    Placeholder for fetching user name from core service.
-    In production, this would call core API or use event-driven sync.
-    For now, returns None (name is a profile field, not auth field).
-    """
-    return None
+_AUTH_NAME_DEPRECATION_MSG = (
+    "The auth-service does not own profile/display fields. "
+    "The `name` field in auth responses is deprecated and will be removed."
+)
 
 
 @router.post("/register", response_model=AuthTokensOut)
@@ -85,12 +82,14 @@ def register(payload: RegisterIn, db: DBSession, response: Response):
         path="/",
     )
 
+    response.headers.setdefault("Deprecation", "true")
+    response.headers.setdefault("Warning", f'299 - "{_AUTH_NAME_DEPRECATION_MSG}"')
     return AuthTokensOut(
         access_token=access_token,
         expires_in=settings.access_token_ttl_seconds,
         user_id=str(user.id),
         email=user.email,
-        name=payload.name,
+        name=None,
         role=user.role.value,
         status=user.status.value,
     )
@@ -138,12 +137,14 @@ def login(payload: LoginIn, db: DBSession, response: Response):
         path="/",
     )
 
+    response.headers.setdefault("Deprecation", "true")
+    response.headers.setdefault("Warning", f'299 - "{_AUTH_NAME_DEPRECATION_MSG}"')
     return AuthTokensOut(
         access_token=access_token,
         expires_in=settings.access_token_ttl_seconds,
         user_id=str(user.id),
         email=user.email,
-        name=_get_user_name_from_core(user.id),
+        name=None,
         role=user.role.value,
         status=user.status.value,
     )
@@ -222,12 +223,14 @@ def refresh(
         path="/",
     )
 
+    response.headers.setdefault("Deprecation", "true")
+    response.headers.setdefault("Warning", f'299 - "{_AUTH_NAME_DEPRECATION_MSG}"')
     return AuthTokensOut(
         access_token=access_token,
         expires_in=settings.access_token_ttl_seconds,
         user_id=str(user.id),
         email=user.email,
-        name=_get_user_name_from_core(user.id),
+        name=None,
         role=user.role.value,
         status=user.status.value,
     )
@@ -288,18 +291,35 @@ def me(request: Request, db: DBSession):
     )
 
 
-@router.get("/.well-known/jwks", response_model=PublicKeyOut)
-def get_public_key():
-    """
-    Expose public key for JWT verification by other services.
-    Core API can fetch this to verify tokens without shared secrets.
-    """
+@router.get("/public-key", response_model=PublicKeyOut)
+def public_key(response: Response):
+    """Expose PEM public key used to verify RS256 JWTs (not a JWKS)."""
     if not settings.jwt_public_key:
         raise HTTPException(status_code=503, detail="public key not configured")
 
+    response.headers.setdefault(
+        "Cache-Control",
+        # Safe default: public key changes are rare; keep caching conservative.
+        "public, max-age=300",
+    )
     return PublicKeyOut(
         algorithm=settings.jwt_algorithm,
         public_key=settings.jwt_public_key,
         issuer=settings.jwt_issuer,
         audience=settings.jwt_audience,
     )
+
+
+@router.get("/.well-known/jwks", response_model=PublicKeyOut, include_in_schema=False)
+def legacy_jwks_alias(response: Response):
+    """
+    Backward-compatible alias for older clients.
+
+    Note: This endpoint does NOT return a real JWKS (no kid/kty/n/e). Prefer `/public-key`.
+    """
+    response.headers.setdefault("Deprecation", "true")
+    response.headers.setdefault(
+        "Warning",
+        '299 - "This endpoint is not a real JWKS; use /v1/auth/public-key instead."',
+    )
+    return public_key(response)
