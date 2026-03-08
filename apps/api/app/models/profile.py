@@ -21,6 +21,9 @@ class Profile(Base, TimestampMixin):
         primary_key=True,
     )
 
+    # Core-owned display/profile field. Do not treat this as identity data.
+    display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     headline: Mapped[str | None] = mapped_column(String(255), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     skills: Mapped[list[str]] = mapped_column(

@@ -18,7 +18,7 @@ from app.api.v1.schemas.events import (
 )
 from app.auth.deps import CurrentUser, require_role
 from app.db import get_db
-from app.models import Event, User
+from app.models import Event, Profile, User
 from app.models.event import EventStatus
 from app.models.user import UserRole
 from app.services import events_service, rsvp_service
@@ -155,10 +155,17 @@ def join_event(payload: JoinEventIn, db: DBSession, user: CurrentUser):
             NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
         )
 
-    if payload.name and not user.name:
-        user.name = payload.name
-        db.add(user)
-        db.flush()
+    # Display/profile field (core-owned). Do not treat this as auth/identity data.
+    if payload.name:
+        profile = db.get(Profile, user.id)
+        if profile is None:
+            profile = Profile(user_id=user.id)
+            db.add(profile)
+            db.flush()
+        if not profile.display_name:
+            profile.display_name = payload.name.strip() or None
+            db.add(profile)
+            db.flush()
 
     try:
         _status, already_joined = rsvp_service.rsvp(db, user, event_id)

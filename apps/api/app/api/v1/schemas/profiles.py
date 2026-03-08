@@ -9,6 +9,7 @@ from pydantic import BaseModel, root_validator
 
 class ProfileOut(BaseModel):
     user_id: UUID
+    display_name: str | None = None
     headline: str | None = None
     summary: str | None = None
     skills: list[str]
@@ -23,6 +24,7 @@ class ProfileOut(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
+    display_name: str | None = None
     headline: str | None = None
     summary: str | None = None
     skills: list[str] | None = None
@@ -31,7 +33,7 @@ class ProfileUpdate(BaseModel):
 
     @root_validator(pre=True)
     def _require_at_least_one_field(cls, values: dict[str, Any]) -> dict[str, Any]:
-        editable_fields = ("headline", "summary", "skills", "titles", "industries")
+        editable_fields = ("display_name", "headline", "summary", "skills", "titles", "industries")
         if not any(field in values for field in editable_fields):
             raise ValueError("at least one editable field must be provided")
         return values
