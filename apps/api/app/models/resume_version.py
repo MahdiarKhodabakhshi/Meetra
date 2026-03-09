@@ -6,6 +6,7 @@ from enum import Enum
 
 import sqlalchemy as sa
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -53,4 +54,5 @@ class ResumeVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     parse_confidence: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)
     extracted_text_uri: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    parsed_profile_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     parsed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

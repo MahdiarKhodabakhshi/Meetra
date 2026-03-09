@@ -569,6 +569,10 @@ def parse_resume(resume_version_id: str) -> dict:
         if not resume:
             return {"resume_version_id": resume_version_id, "status": "missing"}
 
+        # Idempotency: if already parsed, do nothing.
+        if resume.status == ResumeVersionStatus.PARSED:
+            return {"resume_version_id": str(resume.id), "status": resume.status.value}
+
         user = db.get(User, resume.user_id)
         if user is None:
             _mark_failed(db, resume, "USER_NOT_FOUND", "owner user was not found")
@@ -614,6 +618,20 @@ def parse_resume(resume_version_id: str) -> dict:
         extracted_text_uri = _save_extracted_text(resume, extracted_text)
         if extracted_text_uri:
             resume.extracted_text_uri = extracted_text_uri
+
+        # Persist parsed suggestion payload for review/apply flows.
+        resume.parsed_profile_json = {
+            "headline": structured.headline,
+            "summary": structured.summary,
+            "skills": structured.skills,
+            "titles": structured.titles,
+            "industries": structured.industries,
+            "education_json": structured.education_json,
+            "experience_json": structured.experience_json,
+            "keywords": structured.keywords,
+            "confidence_json": structured.confidence_json,
+            "parse_confidence": structured.parse_confidence,
+        }
 
         profile = db.get(Profile, resume.user_id)
         if profile is None:
