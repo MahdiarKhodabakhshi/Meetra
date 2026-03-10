@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.api.errors import http_error_from_service
@@ -56,7 +56,10 @@ def list_events(
     _ensure_tzaware(starts_after, "starts_after")
     _ensure_tzaware(starts_before, "starts_before")
 
-    filters = [Event.status == EventStatus.PUBLISHED]
+    filters = [
+        Event.status == EventStatus.PUBLISHED,
+        Event.is_hidden.is_(False),
+    ]
     if starts_after:
         filters.append(Event.starts_at >= starts_after)
     if starts_before:
@@ -68,7 +71,10 @@ def list_events(
         db.scalars(
             select(Event)
             .where(*filters)
-            .order_by(Event.starts_at.asc().nulls_last())
+            .order_by(
+                desc(Event.is_featured),
+                Event.starts_at.asc().nulls_last(),
+            )
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
@@ -85,6 +91,12 @@ def get_event(event_id: str, db: DBSession, user: CurrentUser):
         raise http_error_from_service(
             NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
         )
+
+    if event.is_hidden:
+        if user.role != UserRole.ADMIN and user.id != event.organizer_id:
+            raise http_error_from_service(
+                NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
+            )
 
     if event.status == EventStatus.PUBLISHED:
         return event
@@ -149,11 +161,17 @@ class JoinEventIn(BaseModel):
 
 @router.post("/join", response_model=RSVPOut)
 def join_event(payload: JoinEventIn, db: DBSession, user: CurrentUser):
-    event_id = db.scalar(select(Event.id).where(Event.join_code == payload.join_code))
-    if not event_id:
+    event = db.scalar(select(Event).where(Event.join_code == payload.join_code.strip()))
+    if not event:
         raise http_error_from_service(
             NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
         )
+    if event.is_hidden:
+        if user.role != UserRole.ADMIN and user.id != event.organizer_id:
+            raise http_error_from_service(
+                NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
+            )
+    event_id = event.id
 
     # Display/profile field (core-owned). Do not treat this as auth/identity data.
     if payload.name:
