@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -35,6 +35,13 @@ class Event(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         ),
         sa.Index("ix_events_status_starts_at", "status", "starts_at"),
         sa.Index("ix_events_organizer_starts_at", "organizer_id", "starts_at"),
+        sa.Index(
+            "ix_events_catalog_list",
+            "status",
+            "is_hidden",
+            "is_featured",
+            "starts_at",
+        ),
     )
 
     title: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -59,3 +66,12 @@ class Event(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Human-friendly join code (you will use this in QR codes / links)
     join_code: Mapped[str] = mapped_column(String(32), unique=True, nullable=False, index=True)
+
+    # Moderation (core-owned; admin-only writes via /v1/admin/events/*)
+    is_hidden: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=sa.false()
+    )
+    is_featured: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=sa.false()
+    )
+    moderation_note: Mapped[str | None] = mapped_column(Text, nullable=True)

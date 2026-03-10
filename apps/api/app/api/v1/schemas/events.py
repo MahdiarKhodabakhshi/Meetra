@@ -111,6 +111,10 @@ class EventOut(TZAwareMixin, SchemaBase):
     created_at: datetime
     updated_at: datetime
     cancelled_at: datetime | None = None
+    join_code: str
+    is_hidden: bool = False
+    is_featured: bool = False
+    moderation_note: str | None = None
 
 
 class EventListOut(SchemaBase):
@@ -135,3 +139,11 @@ class RSVPOut(SchemaBase):
 class EventCreatedOut(SchemaBase):
     event_id: UUID
     join_code: str
+
+
+class AdminEventModerationIn(SchemaBase):
+    """Partial update; omit fields to leave unchanged."""
+
+    is_hidden: bool | None = None
+    is_featured: bool | None = None
+    moderation_note: str | None = Field(default=None, max_length=4000)
