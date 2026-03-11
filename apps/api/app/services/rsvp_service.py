@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Event, EventAttendee, User
 from app.models.event import EventStatus
+from app.models.user import UserRole
 from app.models.event_attendee import EventAttendeeStatus
 from app.services.error_codes import ErrorCode
 from app.services.exceptions import ConflictError, NotFoundError, ValidationError
@@ -48,6 +49,8 @@ def rsvp(db: Session, user: User, event_id: Any) -> tuple[EventAttendeeStatus, b
         if not event:
             raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
 
+        if event.is_hidden and user.role != UserRole.ADMIN and user.id != event.organizer_id:
+            raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
         if event.status == EventStatus.CANCELLED:
             raise ConflictError(ErrorCode.EVENT_CANCELLED.value, "event is cancelled")
         if event.status != EventStatus.PUBLISHED:
@@ -113,6 +116,8 @@ def rsvp(db: Session, user: User, event_id: Any) -> tuple[EventAttendeeStatus, b
 def cancel_rsvp(db: Session, user: User, event_id: Any) -> EventAttendeeStatus:
     event = db.scalar(select(Event).where(Event.id == event_id).with_for_update())
     if not event:
+        raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
+    if event.is_hidden and user.role != UserRole.ADMIN and user.id != event.organizer_id:
         raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
 
     attendee = db.scalar(
