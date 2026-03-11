@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.v1.schemas.events import EventCreate, EventUpdate
+from app.api.v1.schemas.events import AdminEventModerationIn, EventCreate, EventUpdate
 from app.models import Event, EventAttendee, User
 from app.models.event import EventStatus
 from app.models.event_attendee import EventAttendeeStatus
@@ -207,6 +207,46 @@ def publish_event(db: Session, organizer: User, event_id: Any) -> Event:
         )
 
     event.status = EventStatus.PUBLISHED
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+def moderate_event(
+    db: Session,
+    admin: User,
+    event_id: Any,
+    patch: AdminEventModerationIn,
+) -> Event:
+    """Admin-only: hide/feature events and optional internal note."""
+    if not _is_admin(admin):
+        raise PermissionDeniedError(
+            ErrorCode.FORBIDDEN.value, "only admins can moderate events"
+        )
+
+    data = patch.model_dump(exclude_unset=True)
+    if not data:
+        raise ValidationError(
+            ErrorCode.VALIDATION_ERROR.value,
+            "at least one of is_hidden, is_featured, moderation_note must be set",
+        )
+
+    event = db.get(Event, event_id)
+    if not event:
+        raise NotFoundError(ErrorCode.EVENT_NOT_FOUND.value, "event not found")
+
+    if "is_hidden" in data:
+        event.is_hidden = bool(data["is_hidden"])
+    if "is_featured" in data:
+        event.is_featured = bool(data["is_featured"])
+    if "moderation_note" in data:
+        note = data["moderation_note"]
+        if note is None or (isinstance(note, str) and not note.strip()):
+            event.moderation_note = None
+        else:
+            event.moderation_note = str(note).strip()
+
     db.add(event)
     db.commit()
     db.refresh(event)
