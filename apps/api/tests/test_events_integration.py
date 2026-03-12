@@ -15,6 +15,13 @@ from app.models.user import UserRole
 from tests.test_auth_rbac import login, register
 
 
+def _make_admin(client: TestClient, db_session, email: str) -> str:
+    register(client, email)
+    db_session.execute(update(User).where(User.email == email).values(role=UserRole.ADMIN))
+    db_session.commit()
+    return login(client, email).json()["access_token"]
+
+
 def _auth_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
@@ -117,6 +124,73 @@ def test_attendee_browsing_only_sees_published(client: TestClient, db_session):
     ids = {item["id"] for item in data["items"]}
     assert pub_id in ids
     assert draft_id not in ids
+
+
+def test_hidden_published_event_excluded_from_public_list(client: TestClient, db_session):
+    organizer_token = _make_organizer(client, db_session, "org_hidden@example.com")
+    attendee_token = _make_attendee(client, "att_hidden@example.com")
+    admin_token = _make_admin(client, db_session, "admin_hidden@example.com")
+
+    event_id = _create_event(
+        client,
+        organizer_token,
+        title="Will be hidden",
+    ).json()["event_id"]
+    client.post(f"/v1/events/{event_id}/publish", headers=_auth_headers(organizer_token))
+
+    hide = client.patch(
+        f"/v1/admin/events/{event_id}/moderation",
+        json={"is_hidden": True, "moderation_note": "spam"},
+        headers=_auth_headers(admin_token),
+    )
+    assert hide.status_code == 200
+    assert hide.json()["is_hidden"] is True
+
+    list_resp = client.get("/v1/events", headers=_auth_headers(attendee_token))
+    assert list_resp.status_code == 200
+    ids = {item["id"] for item in list_resp.json()["items"]}
+    assert event_id not in ids
+
+    # Organizer can still open; attendee cannot
+    org_get = client.get(f"/v1/events/{event_id}", headers=_auth_headers(organizer_token))
+    assert org_get.status_code == 200
+    att_get = client.get(f"/v1/events/{event_id}", headers=_auth_headers(attendee_token))
+    assert att_get.status_code == 404
+
+
+def test_featured_events_sort_before_others(client: TestClient, db_session):
+    organizer_token = _make_organizer(client, db_session, "org_feat@example.com")
+    attendee_token = _make_attendee(client, "att_feat@example.com")
+    admin_token = _make_admin(client, db_session, "admin_feat@example.com")
+
+    starts = datetime.now(timezone.utc) + timedelta(days=2)
+    early_id = _create_event(
+        client,
+        organizer_token,
+        title="Earlier start",
+        starts_at=starts.isoformat(),
+    ).json()["event_id"]
+    later_starts = starts + timedelta(days=1)
+    late_id = _create_event(
+        client,
+        organizer_token,
+        title="Later start",
+        starts_at=later_starts.isoformat(),
+    ).json()["event_id"]
+    client.post(f"/v1/events/{early_id}/publish", headers=_auth_headers(organizer_token))
+    client.post(f"/v1/events/{late_id}/publish", headers=_auth_headers(organizer_token))
+
+    client.patch(
+        f"/v1/admin/events/{late_id}/moderation",
+        json={"is_featured": True},
+        headers=_auth_headers(admin_token),
+    )
+
+    list_resp = client.get("/v1/events", headers=_auth_headers(attendee_token))
+    assert list_resp.status_code == 200
+    items = list_resp.json()["items"]
+    assert items[0]["id"] == late_id
+    assert items[1]["id"] == early_id
 
 
 def test_rsvp_uniqueness_same_user(client: TestClient, db_session):
