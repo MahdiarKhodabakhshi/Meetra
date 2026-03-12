@@ -38,6 +38,10 @@ export interface Event {
   created_at: string;
   updated_at: string;
   cancelled_at: string | null;
+  join_code: string;
+  is_hidden: boolean;
+  is_featured: boolean;
+  moderation_note: string | null;
 }
 
 export interface EventListResponse {
