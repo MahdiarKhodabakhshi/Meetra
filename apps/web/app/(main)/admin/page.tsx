@@ -8,10 +8,16 @@ import {
   revokeUserSessions,
   type UpdateUserIn,
 } from '@/lib/admin-api';
+import {
+  listAdminEvents,
+  patchEventModeration,
+  type EventModerationPatch,
+} from '@/lib/admin-events-api';
+import { getApiErrorMessage } from '@/lib/api-client';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
-import type { AdminUserOut } from '@/lib/types';
+import type { AdminUserOut, Event } from '@/lib/types';
 
 export default function AdminDashboardPage() {
   const { accessToken, user } = useAuth();
@@ -20,6 +26,10 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventQuery, setEventQuery] = useState('');
+  const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
 
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
@@ -39,6 +49,21 @@ export default function AdminDashboardPage() {
     load();
   }, [isAdmin, load]);
 
+  const loadEvents = useCallback(() => {
+    if (!accessToken) return;
+    setEventsLoading(true);
+    listAdminEvents(accessToken, { page_size: 100, q: eventQuery.trim() || undefined })
+      .then(({ data, error }) => {
+        if (!error && data) setEvents(data.items ?? []);
+      })
+      .finally(() => setEventsLoading(false));
+  }, [accessToken, eventQuery]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    loadEvents();
+  }, [isAdmin, loadEvents]);
+
   const handleUpdate = async (userId: string, payload: UpdateUserIn) => {
     if (!accessToken || userId === user?.user_id) return;
     setUpdatingId(userId);
@@ -54,6 +79,19 @@ export default function AdminDashboardPage() {
       return;
     }
     load();
+  };
+
+  const handleEventModeration = async (eventId: string, patch: EventModerationPatch) => {
+    if (!accessToken) return;
+    setUpdatingEventId(eventId);
+    setActionError(null);
+    const { error: err } = await patchEventModeration(accessToken, eventId, patch);
+    setUpdatingEventId(null);
+    if (err) {
+      setActionError(getApiErrorMessage(err));
+      return;
+    }
+    loadEvents();
   };
 
   const handleRevokeSessions = async (userId: string) => {
@@ -192,14 +230,88 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle>Events moderation</CardTitle>
           <CardDescription>
-            Event-level moderation (e.g. hide or feature events) can be added when the backend
-            exposes admin event endpoints.
+            Hide events from the public catalog (organizers can still open their own; join-by-code
+            is blocked for others). Feature to pin highlighted events to the top of the public
+            list.
           </CardDescription>
         </CardHeader>
-        <p className="text-sm text-[var(--muted)]">
-          For now, use the Events list and event detail; admins can open any event and organizers
-          can cancel their own.
-        </p>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <Input
+            placeholder="Search title"
+            value={eventQuery}
+            onChange={(e) => setEventQuery(e.target.value)}
+            className="max-w-xs"
+          />
+          <Button
+            variant="secondary"
+            onClick={loadEvents}
+            disabled={eventsLoading}
+          >
+            Search
+          </Button>
+        </div>
+        {eventsLoading && events.length === 0 ? (
+          <div className="flex justify-center py-8">
+            <span className="inline-block size-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-[var(--border)]">
+                  <th className="py-2 pr-4">Title</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Hidden</th>
+                  <th className="py-2 pr-4">Featured</th>
+                  <th className="py-2 pr-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((ev) => (
+                  <tr key={ev.id} className="border-b border-[var(--border)]/60">
+                    <td className="py-2 pr-4 max-w-[200px]">
+                      <span className="font-medium">{ev.title}</span>
+                      {ev.moderation_note && (
+                        <p className="text-xs text-[var(--muted)] mt-1 line-clamp-2">
+                          Note: {ev.moderation_note}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-2 pr-4">{ev.status}</td>
+                    <td className="py-2 pr-4">{ev.is_hidden ? 'yes' : 'no'}</td>
+                    <td className="py-2 pr-4">{ev.is_featured ? 'yes' : 'no'}</td>
+                    <td className="py-2 pr-4">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={updatingEventId === ev.id}
+                          onClick={() =>
+                            handleEventModeration(ev.id, { is_hidden: !ev.is_hidden })
+                          }
+                        >
+                          {ev.is_hidden ? 'Unhide' : 'Hide'}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={updatingEventId === ev.id}
+                          onClick={() =>
+                            handleEventModeration(ev.id, { is_featured: !ev.is_featured })
+                          }
+                        >
+                          {ev.is_featured ? 'Unfeature' : 'Feature'}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );
