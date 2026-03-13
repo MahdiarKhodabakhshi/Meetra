@@ -78,7 +78,14 @@ export default function EventsListPage() {
                 <Card className="hover:border-[var(--accent)] transition-colors cursor-pointer block">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h2 className="font-semibold text-[var(--foreground)]">{event.title}</h2>
+                      <h2 className="font-semibold text-[var(--foreground)] flex flex-wrap items-center gap-2">
+                        {event.title}
+                        {event.is_featured && (
+                          <span className="text-xs font-normal px-2 py-0.5 rounded bg-[var(--accent)]/20 text-[var(--accent)]">
+                            Featured
+                          </span>
+                        )}
+                      </h2>
                       <p className="text-sm text-[var(--muted)] mt-1">
                         {formatEventDate(event.starts_at)}
                         {event.location && ` · ${event.location}`}
