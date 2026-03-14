@@ -1,0 +1,14 @@
+.git
+.github
+.cursor
+**/.DS_Store
+**/.env
+**/.env.*
+**/node_modules
+**/.next
+**/dist
+**/build
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+data
