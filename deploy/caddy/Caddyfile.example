@@ -1,0 +1,22 @@
+# Production Caddyfile for Meetra.
+# Replace every "meetranow.com" below if your domain is different.
+# DNS must have A (or AAAA) for @, www, api, auth → this server's public IP.
+#
+# On the VM, this content belongs in /etc/caddy/Caddyfile (default for package installs).
+
+meetranow.com {
+	encode gzip zstd
+	reverse_proxy 127.0.0.1:3000
+}
+
+www.meetranow.com {
+	redir https://meetranow.com{uri}
+}
+
+api.meetranow.com {
+	reverse_proxy 127.0.0.1:9000
+}
+
+auth.meetranow.com {
+	reverse_proxy 127.0.0.1:8002
+}

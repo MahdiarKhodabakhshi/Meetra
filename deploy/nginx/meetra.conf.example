@@ -1,0 +1,63 @@
+# Copy to /etc/nginx/sites-available/meetra (adjust domain: replace meetranow.com).
+# Enable: sudo ln -sf /etc/nginx/sites-available/meetra /etc/nginx/sites-enabled/
+# Test: sudo nginx -t && sudo systemctl reload nginx
+#
+# TLS: use certbot (see deploy steps). Certbot will add ssl_certificate lines
+# and listen 443 ssl to these blocks, or use separate files per vhost.
+
+# --- Apex: Next.js ---
+server {
+	listen 80;
+	server_name meetranow.com;
+
+	location / {
+		proxy_pass http://127.0.0.1:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+	}
+}
+
+# --- www → apex ---
+server {
+	listen 80;
+	server_name www.meetranow.com;
+
+	location / {
+		return 301 https://meetranow.com$request_uri;
+	}
+}
+
+# --- Core API ---
+server {
+	listen 80;
+	server_name api.meetranow.com;
+
+	location / {
+		proxy_pass http://127.0.0.1:9000;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+
+# --- Auth service ---
+server {
+	listen 80;
+	server_name auth.meetranow.com;
+
+	location / {
+		proxy_pass http://127.0.0.1:8002;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
