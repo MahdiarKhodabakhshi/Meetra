@@ -22,16 +22,22 @@ RUN pip install --no-cache-dir \
     psycopg[binary]>=3.2.0 \
     alembic>=1.14.0 \
     python-dotenv>=1.0.1 \
+    prometheus-fastapi-instrumentator>=7.0.0 \
+    structlog \
+    argon2-cffi \
     PyJWT>=2.9.0 \
+    email-validator \
     cryptography>=43.0.0 \
     bcrypt>=4.2.0 \
     redis>=5.0.0 \
     celery>=5.3.0 \
     httpx>=0.28.0 \
-    python-multipart>=0.0.9
+    python-multipart>=0.0.9 \
+    pdfplumber \
+    python-docx
 
 # Copy application code
 COPY . .
 
 # Run with uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
