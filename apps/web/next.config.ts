@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@meetra/shared'],
+  output: 'standalone',
   turbopack: {
     // repo root (because apps/web is nested)
     root: path.join(__dirname, '../..'),
