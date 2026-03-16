@@ -6,6 +6,7 @@ from app.api.dev import router as dev_router
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.migrations import upgrade_head
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -25,6 +26,13 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+
+@app.on_event("startup")
+def _local_auto_migrate() -> None:
+    if settings.env != "local" or not settings.auto_migrate:
+        return
+    upgrade_head(database_url=settings.database_url)
 
 
 @app.get("/")
