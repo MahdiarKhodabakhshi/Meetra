@@ -20,8 +20,13 @@ def _csv(val: str | None, default: list[str]) -> list[str]:
 
 
 def _default_storage_root() -> str:
-    # apps/api/app/core/config.py -> repo root is parents[4]
-    repo_root = Path(__file__).resolve().parents[4]
+    # In the dev repo, `apps/api/app/core/config.py` -> repo root is often `parents[4]`.
+    # In the container, the code is copied into `/app`, so that fixed index may not exist.
+    p = Path(__file__).resolve()
+    parents = list(p.parents)
+
+    # Prefer the original layout when available; otherwise fall back to a nearby parent.
+    repo_root = parents[4] if len(parents) > 4 else (parents[2] if len(parents) > 2 else p.parent)
     return str(repo_root / "data")
 
 
@@ -84,6 +89,9 @@ class Settings:
         "postgresql+psycopg://meetra:meetra@localhost:5432/meetra",
     )
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+    # Local DX: optionally auto-run Alembic migrations on startup.
+    auto_migrate: bool = _bool(os.getenv("AUTO_MIGRATE"), default=False)
 
     # Storage
     storage_backend: str = os.getenv("MEETRA_STORAGE_BACKEND", "local").strip().lower()
