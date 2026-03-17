@@ -161,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       accessToken,
       isLoading,
-      isAuthenticated: !!user && user.status === 'active',
+      isAuthenticated: !!user && (user.status ?? '').toLowerCase() === 'active',
       login,
       register,
       logout,

@@ -81,7 +81,9 @@ export default function ProfilePage() {
   const [titles, setTitles] = useState<string[]>([]);
   const [industries, setIndustries] = useState<string[]>([]);
 
-  const [latestResume, setLatestResume] = useState<Awaited<ReturnType<typeof getLatestResume>>['data']>(null);
+  const [latestResume, setLatestResume] = useState<
+    Awaited<ReturnType<typeof getLatestResume>>['data'] | null
+  >(null);
   const [latestResumeLoading, setLatestResumeLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);

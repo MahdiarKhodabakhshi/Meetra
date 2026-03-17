@@ -8,7 +8,7 @@ import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 
 export default function RegisterPage() {
-  const { register, isLoading } = useAuth();
+  const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -71,7 +71,7 @@ export default function RegisterPage() {
             {error}
           </p>
         )}
-        <Button type="submit" fullWidth loading={loading} disabled={isLoading}>
+        <Button type="submit" fullWidth loading={loading}>
           Register
         </Button>
       </form>

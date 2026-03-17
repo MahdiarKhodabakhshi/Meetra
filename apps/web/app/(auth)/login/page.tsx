@@ -8,7 +8,7 @@ import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -60,7 +60,7 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-        <Button type="submit" fullWidth loading={loading} disabled={isLoading}>
+        <Button type="submit" fullWidth loading={loading}>
           Sign in
         </Button>
       </form>
