@@ -12,6 +12,7 @@ import {
   formatEventDate,
 } from '@/lib/events-api';
 import { publishEvent, cancelEvent } from '@/lib/organizer-api';
+import { getApiErrorMessage } from '@/lib/api-client';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
@@ -42,7 +43,7 @@ export default function EventDetailPage() {
     fetchEvent(accessToken, eventId)
       .then(({ data, error: err }) => {
         if (!mounted) return;
-        if (err) setError(err.detail?.message ?? 'Event not found');
+        if (err) setError(getApiErrorMessage(err) || 'Event not found');
         else setEvent(data ?? null);
         setLoading(false);
       })
@@ -63,11 +64,7 @@ export default function EventDetailPage() {
     const { data, error: err } = await rsvpEvent(accessToken, eventId);
     setActionLoading(false);
     if (err) {
-      const msg =
-        typeof err.detail === 'object' && err.detail?.message
-          ? err.detail.message
-          : String(err.detail);
-      setActionError(msg);
+      setActionError(getApiErrorMessage(err));
       return;
     }
     if (data) setRsvpStatus(data.status as 'joined' | 'already_joined');

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { fetchEvents } from '@/lib/events-api';
 import { formatEventDate } from '@/lib/events-api';
+import { getApiErrorMessage } from '@/lib/api-client';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
@@ -24,7 +25,7 @@ export default function EventsListPage() {
     fetchEvents(accessToken, { page, page_size: 20 })
       .then(({ data, error }) => {
         if (!mounted) return;
-        if (error) setError(error.detail?.message ?? 'Failed to load events');
+        if (error) setError(getApiErrorMessage(error) || 'Failed to load events');
         else if (data) {
           setEvents(data.items);
           setTotal(data.total);
