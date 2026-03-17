@@ -1,7 +1,7 @@
 import { API_BASE, API_PREFIX, AUTH_API_BASE } from './config';
 
 export type ApiError = {
-  detail: string | { code?: string; message?: string };
+  detail: unknown;
   statusCode: number;
 };
 
@@ -63,8 +63,14 @@ export async function apiRequest<T>(
 }
 
 export function getApiErrorMessage(error: ApiError): string {
-  if (typeof error.detail === 'string') return error.detail;
-  return error.detail?.message ?? error.detail?.code ?? 'Something went wrong';
+  const d = error.detail;
+  if (typeof d === 'string') return d;
+  if (d && typeof d === 'object') {
+    const maybe = d as { message?: unknown; code?: unknown };
+    if (typeof maybe.message === 'string' && maybe.message) return maybe.message;
+    if (typeof maybe.code === 'string' && maybe.code) return maybe.code;
+  }
+  return 'Something went wrong';
 }
 
 /** Multipart upload (e.g. file). Do not set Content-Type; browser sets it with boundary. */
