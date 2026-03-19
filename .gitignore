@@ -27,6 +27,8 @@ __pycache__/
 .DS_Store
 .idea
 .vscode
+.claude
+.meetra-run-pids
 # Keep Alembic revisions in git (required for deploys).
 # apps/api/migrations/versions/
 apps/api/pyproject.toml.bak.2026-01-20-193848
@@ -36,3 +38,6 @@ proposal-report.md
 # UI skill assets
 ui-ux-pro-max-skill/
 ui-ux-pro-max-skill-main.zip
+
+meetra_logo.png
+meetra_logo.svg
