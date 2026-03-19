@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import './globals.css';
 
@@ -13,15 +13,11 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const playfair = Playfair_Display({
-  variable: '--font-playfair',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-});
-
 export const metadata: Metadata = {
-  title: 'Meetra — Event-first networking',
-  description: 'Discover events, RSVP, and get matched with attendees.',
+  title: 'Meetra — Network with purpose, not by chance',
+  description:
+    'Meetra identifies the right people to connect with at events, explains why they matter to your goals, and gives you exactly what to say. Intelligent networking for meaningful connections.',
+  keywords: ['networking', 'events', 'professional connections', 'AI matching', 'conversation starters'],
 };
 
 export default function RootLayout({
@@ -31,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
