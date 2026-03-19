@@ -27,6 +27,13 @@ __pycache__/
 .DS_Store
 .idea
 .vscode
+.claude/
+
+# Local runtime / workspace artifacts
+.meetra-run-pids
+/meetra_logo.png
+/meetra_logo.svg
+
 # Keep Alembic revisions in git (required for deploys).
 # apps/api/migrations/versions/
 apps/api/pyproject.toml.bak.2026-01-20-193848
