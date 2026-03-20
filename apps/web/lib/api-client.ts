@@ -15,11 +15,14 @@ async function parseResponse<T>(res: Response): Promise<T> {
   }
 }
 
-function getBaseUrl(path: string): string {
-  if (path.startsWith('/auth/')) {
-    return AUTH_API_BASE;
-  }
-  return API_BASE;
+function buildUrl(path: string): string {
+  const isAuth = path.startsWith('/auth/');
+  const baseUrl = isAuth ? AUTH_API_BASE : API_BASE;
+  // In the browser the proxy bases already include the service prefix,
+  // so strip the leading /auth/ segment to avoid duplication.
+  const isBrowser = typeof window !== 'undefined';
+  const adjustedPath = isBrowser && isAuth ? path.replace(/^\/auth\//, '/') : path;
+  return `${baseUrl}${API_PREFIX}${adjustedPath}`;
 }
 
 export async function apiRequest<T>(
@@ -27,8 +30,7 @@ export async function apiRequest<T>(
   options: RequestInit & { token?: string | null } = {},
 ): Promise<{ data?: T; error?: ApiError }> {
   const { token, ...init } = options;
-  const baseUrl = getBaseUrl(path);
-  const url = `${baseUrl}${API_PREFIX}${path}`;
+  const url = buildUrl(path);
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(init.headers as Record<string, string>),
@@ -36,7 +38,10 @@ export async function apiRequest<T>(
   if (token) headers['Authorization'] = `Bearer ${token}`;
   let res: Response;
   try {
-    res = await fetch(url, { ...init, headers, credentials: 'include' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    res = await fetch(url, { ...init, headers, credentials: 'include', signal: controller.signal });
+    clearTimeout(timeout);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to fetch';
     return {
