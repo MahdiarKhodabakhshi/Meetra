@@ -27,10 +27,10 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
+    <Card className="bg-[var(--background)]">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Use your email and password to access your account.</CardDescription>
+        <CardTitle>Welcome back</CardTitle>
+        <CardDescription>Sign in to your Meetra account to continue networking.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -46,7 +46,7 @@ export default function LoginPage() {
         <Input
           type="password"
           label="Password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -60,14 +60,14 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-        <Button type="submit" fullWidth loading={loading}>
+        <Button type="submit" fullWidth loading={loading} className="btn-gradient">
           Sign in
         </Button>
       </form>
-      <p className="mt-4 text-center text-sm text-[var(--muted)]">
+      <p className="mt-6 text-center text-sm text-[var(--muted)]">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="link">
-          Register
+        <Link href="/register" className="link font-medium">
+          Create one free
         </Link>
       </p>
     </Card>
