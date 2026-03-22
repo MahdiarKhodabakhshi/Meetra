@@ -14,8 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Meetra — Event-first networking',
-  description: 'Discover events, RSVP, and get matched with attendees.',
+  title: 'Meetra — Network with purpose, not by chance',
+  description:
+    'Meetra identifies the right people to connect with at events, explains why they matter to your goals, and gives you exactly what to say. Intelligent networking for meaningful connections.',
+  keywords: ['networking', 'events', 'professional connections', 'AI matching', 'conversation starters'],
 };
 
 export default function RootLayout({
