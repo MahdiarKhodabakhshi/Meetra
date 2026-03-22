@@ -32,12 +32,22 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card>
+    <Card className="bg-[var(--background)]">
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
-        <CardDescription>Register with your email to join events and get matches.</CardDescription>
+        <CardTitle>Create your account</CardTitle>
+        <CardDescription>
+          Join Meetra to start networking with purpose. It's free to get started.
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          type="text"
+          label="Full name"
+          placeholder="Your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
+        />
         <Input
           type="email"
           label="Email"
@@ -46,14 +56,6 @@ export default function RegisterPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-        />
-        <Input
-          type="text"
-          label="Name (optional)"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
         />
         <Input
           type="password"
@@ -71,13 +73,13 @@ export default function RegisterPage() {
             {error}
           </p>
         )}
-        <Button type="submit" fullWidth loading={loading}>
-          Register
+        <Button type="submit" fullWidth loading={loading} className="btn-gradient">
+          Create account
         </Button>
       </form>
-      <p className="mt-4 text-center text-sm text-[var(--muted)]">
+      <p className="mt-6 text-center text-sm text-[var(--muted)]">
         Already have an account?{' '}
-        <Link href="/login" className="link">
+        <Link href="/login" className="link font-medium">
           Sign in
         </Link>
       </p>
