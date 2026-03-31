@@ -1,0 +1,10 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: meetra-managed-cert-v2
+  namespace: meetra
+spec:
+  domains:
+    - app.meetranow.com
+    - api.meetranow.com
+    - auth.meetranow.com

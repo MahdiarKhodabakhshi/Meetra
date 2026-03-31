@@ -1,0 +1,51 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: meetra-managed-cert
+  namespace: meetra
+spec:
+  domains:
+    - app.meetranow.com
+    - api.meetranow.com
+    - auth.meetranow.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: meetra-ingress
+  namespace: meetra
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "meetra-managed-cert"
+spec:
+  rules:
+    - host: app.meetranow.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: meetra-web
+                port:
+                  number: 80
+    - host: api.meetranow.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: meetra-api
+                port:
+                  number: 80
+    - host: auth.meetranow.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: meetra-auth
+                port:
+                  number: 80
