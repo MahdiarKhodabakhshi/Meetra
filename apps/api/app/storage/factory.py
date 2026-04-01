@@ -16,6 +16,14 @@ def create_storage(
     if selected_backend == "local":
         storage_root = Path(root or settings.storage_root)
         return LocalStorageAdapter(storage_root)
+    if selected_backend in {"gcs", "gs"}:
+        # Lazy import so local dev doesn't require google-cloud-storage installed.
+        from app.storage.gcs import GCSStorageAdapter
+
+        return GCSStorageAdapter(
+            bucket=settings.gcs_bucket,
+            prefix=settings.gcs_prefix,
+        )
     raise ValueError(f"unsupported storage backend: {selected_backend}")
 
 
