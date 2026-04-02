@@ -4,10 +4,12 @@ import hashlib
 import re
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -50,6 +52,19 @@ def _safe_filename(raw_filename: str | None) -> str:
         suffix = Path(candidate).suffix[:20]
         candidate = f"{stem}{suffix}"
     return candidate
+
+
+def _storage_key_from_uri(uri: str) -> str:
+    """Convert storage URI (local://, gs://) into adapter key."""
+    parsed = urlparse(uri)
+    if not parsed.scheme:
+        return uri.lstrip("/")
+    if parsed.scheme in {"gs", "gcs"}:
+        # gs://bucket/object -> key is "object"
+        return parsed.path.lstrip("/")
+    # local://resumes/... -> netloc is first path segment
+    key = f"{parsed.netloc}{parsed.path}"
+    return key.lstrip("/")
 
 
 def _progress_stage(status: ResumeVersionStatus) -> str:
@@ -120,6 +135,34 @@ def upload_resume(
         db.refresh(resume_version)
     except IntegrityError as exc:
         db.rollback()
+        # If the same resume was uploaded before, allow re-upload only when the
+        # backing object is missing (common with old local storage on Cloud Run).
+        existing = db.scalar(
+            select(ResumeVersion)
+            .where(ResumeVersion.user_id == user.id, ResumeVersion.sha256 == sha256)
+            .order_by(ResumeVersion.created_at.desc())
+            .limit(1)
+        )
+        if existing:
+            storage_key = _storage_key_from_uri(existing.file_uri)
+            try:
+                if not storage.exists(storage_key):
+                    stored_uri = storage.put_file(storage_key, buffered)
+                    if stored_uri != existing.file_uri:
+                        existing.file_uri = stored_uri
+                    existing.status = ResumeVersionStatus.UPLOADED
+                    existing.error_code = None
+                    existing.error_message = None
+                    db.add(existing)
+                    db.commit()
+                    db.refresh(existing)
+                    return existing
+            except HTTPException:
+                raise
+            except Exception:
+                # Fall through to the default duplicate error
+                pass
+
         buffered.close()
         raise HTTPException(
             status_code=409,
@@ -146,6 +189,57 @@ def upload_resume(
         ) from exc
     finally:
         buffered.close()
+
+    return resume_version
+
+
+@router.get("", response_model=list[ResumeVersionOut])
+def list_resumes(
+    user: CurrentUser,
+    db: Session = Depends(_db_session),
+):
+    rows = (
+        db.execute(
+            select(ResumeVersion)
+            .where(ResumeVersion.user_id == user.id)
+            .order_by(ResumeVersion.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
+    return rows
+
+
+@router.post("/{resume_version_id}/select-and-parse", response_model=ResumeVersionOut, status_code=202)
+def select_and_parse_resume(
+    user: CurrentUser,
+    resume_version_id: uuid.UUID,
+    db: Session = Depends(_db_session),
+):
+    resume_version = db.get(ResumeVersion, resume_version_id)
+    if not resume_version:
+        raise HTTPException(status_code=404, detail={"code": "RESUME_NOT_FOUND", "message": "not found"})
+    if user.role != UserRole.ADMIN and resume_version.user_id != user.id:
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "message": "forbidden"})
+
+    now = datetime.now(timezone.utc)
+    db.execute(
+        update(ResumeVersion)
+        .where(ResumeVersion.user_id == resume_version.user_id)
+        .values(is_selected=False, selected_at=None)
+    )
+    resume_version.is_selected = True
+    resume_version.selected_at = now
+    resume_version.status = ResumeVersionStatus.UPLOADED
+    resume_version.error_code = None
+    resume_version.error_message = None
+    resume_version.parsed_at = None
+    resume_version.extracted_text_uri = None
+    resume_version.parsed_profile_json = None
+    resume_version.parse_confidence = None
+    db.add(resume_version)
+    db.commit()
+    db.refresh(resume_version)
 
     try:
         celery_app.send_task("parse_resume", args=[str(resume_version.id)])
@@ -200,3 +294,43 @@ def get_resume_status(
         parsed_at=resume_version.parsed_at,
         progress_stage=_progress_stage(resume_version.status),
     )
+
+
+@router.post("/{resume_version_id}/reparse", response_model=ResumeVersionOut, status_code=202)
+def reparse_resume(
+    user: CurrentUser,
+    resume_version_id: uuid.UUID,
+    db: Session = Depends(_db_session),
+):
+    resume_version = db.get(ResumeVersion, resume_version_id)
+    if not resume_version:
+        raise HTTPException(status_code=404, detail={"code": "RESUME_NOT_FOUND", "message": "not found"})
+    if user.role != UserRole.ADMIN and resume_version.user_id != user.id:
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "message": "forbidden"})
+
+    # Re-parse keeps selection state as-is, but re-queues parsing.
+    resume_version.status = ResumeVersionStatus.UPLOADED
+    resume_version.error_code = None
+    resume_version.error_message = None
+    resume_version.parsed_at = None
+    resume_version.extracted_text_uri = None
+    resume_version.parsed_profile_json = None
+    resume_version.parse_confidence = None
+    db.add(resume_version)
+    db.commit()
+    db.refresh(resume_version)
+
+    try:
+        celery_app.send_task("parse_resume", args=[str(resume_version.id)])
+    except Exception as exc:
+        resume_version.status = ResumeVersionStatus.FAILED
+        resume_version.error_code = "QUEUE_ERROR"
+        resume_version.error_message = str(exc)
+        db.add(resume_version)
+        db.commit()
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "QUEUE_ERROR", "message": "failed to enqueue parse job"},
+        ) from exc
+
+    return resume_version
