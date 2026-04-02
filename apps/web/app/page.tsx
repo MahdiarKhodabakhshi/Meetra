@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValue, useInView, animate } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
 const fade = {
   hidden: { opacity: 0, y: 40 },
@@ -20,6 +21,32 @@ const cardFade = {
   hidden: { opacity: 0, y: 36 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
 };
+
+function CountUp({ target, suffix, duration = 2 }: { target: number; suffix: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: '-80px' });
+  const count = useMotionValue(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(count, target, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => {
+        if (ref.current) {
+          ref.current.textContent = `${Math.round(v).toLocaleString()}${suffix}`;
+        }
+      },
+    });
+    return controls.stop;
+  }, [inView, target, suffix, duration, count]);
+
+  return (
+    <span ref={ref} className="font-[family-name:var(--font-playfair)] text-4xl font-semibold tabular-nums">
+      0{suffix}
+    </span>
+  );
+}
 
 export default function LandingPage() {
   const { scrollY } = useScroll();
@@ -268,14 +295,13 @@ export default function LandingPage() {
         >
           <div className="flex flex-col sm:flex-row items-center justify-center gap-12 sm:gap-20">
             {[
-              { value: '500+', label: 'Events hosted' },
-              { value: '10k+', label: 'Connections made' },
-              { value: '98%', label: 'Would attend again' },
-            ].map((stat, i) => (
+              { target: 500, suffix: '+', label: 'Events hosted' },
+              { target: 10, suffix: 'k+', label: 'Connections made' },
+              { target: 98, suffix: '%', label: 'Would attend again' },
+            ].map((stat) => (
               <motion.div key={stat.label} variants={cardFade} className="text-center">
-                <p className="font-[family-name:var(--font-playfair)] text-4xl font-semibold">{stat.value}</p>
+                <CountUp target={stat.target} suffix={stat.suffix} duration={2.2} />
                 <p className="mt-1 text-sm text-[#64748B]">{stat.label}</p>
-                {i < 2 && <div className="hidden sm:block absolute" />}
               </motion.div>
             ))}
           </div>
