@@ -15,6 +15,8 @@ class ResumeVersionOut(BaseModel):
     original_filename: str
     mime_type: str
     sha256: str
+    is_selected: bool = False
+    selected_at: datetime | None = None
     status: ResumeVersionStatus
     error_code: str | None = None
     error_message: str | None = None
