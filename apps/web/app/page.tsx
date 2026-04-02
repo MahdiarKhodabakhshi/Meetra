@@ -152,134 +152,197 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* How it works */}
-      <section className="py-24 px-6 bg-[#F8FAFC]">
-        <div className="mx-auto max-w-5xl">
+      {/* How it works — connected timeline */}
+      <section className="py-32 px-6 bg-[#FAFBFC]">
+        <div className="mx-auto max-w-4xl">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
           >
-            <motion.h2
+            <motion.p
               custom={0}
               variants={fade}
-              className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl font-medium text-center tracking-tight"
+              className="text-center text-xs font-medium tracking-[0.2em] uppercase text-[#3B82F6]"
             >
-              Simple by design
-            </motion.h2>
-            <motion.p
+              How it works
+            </motion.p>
+            <motion.h2
               custom={1}
               variants={fade}
-              className="mt-3 text-center text-[#64748B] text-base max-w-lg mx-auto"
+              className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl font-medium text-center tracking-tight leading-[1.15]"
             >
-              Three steps to your next great connection.
-            </motion.p>
+              Three moments to
+              <br />
+              something meaningful
+            </motion.h2>
           </motion.div>
 
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '-60px' }}
             variants={stagger}
-            className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8"
+            className="mt-20 relative"
           >
+            {/* Vertical connector line */}
+            <div className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#E2E8F0] via-[#3B82F6]/20 to-[#E2E8F0]" />
+
             {[
-              { num: '1', title: 'Browse events', desc: 'Explore a curated selection of events that match your interests and schedule.' },
-              { num: '2', title: 'RSVP instantly', desc: 'Reserve your spot in seconds. No complicated forms, no friction.' },
-              { num: '3', title: 'Meet your match', desc: 'Get paired with like-minded attendees before the event even starts.' },
+              {
+                num: '01',
+                title: 'Discover',
+                desc: 'Browse a curated feed of events tailored to your world — from intimate dinners to industry mixers.',
+                align: 'right' as const,
+              },
+              {
+                num: '02',
+                title: 'Commit',
+                desc: 'One tap to RSVP. No forms, no friction. Your spot is secured and your profile is shared with the host.',
+                align: 'left' as const,
+              },
+              {
+                num: '03',
+                title: 'Connect',
+                desc: 'Before you even arrive, we surface the people you should meet — matched on shared interests and goals.',
+                align: 'right' as const,
+              },
             ].map((step) => (
-              <motion.div key={step.num} variants={cardFade} className="text-center">
-                <motion.div
-                  whileHover={{ scale: 1.08 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                  className="mx-auto w-12 h-12 rounded-full bg-[#EFF6FF] flex items-center justify-center"
-                >
-                  <span className="text-[#3B82F6] text-lg font-semibold">{step.num}</span>
-                </motion.div>
-                <h3 className="mt-5 text-base font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-[#64748B] leading-relaxed">{step.desc}</p>
+              <motion.div
+                key={step.num}
+                variants={cardFade}
+                className={`relative flex items-start gap-8 sm:gap-16 mb-20 last:mb-0 ${
+                  step.align === 'left' ? 'sm:flex-row-reverse sm:text-right' : ''
+                }`}
+              >
+                {/* Content side */}
+                <div className="flex-1">
+                  <span className="font-[family-name:var(--font-playfair)] text-6xl sm:text-8xl font-semibold text-[#F1F5F9] leading-none select-none">
+                    {step.num}
+                  </span>
+                  <h3 className="mt-3 text-xl sm:text-2xl font-semibold tracking-tight">{step.title}</h3>
+                  <p className="mt-3 text-[15px] text-[#64748B] leading-relaxed max-w-sm">
+                    {step.desc}
+                  </p>
+                </div>
+
+                {/* Center dot */}
+                <div className="hidden sm:flex flex-col items-center flex-shrink-0">
+                  <motion.div
+                    whileInView={{ scale: [0, 1.2, 1] }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-4 h-4 rounded-full bg-[#3B82F6] ring-4 ring-[#EFF6FF] shadow-sm shadow-blue-200"
+                  />
+                </div>
+
+                {/* Empty side for layout balance */}
+                <div className="hidden sm:block flex-1" />
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-24 px-6">
+      {/* Features — bento grid */}
+      <section className="py-32 px-6">
         <div className="mx-auto max-w-5xl">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
           >
-            <motion.h2
+            <motion.p
               custom={0}
               variants={fade}
-              className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl font-medium text-center tracking-tight"
+              className="text-center text-xs font-medium tracking-[0.2em] uppercase text-[#3B82F6]"
             >
-              Built for real connections
-            </motion.h2>
-            <motion.p
+              Why Meetra
+            </motion.p>
+            <motion.h2
               custom={1}
               variants={fade}
-              className="mt-3 text-center text-[#64748B] text-base max-w-lg mx-auto"
+              className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl font-medium text-center tracking-tight leading-[1.15]"
             >
-              Everything you need, nothing you don&apos;t.
-            </motion.p>
+              Designed around people,
+              <br />
+              not profiles
+            </motion.h2>
           </motion.div>
 
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '-60px' }}
             variants={stagger}
-            className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6"
+            className="mt-16 grid grid-cols-1 sm:grid-cols-6 gap-5"
           >
-            {[
-              {
-                title: 'Event-first approach',
-                desc: 'Every connection starts with a shared experience. Browse events that align with what you care about.',
-                icon: (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                ),
-              },
-              {
-                title: 'Smart matching',
-                desc: 'Our matching pairs you with attendees who share your background and interests before the event.',
-                icon: (
+            {/* Large card — spans 4 cols */}
+            <motion.div
+              variants={cardFade}
+              whileHover={{ y: -6, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+              className="sm:col-span-4 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#EFF6FF] to-[#F8FAFC] p-10 sm:p-12 border border-[#E2E8F0]/60 cursor-default"
+            >
+              <div className="absolute top-6 right-6 w-24 h-24 rounded-full bg-[#3B82F6]/5 blur-2xl group-hover:bg-[#3B82F6]/10 transition-colors duration-700" />
+              <svg className="w-8 h-8 text-[#3B82F6] mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              </svg>
+              <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">Event-first approach</h3>
+              <p className="mt-3 text-[15px] text-[#64748B] leading-relaxed max-w-md">
+                Every connection starts with a shared experience. We don&apos;t ask you to swipe — we ask you to show up.
+              </p>
+            </motion.div>
+
+            {/* Tall card — spans 2 cols */}
+            <motion.div
+              variants={cardFade}
+              whileHover={{ y: -6, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+              className="sm:col-span-2 sm:row-span-2 group relative overflow-hidden rounded-3xl bg-[#0F172A] text-white p-10 sm:p-8 flex flex-col justify-between cursor-default"
+            >
+              <div className="absolute bottom-0 right-0 w-32 h-32 rounded-full bg-[#3B82F6]/10 blur-3xl" />
+              <div>
+                <svg className="w-8 h-8 text-[#60A5FA] mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                ),
-              },
-              {
-                title: 'Safe and private',
-                desc: 'Your data stays yours. We only share what you choose, when you choose.',
-                icon: (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                ),
-              },
-              {
-                title: 'Effortless experience',
-                desc: 'From sign-up to showing up — everything is designed to feel easy and intuitive.',
-                icon: (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-                ),
-              },
-            ].map((feature) => (
-              <motion.div
-                key={feature.title}
-                variants={cardFade}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="rounded-2xl border border-[#F1F5F9] bg-white p-8 hover:shadow-md hover:shadow-slate-100 transition-shadow cursor-default"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    {feature.icon}
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-base font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm text-[#64748B] leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
+                </svg>
+                <h3 className="text-xl font-semibold tracking-tight">Smart matching</h3>
+                <p className="mt-3 text-[15px] text-[#94A3B8] leading-relaxed">
+                  We pair you with people who share your background, interests, and goals — before you walk through the door.
+                </p>
+              </div>
+              <p className="mt-8 text-xs text-[#475569] font-medium tracking-wide uppercase">
+                AI-powered · Context-aware
+              </p>
+            </motion.div>
+
+            {/* Bottom left — spans 2 cols */}
+            <motion.div
+              variants={cardFade}
+              whileHover={{ y: -6, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+              className="sm:col-span-2 group relative overflow-hidden rounded-3xl bg-white p-10 sm:p-8 border border-[#E2E8F0]/60 cursor-default"
+            >
+              <svg className="w-8 h-8 text-[#3B82F6] mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+              </svg>
+              <h3 className="text-lg font-semibold tracking-tight">Safe &amp; private</h3>
+              <p className="mt-2 text-sm text-[#64748B] leading-relaxed">
+                Your data stays yours. We only share what you choose, when you choose.
+              </p>
+            </motion.div>
+
+            {/* Bottom right — spans 2 cols */}
+            <motion.div
+              variants={cardFade}
+              whileHover={{ y: -6, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+              className="sm:col-span-2 group relative overflow-hidden rounded-3xl bg-white p-10 sm:p-8 border border-[#E2E8F0]/60 cursor-default"
+            >
+              <svg className="w-8 h-8 text-[#3B82F6] mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+              </svg>
+              <h3 className="text-lg font-semibold tracking-tight">Effortless</h3>
+              <p className="mt-2 text-sm text-[#64748B] leading-relaxed">
+                From sign-up to showing up — everything feels easy and intuitive. Zero learning curve.
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </section>
