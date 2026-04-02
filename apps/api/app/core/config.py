@@ -97,6 +97,8 @@ class Settings:
     storage_backend: str = os.getenv("MEETRA_STORAGE_BACKEND", "local").strip().lower()
     storage_root: str = os.getenv("MEETRA_STORAGE_ROOT", _default_storage_root())
     resume_max_upload_bytes: int = int(os.getenv("MEETRA_RESUME_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
+    gcs_bucket: str = os.getenv("MEETRA_GCS_BUCKET", "").strip()
+    gcs_prefix: str = os.getenv("MEETRA_GCS_PREFIX", "").strip().strip("/")
 
     # Celery
     celery_broker_url: str = os.getenv(
