@@ -65,11 +65,27 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* Hero */}
-      <section className="pt-40 pb-24 px-6">
+      <section className="relative pt-40 pb-24 px-6 min-h-[90vh] flex items-center overflow-hidden">
+        {/* Background image */}
+        <motion.div
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-0"
+        >
+          <img
+            src="/hero-bg.png"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          {/* Overlay for text readability */}
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px]" />
+        </motion.div>
+
         <motion.div
           initial="hidden"
           animate="visible"
-          className="mx-auto max-w-3xl text-center"
+          className="relative z-10 mx-auto max-w-3xl text-center"
         >
           <motion.h1
             custom={0}
