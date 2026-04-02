@@ -4,21 +4,21 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const fade = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 40 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay: i * 0.1, ease: [0.25, 0.4, 0.25, 1] },
+    transition: { duration: 0.9, delay: 0.3 + i * 0.2, ease: [0.16, 1, 0.3, 1] },
   }),
 };
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.12 } },
+  visible: { transition: { staggerChildren: 0.2, delayChildren: 0.15 } },
 };
 
 const cardFade = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.4, 0.25, 1] } },
+  hidden: { opacity: 0, y: 36 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
 };
 
 export default function LandingPage() {
@@ -35,17 +35,17 @@ export default function LandingPage() {
       >
         <div className="mx-auto max-w-6xl flex items-center justify-between px-6 h-16">
           <motion.span
-            initial={{ opacity: 0, x: -12 }}
+            initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight"
           >
             Meetra
           </motion.span>
           <motion.div
-            initial={{ opacity: 0, x: 12 }}
+            initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+            transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="flex items-center gap-3"
           >
             <Link
@@ -115,7 +115,7 @@ export default function LandingPage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '-100px' }}
           >
             <motion.h2
               custom={0}
@@ -136,7 +136,7 @@ export default function LandingPage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
+            viewport={{ once: true, margin: '-80px' }}
             variants={stagger}
             className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8"
           >
@@ -167,7 +167,7 @@ export default function LandingPage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '-100px' }}
           >
             <motion.h2
               custom={0}
@@ -188,7 +188,7 @@ export default function LandingPage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
+            viewport={{ once: true, margin: '-80px' }}
             variants={stagger}
             className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6"
           >
@@ -246,7 +246,7 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '-80px' }}
           variants={stagger}
           className="mx-auto max-w-4xl"
         >
@@ -271,7 +271,7 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '-100px' }}
           className="mx-auto max-w-2xl text-center"
         >
           <motion.h2
@@ -304,7 +304,7 @@ export default function LandingPage() {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.8 }}
         className="border-t border-[#F1F5F9] py-10 px-6"
       >
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
