@@ -75,7 +75,6 @@ export default function LandingPage() {
   const heroScale = useTransform(scrollY, [0, 600], [1, 1.08]);
   const heroOverlay = useTransform(scrollY, [0, 400], [0.4, 0.7]);
   const connectY = useTransform(scrollY, [2800, 4200], [40, -40]);
-  const ctaY = useTransform(scrollY, [4400, 5800], [50, -50]);
 
   const brands = ['Y Combinator', 'Stripe', 'Figma', 'Notion', 'Linear', 'Vercel'];
 
@@ -350,41 +349,36 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <motion.img
-            src="/cta-bg.jpg" alt=""
-            style={{ y: ctaY, scale: 1.12 }}
-            className="w-full h-full object-cover will-change-transform" loading="lazy"
-          />
-          <div className="absolute inset-0 bg-[#0F172A]/75 backdrop-blur-[2px]" />
-        </div>
+      <section className="relative py-32 sm:py-40 overflow-hidden bg-[#0F172A]">
+        {/* Radial glow */}
+        <div className="absolute inset-0 opacity-40" style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(59,130,246,0.15), transparent)' }} />
+
         <motion.div
           initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-40px' }}
-          className="relative z-10 text-center px-6 py-20"
+          className="relative z-10 text-center px-6 mx-auto max-w-3xl"
         >
           <motion.div
             custom={0} variants={fade}
-            className="inline-flex items-center gap-2 text-[11px] font-medium text-white/50 bg-white/[0.06] backdrop-blur-xl px-4 py-2 rounded-full border border-white/[0.08] mb-8"
+            className="inline-flex items-center gap-2 text-[11px] font-medium text-white/40 bg-white/[0.04] px-4 py-2 rounded-full border border-white/[0.06] mb-10"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Limited spots available
           </motion.div>
           <motion.h2
             custom={1} variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight leading-[1.08]"
+            className="font-[family-name:var(--font-playfair)] text-4xl sm:text-5xl lg:text-[3.75rem] font-medium text-white tracking-tight leading-[1.06]"
           >
             Your next conversation<br />is waiting
           </motion.h2>
-          <motion.p custom={2} variants={fade} className="mt-6 text-base text-white/40 max-w-md mx-auto leading-relaxed">
+          <motion.p custom={2} variants={fade} className="mt-6 text-base sm:text-lg text-white/30 max-w-md mx-auto leading-relaxed">
             Join a community built on real connections, not vanity metrics.
           </motion.p>
           <motion.div custom={3} variants={fade} className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/register" className="bg-white text-[#0F172A] px-8 py-4 rounded-full text-sm font-medium hover:bg-white/95 transition-all hover:shadow-2xl hover:shadow-white/15">
+            <Link href="/register" className="bg-white text-[#0F172A] px-8 py-4 rounded-full text-sm font-medium hover:bg-[#F1F5F9] transition-all hover:shadow-2xl hover:shadow-blue-500/10">
               Request an invite
             </Link>
-            <Link href="/login" className="text-sm text-white/35 hover:text-white/80 transition-colors py-4">
+            <Link href="/login" className="text-sm text-white/25 hover:text-white/60 transition-colors py-4">
               Sign in →
             </Link>
           </motion.div>
