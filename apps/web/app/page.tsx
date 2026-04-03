@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { motion, useScroll, useTransform, useMotionValue, useInView, animate } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import TiltCard from './components/TiltCard';
+
+const EventCardStack = dynamic(() => import('./components/EventCardStack'), { ssr: false });
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -86,6 +90,34 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Event Card Stack ── */}
+      <section className="py-24 sm:py-32 px-6 sm:px-10 bg-[#FAFBFC] overflow-hidden">
+        <div className="mx-auto max-w-7xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div custom={0} variants={fade}>
+              <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Live on Meetra</p>
+              <h2 className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight leading-[1.1]">
+                Events happening<br />right now
+              </h2>
+              <p className="mt-5 text-[15px] text-[#64748B] leading-[1.75] max-w-md">
+                From intimate founder dinners to 500-person summits — browse a curated feed that matches your world.
+              </p>
+              <Link href="/register"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-[#0F172A] group">
+                <span className="border-b border-[#0F172A] pb-px group-hover:border-[#3B82F6] group-hover:text-[#3B82F6] transition-colors">
+                  Browse events
+                </span>
+                <span className="text-[#94A3B8] group-hover:text-[#3B82F6] transition-colors">→</span>
+              </Link>
+            </motion.div>
+            <motion.div custom={1} variants={fade}>
+              <EventCardStack />
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── Intro + Stats ── */}
       <section className="py-24 sm:py-36 px-6 sm:px-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
@@ -115,9 +147,11 @@ export default function LandingPage() {
       <section className="px-6 sm:px-10 pb-24 sm:pb-36">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
           className="mx-auto max-w-7xl">
-          <motion.div variants={up} className="w-full aspect-video overflow-hidden rounded-2xl">
-            <img src="/discover.png" alt="Tech meetup venue" className="w-full h-full object-cover" />
-          </motion.div>
+          <TiltCard className="w-full">
+            <div className="w-full aspect-video overflow-hidden rounded-2xl">
+              <img src="/discover.png" alt="Tech meetup venue" className="w-full h-full object-cover" />
+            </div>
+          </TiltCard>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-16 items-start">
             <motion.div variants={up}>
               <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Discover</span>
@@ -138,7 +172,9 @@ export default function LandingPage() {
           variants={stagger}
           className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-16 items-center">
           <motion.div variants={up} className="w-full aspect-[3/2] overflow-hidden rounded-2xl">
-            <img src="/rsvp.png" alt="RSVP experience" className="w-full h-full object-cover" />
+            <TiltCard className="w-full h-full">
+              <img src="/rsvp.png" alt="RSVP experience" className="w-full h-full object-cover rounded-2xl" />
+            </TiltCard>
           </motion.div>
           <motion.div variants={up} className="lg:py-8">
             <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Commit</span>
@@ -176,7 +212,9 @@ export default function LandingPage() {
             </div>
           </motion.div>
           <motion.div variants={up} className="order-1 lg:order-2 w-full aspect-[3/2] overflow-hidden rounded-2xl">
-            <img src="/connect.png" alt="People connecting" className="w-full h-full object-cover" />
+            <TiltCard className="w-full h-full">
+              <img src="/connect.png" alt="People connecting" className="w-full h-full object-cover rounded-2xl" />
+            </TiltCard>
           </motion.div>
         </motion.div>
       </section>
