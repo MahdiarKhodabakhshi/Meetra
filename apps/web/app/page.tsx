@@ -123,18 +123,6 @@ export default function LandingPage() {
           />
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease }}
-          className="absolute top-28 left-6 sm:left-10 z-10"
-        >
-          <span className="inline-flex items-center gap-2 text-[11px] font-medium text-white/70 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Invite-only beta
-          </span>
-        </motion.div>
-
         <div className="relative z-10 w-full px-6 sm:px-10 pb-16 sm:pb-24">
           <motion.div initial="hidden" animate="visible" className="mx-auto max-w-7xl">
             <motion.h1
@@ -358,15 +346,8 @@ export default function LandingPage() {
           viewport={{ once: true, margin: '-40px' }}
           className="relative z-10 text-center px-6 mx-auto max-w-3xl"
         >
-          <motion.div
-            custom={0} variants={fade}
-            className="inline-flex items-center gap-2 text-[11px] font-medium text-white/40 bg-white/[0.04] px-4 py-2 rounded-full border border-white/[0.06] mb-10"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Limited spots available
-          </motion.div>
           <motion.h2
-            custom={1} variants={fade}
+            custom={0} variants={fade}
             className="font-[family-name:var(--font-playfair)] text-4xl sm:text-5xl lg:text-[3.75rem] font-medium text-white tracking-tight leading-[1.06]"
           >
             Your next conversation<br />is waiting
