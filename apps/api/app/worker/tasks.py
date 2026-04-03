@@ -216,6 +216,8 @@ def _storage_key_from_uri(uri: str) -> str:
     parsed = urlparse(uri)
     if not parsed.scheme:
         return uri.lstrip("/")
+    if parsed.scheme in {"gs", "gcs"}:
+        return parsed.path.lstrip("/")
     key = f"{parsed.netloc}{parsed.path}"
     return key.lstrip("/")
 
