@@ -8,12 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-# Note: This requires a requirements.txt - generate from conda env if needed
-COPY requirements.txt* ./
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
-
-# For conda-based setup, install common dependencies
+# Install Python dependencies (self-contained; no requirements.txt needed)
 RUN pip install --no-cache-dir \
     fastapi>=0.115.0 \
     uvicorn[standard]>=0.32.0 \
@@ -34,7 +29,8 @@ RUN pip install --no-cache-dir \
     httpx>=0.28.0 \
     python-multipart>=0.0.9 \
     pdfplumber \
-    python-docx
+    python-docx \
+    google-cloud-storage>=2.18.0
 
 # Copy application code
 COPY . .
