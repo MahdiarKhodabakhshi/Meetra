@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const ScrollVideo = dynamic(() => import('./components/ScrollVideo'), { ssr: false });
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -65,6 +68,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Scroll Video ── */}
+      <ScrollVideo />
 
       {/* ── CTA ── */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
