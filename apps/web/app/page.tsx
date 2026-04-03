@@ -39,7 +39,7 @@ export default function LandingPage() {
   const heroScale = useTransform(scrollY, [0, 800], [1, 1.08]);
 
   return (
-    <div className="min-h-screen bg-white text-[#0F172A]">
+    <div className="bg-white text-[#0F172A]">
 
       {/* ── Nav ── */}
       <motion.nav
@@ -61,12 +61,10 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative h-screen flex items-end overflow-hidden">
-        {/* Image is always visible — no opacity animation. Parallax zoom on scroll instead. */}
         <motion.div style={{ scale: heroScale }} className="absolute inset-0 will-change-transform">
           <img src="/hero-bg.png" alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/40 to-transparent" />
         </motion.div>
-
         <div className="relative z-10 w-full px-6 sm:px-10 pb-16 sm:pb-24">
           <motion.div initial="hidden" animate="visible" className="mx-auto max-w-7xl">
             <motion.h1 custom={0} variants={fade}
@@ -88,16 +86,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Intro strip ── */}
-      <section className="py-20 sm:py-28 px-6 sm:px-10">
+      {/* ── Intro + Stats ── */}
+      <section className="py-24 sm:py-36 px-6 sm:px-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
           className="mx-auto max-w-7xl">
           <motion.p custom={0} variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-4xl font-medium leading-[1.3] tracking-tight max-w-3xl">
+            className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-[2.5rem] font-medium leading-[1.35] tracking-tight max-w-3xl">
             Meetra is the networking platform for people who&apos;d rather have one great conversation than collect a hundred business cards.
           </motion.p>
           <motion.div custom={1} variants={fade}
-            className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6 pt-10 border-t border-[#F1F5F9]">
+            className="mt-16 pt-10 border-t border-[#F1F5F9] grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6">
             {[
               { target: 500, suffix: '+', label: 'Events hosted' },
               { target: 10, suffix: 'k+', label: 'Connections made' },
@@ -113,59 +111,72 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── Discover ── */}
-      <section className="relative">
-        <div className="w-full h-[75vh] sm:h-[85vh] overflow-hidden">
-          <img src="/discover.png" alt="Tech meetup venue" className="w-full h-full object-cover" />
-        </div>
-        <motion.div
-          initial="hidden" whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          className="mx-auto max-w-7xl px-6 sm:px-10 -mt-32 sm:-mt-44 relative z-10"
-        >
-          <motion.div variants={up}
-            className="bg-white rounded-2xl p-8 sm:p-12 shadow-xl shadow-black/5 max-w-lg border border-[#F1F5F9]">
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Discover</span>
-            <h2 className="mt-4 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl font-medium tracking-tight leading-[1.15]">
-              Events worth showing up for
-            </h2>
-            <p className="mt-4 text-[15px] text-[#64748B] leading-[1.7]">
+      {/* ── Discover — full-bleed, 16:9 image, text below ── */}
+      <section className="px-6 sm:px-10 pb-24 sm:pb-36">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
+          className="mx-auto max-w-7xl">
+          <motion.div variants={up} className="w-full aspect-video overflow-hidden rounded-2xl">
+            <img src="/discover.png" alt="Tech meetup venue" className="w-full h-full object-cover" />
+          </motion.div>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-16 items-start">
+            <motion.div variants={up}>
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Discover</span>
+              <h2 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl font-medium tracking-tight leading-[1.2]">
+                Events worth showing up for
+              </h2>
+            </motion.div>
+            <motion.p variants={up} className="text-[15px] text-[#64748B] leading-[1.75] sm:pt-8">
               From intimate founder dinners to 500-person industry summits — a curated feed that matches your world. No noise. Just the ones that matter.
+            </motion.p>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── RSVP — 3:2 image left, text right ── */}
+      <section className="px-6 sm:px-10 pb-24 sm:pb-36">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
+          variants={stagger}
+          className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-16 items-center">
+          <motion.div variants={up} className="w-full aspect-[3/2] overflow-hidden rounded-2xl">
+            <img src="/rsvp.png" alt="RSVP experience" className="w-full h-full object-cover" />
+          </motion.div>
+          <motion.div variants={up} className="lg:py-8">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Commit</span>
+            <h2 className="mt-4 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-[2rem] font-medium tracking-tight leading-[1.2]">
+              One tap.<br />You&apos;re in.
+            </h2>
+            <p className="mt-5 text-[15px] text-[#64748B] leading-[1.75]">
+              No forms. No friction. Tap RSVP and your spot is locked — confirmation, reminders, and your match list, handled.
             </p>
+            <Link href="/register" className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-[#0F172A] group">
+              <span className="border-b border-[#0F172A] pb-px group-hover:border-[#3B82F6] group-hover:text-[#3B82F6] transition-colors">Get started free</span>
+              <span className="text-[#94A3B8] group-hover:text-[#3B82F6] transition-colors">→</span>
+            </Link>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ── RSVP + Connect ── */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10">
+      {/* ── Connect — text left, 3:2 image right ── */}
+      <section className="px-6 sm:px-10 pb-24 sm:pb-36">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
           variants={stagger}
-          className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div variants={up} className="group overflow-hidden rounded-2xl bg-[#FAFBFC] border border-[#F1F5F9]">
-            <div className="overflow-hidden">
-              <img src="/rsvp.png" alt="RSVP experience"
-                className="w-full h-64 sm:h-80 object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" />
-            </div>
-            <div className="p-8 sm:p-10">
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Commit</span>
-              <h3 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl font-medium tracking-tight">One tap. You&apos;re in.</h3>
-              <p className="mt-3 text-[15px] text-[#64748B] leading-[1.7]">
-                No forms. No friction. Tap RSVP and your spot is locked — confirmation, reminders, and match list included.
-              </p>
+          className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-16 items-center">
+          <motion.div variants={up} className="order-2 lg:order-1 lg:py-8">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Connect</span>
+            <h2 className="mt-4 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-[2rem] font-medium tracking-tight leading-[1.2]">
+              Skip the<br />small talk
+            </h2>
+            <p className="mt-5 text-[15px] text-[#64748B] leading-[1.75]">
+              Before you arrive, we surface the people you should meet — matched on shared interests, background, and goals. Walk in knowing exactly who to find.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {['AI matching', 'Shared interests', 'Pre-event intros'].map((t) => (
+                <span key={t} className="text-[11px] font-medium text-[#475569] bg-[#F1F5F9] px-3 py-1.5 rounded-full">{t}</span>
+              ))}
             </div>
           </motion.div>
-          <motion.div variants={up} className="group overflow-hidden rounded-2xl bg-[#FAFBFC] border border-[#F1F5F9]">
-            <div className="overflow-hidden">
-              <img src="/connect.png" alt="People connecting"
-                className="w-full h-64 sm:h-80 object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" />
-            </div>
-            <div className="p-8 sm:p-10">
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6]">Connect</span>
-              <h3 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl font-medium tracking-tight">Skip the small talk</h3>
-              <p className="mt-3 text-[15px] text-[#64748B] leading-[1.7]">
-                Before you arrive, we surface the people you should meet — matched on shared interests, background, and goals.
-              </p>
-            </div>
+          <motion.div variants={up} className="order-1 lg:order-2 w-full aspect-[3/2] overflow-hidden rounded-2xl">
+            <img src="/connect.png" alt="People connecting" className="w-full h-full object-cover" />
           </motion.div>
         </motion.div>
       </section>
@@ -192,7 +203,7 @@ export default function LandingPage() {
       <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img src="/cta-bg.png" alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-[#0F172A]/75" />
+          <div className="absolute inset-0 bg-[#0F172A]/72" />
         </div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
           className="relative z-10 text-center px-6 py-20">
