@@ -42,6 +42,11 @@ export default function LandingPage() {
   const navBorder = useTransform(scrollY, [0, 80], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.05)']);
   const heroScale = useTransform(scrollY, [0, 600], [1, 1.06]);
 
+  // Parallax layers
+  const connectImgY = useTransform(scrollY, [400, 1400], [40, -40]);
+  const ctaImgY = useTransform(scrollY, [2000, 3600], [60, -60]);
+  const statsY = useTransform(scrollY, [600, 1200], [30, -30]);
+
   return (
     <div className="bg-white text-[#0F172A]">
 
@@ -115,21 +120,26 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-20 sm:py-24 px-6 sm:px-10 border-b border-[#F1F5F9]">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-          variants={stagger}
-          className="mx-auto max-w-7xl grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6">
-          {[
-            { target: 500, suffix: '+', label: 'Events hosted' },
-            { target: 10, suffix: 'k+', label: 'Connections made' },
-            { target: 98, suffix: '%', label: 'Return rate' },
-            { target: 40, suffix: '+', label: 'Cities' },
-          ].map((s) => (
-            <motion.div key={s.label} variants={up}>
-              <CountUp target={s.target} suffix={s.suffix} />
-              <p className="mt-2 text-sm text-[#94A3B8]">{s.label}</p>
-            </motion.div>
-          ))}
+      <section className="py-20 sm:py-24 px-6 sm:px-10 border-b border-[#F1F5F9] overflow-hidden">
+        <motion.div
+          style={{ y: statsY }}
+          className="will-change-transform"
+        >
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
+            variants={stagger}
+            className="mx-auto max-w-7xl grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6">
+            {[
+              { target: 500, suffix: '+', label: 'Events hosted' },
+              { target: 10, suffix: 'k+', label: 'Connections made' },
+              { target: 98, suffix: '%', label: 'Return rate' },
+              { target: 40, suffix: '+', label: 'Cities' },
+            ].map((s) => (
+              <motion.div key={s.label} variants={up}>
+                <CountUp target={s.target} suffix={s.suffix} />
+                <p className="mt-2 text-sm text-[#94A3B8]">{s.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
         </motion.div>
       </section>
 
@@ -162,15 +172,15 @@ export default function LandingPage() {
                 step: '02',
                 title: 'Commit',
                 desc: 'One tap to RSVP. Your spot is locked, reminders are set, and your match list is being built.',
-                color: '#F0FDF4',
-                accent: '#16A34A',
+                color: '#F8FAFC',
+                accent: '#3B82F6',
               },
               {
                 step: '03',
                 title: 'Connect',
                 desc: 'Walk in knowing exactly who to find. We surface your matches before you even arrive.',
-                color: '#FDF4FF',
-                accent: '#9333EA',
+                color: '#EFF6FF',
+                accent: '#2563EB',
               },
             ].map((item) => (
               <motion.div key={item.step} variants={up} className="relative px-0 sm:px-8 pb-12 sm:pb-0">
@@ -198,14 +208,19 @@ export default function LandingPage() {
       </section>
 
       {/* ── Connect image — single full-width ── */}
-      <section className="px-6 sm:px-10 pb-24 sm:pb-32">
+      <section className="px-6 sm:px-10 pb-24 sm:pb-32 overflow-hidden">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
           className="mx-auto max-w-7xl">
           <motion.div variants={up}>
             <TiltCard className="w-full">
               <div className="w-full aspect-video overflow-hidden rounded-2xl">
-                <img src="/connect.jpg" alt="People connecting at a tech event"
-                  className="w-full h-full object-cover" loading="lazy" />
+                <motion.img
+                  src="/connect.jpg"
+                  alt="People connecting at a tech event"
+                  style={{ y: connectImgY, scale: 1.08 }}
+                  className="w-full h-full object-cover will-change-transform"
+                  loading="lazy"
+                />
               </div>
             </TiltCard>
           </motion.div>
@@ -243,7 +258,13 @@ export default function LandingPage() {
       {/* ── CTA ── */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src="/cta-bg.jpg" alt="" className="w-full h-full object-cover" loading="lazy" />
+          <motion.img
+            src="/cta-bg.jpg"
+            alt=""
+            style={{ y: ctaImgY, scale: 1.12 }}
+            className="w-full h-full object-cover will-change-transform"
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-[#0F172A]/72" />
         </div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}

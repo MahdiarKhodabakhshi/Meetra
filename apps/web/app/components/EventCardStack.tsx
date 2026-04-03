@@ -21,8 +21,8 @@ const events = [
     time: '9:00 AM',
     attendees: 340,
     tag: 'Tech',
-    color: '#F0FDF4',
-    accent: '#16A34A',
+    color: '#F8FAFC',
+    accent: '#2563EB',
   },
   {
     title: 'Design Week',
@@ -31,8 +31,8 @@ const events = [
     time: '10:00 AM',
     attendees: 180,
     tag: 'Design',
-    color: '#FDF4FF',
-    accent: '#9333EA',
+    color: '#EFF6FF',
+    accent: '#3B82F6',
   },
   {
     title: 'VC Mixer',
@@ -41,8 +41,8 @@ const events = [
     time: '6:30 PM',
     attendees: 60,
     tag: 'Investing',
-    color: '#FFFBEB',
-    accent: '#D97706',
+    color: '#F1F5F9',
+    accent: '#1E40AF',
   },
 ];
 
