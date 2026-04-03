@@ -4,379 +4,293 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform, useMotionValue, useInView, animate } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
+/* ── animation presets ── */
+const ease = [0.16, 1, 0.3, 1] as const;
+
 const fade = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 32 },
   visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.9, delay: 0.3 + i * 0.2, ease: [0.16, 1, 0.3, 1] },
+    opacity: 1, y: 0,
+    transition: { duration: 1, delay: 0.35 + i * 0.18, ease },
   }),
 };
 
-const stagger = {
-  visible: { transition: { staggerChildren: 0.2, delayChildren: 0.15 } },
+const imgReveal = {
+  hidden: { opacity: 0, scale: 1.06 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 1.4, ease } },
 };
 
-const cardFade = {
-  hidden: { opacity: 0, y: 36 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-};
+const stagger = { visible: { transition: { staggerChildren: 0.18, delayChildren: 0.1 } } };
+const cardUp = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease } } };
 
-function CountUp({ target, suffix, duration = 2 }: { target: number; suffix: string; duration?: number }) {
+/* ── count-up component ── */
+function CountUp({ target, suffix, duration = 2.4 }: { target: number; suffix: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+  const inView = useInView(ref, { once: true, margin: '-60px' });
   const count = useMotionValue(0);
-
   useEffect(() => {
     if (!inView) return;
-    const controls = animate(count, target, {
-      duration,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => {
-        if (ref.current) {
-          ref.current.textContent = `${Math.round(v).toLocaleString()}${suffix}`;
-        }
-      },
+    const c = animate(count, target, {
+      duration, ease,
+      onUpdate: (v) => { if (ref.current) ref.current.textContent = `${Math.round(v).toLocaleString()}${suffix}`; },
     });
-    return controls.stop;
+    return c.stop;
   }, [inView, target, suffix, duration, count]);
-
-  return (
-    <span ref={ref} className="font-[family-name:var(--font-playfair)] text-4xl font-semibold tabular-nums">
-      0{suffix}
-    </span>
-  );
+  return <span ref={ref} className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl font-medium tabular-nums">0{suffix}</span>;
 }
 
+/* ── page ── */
 export default function LandingPage() {
   const { scrollY } = useScroll();
-  const navBg = useTransform(scrollY, [0, 80], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)']);
-  const navBorder = useTransform(scrollY, [0, 80], ['rgba(241,245,249,0)', 'rgba(241,245,249,1)']);
+  const navBg = useTransform(scrollY, [0, 100], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.92)']);
+  const navBorder = useTransform(scrollY, [0, 100], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.06)']);
 
   return (
-    <div className="min-h-screen bg-white text-[#0F172A]">
-      {/* Navigation */}
+    <div className="min-h-screen bg-white text-[#0F172A] overflow-x-hidden">
+
+      {/* ─── Nav ─── */}
       <motion.nav
         style={{ backgroundColor: navBg, borderBottomColor: navBorder }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b"
+        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
       >
-        <div className="mx-auto max-w-6xl flex items-center justify-between px-6 h-16">
+        <div className="mx-auto max-w-7xl flex items-center justify-between px-6 sm:px-10 h-[72px]">
           <motion.span
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease }}
+            className="font-[family-name:var(--font-playfair)] text-[22px] font-semibold tracking-[-0.01em]"
           >
             Meetra
           </motion.span>
           <motion.div
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center gap-3"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4, ease }}
+            className="flex items-center gap-2"
           >
-            <Link
-              href="/login"
-              className="text-sm text-[#64748B] hover:text-[#0F172A] transition-colors"
-            >
+            <Link href="/login" className="text-[13px] text-[#64748B] hover:text-[#0F172A] transition-colors px-4 py-2">
               Sign in
             </Link>
-            <Link
-              href="/register"
-              className="text-sm bg-[#0F172A] text-white px-4 py-2 rounded-full hover:bg-[#1E293B] transition-colors"
-            >
+            <Link href="/register" className="text-[13px] bg-[#0F172A] text-white px-5 py-2.5 rounded-full hover:bg-[#1E293B] transition-all hover:shadow-lg hover:shadow-black/10">
               Get started
             </Link>
           </motion.div>
         </div>
       </motion.nav>
 
-      {/* Hero */}
-      <section className="relative pt-40 pb-24 px-6 min-h-[90vh] flex items-center overflow-hidden">
-        {/* Background image */}
+      {/* ─── Hero ─── */}
+      <section className="relative min-h-screen flex items-end overflow-hidden">
         <motion.div
-          initial={{ scale: 1.1, opacity: 0 }}
+          initial={{ scale: 1.12, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 2, ease }}
           className="absolute inset-0 z-0"
         >
-          <img
-            src="/hero-bg.png"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          {/* Overlay for text readability */}
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px]" />
+          <img src="/hero-bg.png" alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-white/20" />
         </motion.div>
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="relative z-10 mx-auto max-w-3xl text-center"
-        >
-          <motion.h1
-            custom={0}
-            variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl md:text-7xl font-medium leading-[1.1] tracking-tight"
-          >
-            Where meaningful
-            <br />
-            connections begin
-          </motion.h1>
-          <motion.p
-            custom={1}
-            variants={fade}
-            className="mt-6 text-lg sm:text-xl text-[#64748B] max-w-xl mx-auto leading-relaxed"
-          >
-            Discover curated events, RSVP with ease, and meet the people who
-            matter — all in one place.
-          </motion.p>
-          <motion.div
-            custom={2}
-            variants={fade}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Link
-              href="/register"
-              className="w-full sm:w-auto text-center bg-[#3B82F6] text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[#2563EB] transition-colors hover:shadow-lg hover:shadow-blue-500/20"
-            >
-              Join Meetra — it&apos;s free
-            </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto text-center border border-[#E2E8F0] text-[#0F172A] px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[#F8FAFC] transition-colors"
-            >
-              I already have an account
-            </Link>
+        <div className="relative z-10 w-full pb-20 sm:pb-28 pt-40 px-6 sm:px-10">
+          <motion.div initial="hidden" animate="visible" className="mx-auto max-w-7xl">
+            <motion.p custom={0} variants={fade} className="text-xs font-medium tracking-[0.25em] uppercase text-[#3B82F6]">
+              Event-first networking
+            </motion.p>
+            <motion.h1 custom={1} variants={fade} className="mt-5 font-[family-name:var(--font-playfair)] text-[clamp(2.8rem,7vw,5.5rem)] font-medium leading-[1.05] tracking-[-0.02em] max-w-3xl">
+              Where the right
+              <br />people find you
+            </motion.h1>
+            <motion.p custom={2} variants={fade} className="mt-6 text-base sm:text-lg text-[#64748B] max-w-lg leading-relaxed">
+              Curated events. Intelligent matching. Conversations
+              that turn into opportunities.
+            </motion.p>
+            <motion.div custom={3} variants={fade} className="mt-10 flex flex-wrap items-center gap-4">
+              <Link href="/register" className="bg-[#3B82F6] text-white px-7 py-3.5 rounded-full text-sm font-medium hover:bg-[#2563EB] transition-all hover:shadow-xl hover:shadow-blue-500/25">
+                Join the community
+              </Link>
+              <Link href="/login" className="text-sm text-[#64748B] hover:text-[#0F172A] transition-colors px-2 py-3.5 border-b border-transparent hover:border-[#0F172A]">
+                I have an account →
+              </Link>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* RSVP — editorial image + text */}
-      <section className="py-0">
+      {/* ─── Stats ribbon ─── */}
+      <section className="py-16 sm:py-20 px-6 sm:px-10 border-b border-[#F1F5F9]">
         <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 lg:grid-cols-2 min-h-[80vh]"
-        >
-          {/* Image side */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, scale: 1.04 }, visible: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } } }}
-            className="relative overflow-hidden"
-          >
-            <img
-              src="/rsvp.png"
-              alt="RSVP experience"
-              className="w-full h-full object-cover min-h-[400px] lg:min-h-0"
-            />
-          </motion.div>
-
-          {/* Text side */}
-          <div className="flex items-center px-8 sm:px-16 lg:px-20 py-20 lg:py-0 bg-[#FAFBFC]">
-            <div className="max-w-md">
-              <motion.p
-                custom={0}
-                variants={fade}
-                className="text-xs font-medium tracking-[0.2em] uppercase text-[#3B82F6]"
-              >
-                Effortless
-              </motion.p>
-              <motion.h2
-                custom={1}
-                variants={fade}
-                className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight leading-[1.12]"
-              >
-                One tap.
-                <br />
-                You&apos;re in.
-              </motion.h2>
-              <motion.p
-                custom={2}
-                variants={fade}
-                className="mt-6 text-[15px] sm:text-base text-[#64748B] leading-relaxed"
-              >
-                No forms to fill. No hoops to jump through. See an event you love, tap RSVP, and your spot is secured. We handle the rest — confirmation, reminders, and your match list.
-              </motion.p>
-              <motion.div custom={3} variants={fade} className="mt-8 flex items-center gap-6">
-                <Link
-                  href="/register"
-                  className="text-sm font-medium text-[#0F172A] border-b border-[#0F172A] pb-0.5 hover:text-[#3B82F6] hover:border-[#3B82F6] transition-colors"
-                >
-                  Try it yourself
-                </Link>
-                <span className="text-xs text-[#94A3B8]">Free forever</span>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Connect — reversed editorial */}
-      <section className="py-0">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 lg:grid-cols-2 min-h-[80vh]"
-        >
-          {/* Text side */}
-          <div className="flex items-center px-8 sm:px-16 lg:px-20 py-20 lg:py-0 order-2 lg:order-1">
-            <div className="max-w-md">
-              <motion.p
-                custom={0}
-                variants={fade}
-                className="text-xs font-medium tracking-[0.2em] uppercase text-[#3B82F6]"
-              >
-                The moment
-              </motion.p>
-              <motion.h2
-                custom={1}
-                variants={fade}
-                className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight leading-[1.12]"
-              >
-                Conversations that
-                <br />
-                actually matter
-              </motion.h2>
-              <motion.p
-                custom={2}
-                variants={fade}
-                className="mt-6 text-[15px] sm:text-base text-[#64748B] leading-relaxed"
-              >
-                Before you even arrive, we surface the people you should meet — matched on shared interests, background, and goals. No awkward icebreakers. Just real conversations with the right people.
-              </motion.p>
-              <motion.div custom={3} variants={fade} className="mt-8 flex flex-wrap items-center gap-3">
-                {['Shared interests', 'Smart matching', 'Pre-event intros'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-3.5 py-1.5 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Image side */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, scale: 1.04 }, visible: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } } }}
-            className="relative overflow-hidden order-1 lg:order-2"
-          >
-            <img
-              src="/connect.png"
-              alt="People connecting at an event"
-              className="w-full h-full object-cover min-h-[400px] lg:min-h-0"
-            />
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Value props — minimal text strip */}
-      <section className="py-24 px-6 bg-[#FAFBFC]">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
           variants={stagger}
-          className="mx-auto max-w-5xl grid grid-cols-1 sm:grid-cols-3 gap-16 sm:gap-8"
+          className="mx-auto max-w-7xl grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6"
         >
           {[
-            { title: 'Event-first', desc: 'Every connection starts with a shared experience — not a profile.' },
-            { title: 'Private by default', desc: 'Your data stays yours. Share only what you want, when you want.' },
-            { title: 'Zero friction', desc: 'From sign-up to showing up, everything just works.' },
-          ].map((item) => (
-            <motion.div key={item.title} variants={cardFade}>
-              <h3 className="font-[family-name:var(--font-playfair)] text-xl font-medium tracking-tight">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm text-[#64748B] leading-relaxed">
-                {item.desc}
-              </p>
+            { target: 500, suffix: '+', label: 'Events hosted' },
+            { target: 10, suffix: 'k+', label: 'Connections made' },
+            { target: 98, suffix: '%', label: 'Return rate' },
+            { target: 40, suffix: '+', label: 'Cities' },
+          ].map((s) => (
+            <motion.div key={s.label} variants={cardUp}>
+              <CountUp target={s.target} suffix={s.suffix} />
+              <p className="mt-2 text-sm text-[#94A3B8]">{s.label}</p>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
-      {/* Social proof */}
-      <section className="py-20 px-6 bg-[#F8FAFC]">
+      {/* ─── Discover — full-bleed image left ─── */}
+      <section className="py-0">
         <motion.div
-          initial="hidden"
-          whileInView="visible"
+          initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
-          variants={stagger}
-          className="mx-auto max-w-4xl"
+          className="grid grid-cols-1 lg:grid-cols-2 min-h-[85vh]"
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-12 sm:gap-20">
-            {[
-              { target: 500, suffix: '+', label: 'Events hosted' },
-              { target: 10, suffix: 'k+', label: 'Connections made' },
-              { target: 98, suffix: '%', label: 'Would attend again' },
-            ].map((stat) => (
-              <motion.div key={stat.label} variants={cardFade} className="text-center">
-                <CountUp target={stat.target} suffix={stat.suffix} duration={2.2} />
-                <p className="mt-1 text-sm text-[#64748B]">{stat.label}</p>
+          <motion.div variants={imgReveal} className="relative overflow-hidden">
+            <img src="/discover.png" alt="Tech meetup venue" className="w-full h-full object-cover min-h-[420px] lg:min-h-0" />
+          </motion.div>
+
+          <div className="flex items-center px-8 sm:px-16 lg:px-20 xl:px-28 py-20 lg:py-0">
+            <div className="max-w-md">
+              <motion.span custom={0} variants={fade} className="inline-block text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6] bg-[#EFF6FF] px-3 py-1 rounded-full">
+                Discover
+              </motion.span>
+              <motion.h2 custom={1} variants={fade} className="mt-6 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-[2.75rem] font-medium tracking-tight leading-[1.12]">
+                Events worth
+                <br />showing up for
+              </motion.h2>
+              <motion.p custom={2} variants={fade} className="mt-5 text-[15px] text-[#64748B] leading-[1.7]">
+                From intimate founder dinners to 500-person industry summits — browse a curated feed of events that match your world. No noise, no spam. Just the ones that matter.
+              </motion.p>
+              <motion.div custom={3} variants={fade} className="mt-8 flex items-center gap-8">
+                <div>
+                  <p className="text-2xl font-semibold">12</p>
+                  <p className="text-xs text-[#94A3B8] mt-0.5">Event categories</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-2xl font-semibold">Weekly</p>
+                  <p className="text-xs text-[#94A3B8] mt-0.5">New events added</p>
+                </div>
               </motion.div>
-            ))}
+            </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-24 px-6">
+      {/* ─── RSVP — image right ─── */}
+      <section className="py-0">
         <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          className="mx-auto max-w-2xl text-center"
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="grid grid-cols-1 lg:grid-cols-2 min-h-[85vh]"
         >
-          <motion.h2
-            custom={0}
-            variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl font-medium tracking-tight"
-          >
-            Ready to meet someone new?
+          <div className="flex items-center px-8 sm:px-16 lg:px-20 xl:px-28 py-20 lg:py-0 order-2 lg:order-1 bg-[#FAFBFC]">
+            <div className="max-w-md">
+              <motion.span custom={0} variants={fade} className="inline-block text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6] bg-[#EFF6FF] px-3 py-1 rounded-full">
+                Commit
+              </motion.span>
+              <motion.h2 custom={1} variants={fade} className="mt-6 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-[2.75rem] font-medium tracking-tight leading-[1.12]">
+                One tap.
+                <br />You&apos;re in.
+              </motion.h2>
+              <motion.p custom={2} variants={fade} className="mt-5 text-[15px] text-[#64748B] leading-[1.7]">
+                No forms. No friction. See something you love, tap RSVP, and your spot is locked. We handle the confirmation, the reminders, and your match list — so you can just show up.
+              </motion.p>
+              <motion.div custom={3} variants={fade} className="mt-8">
+                <Link href="/register" className="text-sm font-medium text-[#0F172A] inline-flex items-center gap-2 group">
+                  <span className="border-b border-[#0F172A] pb-px group-hover:border-[#3B82F6] group-hover:text-[#3B82F6] transition-colors">
+                    Try it yourself
+                  </span>
+                  <span className="text-[#94A3B8] group-hover:text-[#3B82F6] transition-colors">→</span>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+
+          <motion.div variants={imgReveal} className="relative overflow-hidden order-1 lg:order-2">
+            <img src="/rsvp.png" alt="RSVP experience" className="w-full h-full object-cover min-h-[420px] lg:min-h-0" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ─── Connect — full-bleed image left ─── */}
+      <section className="py-0">
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="grid grid-cols-1 lg:grid-cols-2 min-h-[85vh]"
+        >
+          <motion.div variants={imgReveal} className="relative overflow-hidden">
+            <img src="/connect.png" alt="People connecting" className="w-full h-full object-cover min-h-[420px] lg:min-h-0" />
+          </motion.div>
+
+          <div className="flex items-center px-8 sm:px-16 lg:px-20 xl:px-28 py-20 lg:py-0">
+            <div className="max-w-md">
+              <motion.span custom={0} variants={fade} className="inline-block text-[11px] font-semibold tracking-[0.2em] uppercase text-[#3B82F6] bg-[#EFF6FF] px-3 py-1 rounded-full">
+                Connect
+              </motion.span>
+              <motion.h2 custom={1} variants={fade} className="mt-6 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-[2.75rem] font-medium tracking-tight leading-[1.12]">
+                Skip the small talk
+              </motion.h2>
+              <motion.p custom={2} variants={fade} className="mt-5 text-[15px] text-[#64748B] leading-[1.7]">
+                Before you arrive, we surface the people you should meet — matched on shared interests, background, and goals. Walk in knowing exactly who to find.
+              </motion.p>
+              <motion.div custom={3} variants={fade} className="mt-8 flex flex-wrap gap-2">
+                {['Shared interests', 'AI matching', 'Pre-event intros', 'Mutual connections'].map((t) => (
+                  <span key={t} className="text-[11px] font-medium text-[#475569] bg-[#F1F5F9] px-3 py-1.5 rounded-full">
+                    {t}
+                  </span>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ─── Bottom CTA — cinematic ─── */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+        <motion.div
+          initial={{ scale: 1.08, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 1.6, ease }}
+          className="absolute inset-0 z-0"
+        >
+          <img src="/cta-bg.png" alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0F172A]/70" />
+        </motion.div>
+
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="relative z-10 text-center px-6 py-24"
+        >
+          <motion.h2 custom={0} variants={fade} className="font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight leading-[1.1]">
+            Your next conversation
+            <br />is waiting
           </motion.h2>
-          <motion.p
-            custom={1}
-            variants={fade}
-            className="mt-4 text-[#64748B] text-base max-w-md mx-auto"
-          >
-            Join a community that values real conversations over small talk.
+          <motion.p custom={1} variants={fade} className="mt-5 text-base text-white/60 max-w-md mx-auto leading-relaxed">
+            Join a community that values real connections over small talk.
           </motion.p>
-          <motion.div custom={2} variants={fade} className="mt-8">
-            <Link
-              href="/register"
-              className="inline-block bg-[#3B82F6] text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[#2563EB] transition-colors hover:shadow-lg hover:shadow-blue-500/20"
-            >
+          <motion.div custom={2} variants={fade} className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link href="/register" className="bg-white text-[#0F172A] px-8 py-3.5 rounded-full text-sm font-medium hover:bg-white/90 transition-all hover:shadow-xl hover:shadow-white/10">
               Create your free account
+            </Link>
+            <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors px-4 py-3.5">
+              Sign in →
             </Link>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="border-t border-[#F1F5F9] py-10 px-6"
-      >
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-[family-name:var(--font-playfair)] text-sm font-medium">
-            Meetra
-          </span>
-          <p className="text-xs text-[#94A3B8]">
-            &copy; {new Date().getFullYear()} Meetra. All rights reserved.
-          </p>
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-[#F1F5F9] py-12 px-6 sm:px-10">
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="font-[family-name:var(--font-playfair)] text-sm font-medium">Meetra</span>
+          <p className="text-xs text-[#94A3B8]">&copy; {new Date().getFullYear()} Meetra. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs text-[#94A3B8]">
             <a href="#" className="hover:text-[#64748B] transition-colors">Privacy</a>
             <a href="#" className="hover:text-[#64748B] transition-colors">Terms</a>
           </div>
         </div>
-      </motion.footer>
+      </footer>
     </div>
   );
 }
