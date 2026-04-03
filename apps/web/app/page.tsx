@@ -1,63 +1,113 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useMotionValue, useInView, animate } from 'framer-motion';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useInView,
+  animate,
+  useMotionTemplate,
+} from 'framer-motion';
 import { useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import TiltCard from './components/TiltCard';
-
-const ScrollVideo = dynamic(() => import('./components/ScrollVideo'), { ssr: false });
+import EventCardStack from './components/EventCardStack';
+import WhyMeetra from './components/WhyMeetra';
+import ScrollVideo from './components/ScrollVideo';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 const fade = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 0.75, delay: 0.15 + i * 0.12, ease },
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, delay: 0.15 + i * 0.12, ease },
   }),
 };
-const stagger = { visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } } };
-const up = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease } } };
+const stagger = {
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+};
+const up = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease } },
+};
 
-function CountUp({ target, suffix, duration = 2.2 }: { target: number; suffix: string; duration?: number }) {
+function CountUp({
+  target,
+  suffix,
+  duration = 2.2,
+}: {
+  target: number;
+  suffix: string;
+  duration?: number;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
   const count = useMotionValue(0);
   useEffect(() => {
     if (!inView) return;
     const c = animate(count, target, {
-      duration, ease,
-      onUpdate: (v) => { if (ref.current) ref.current.textContent = `${Math.round(v).toLocaleString()}${suffix}`; },
+      duration,
+      ease,
+      onUpdate: (v) => {
+        if (ref.current)
+          ref.current.textContent = `${Math.round(v).toLocaleString()}${suffix}`;
+      },
     });
     return c.stop;
   }, [inView, target, suffix, duration, count]);
-  return <span ref={ref} className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl font-medium tabular-nums">0{suffix}</span>;
+  return (
+    <span
+      ref={ref}
+      className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl font-medium tabular-nums"
+    >
+      0{suffix}
+    </span>
+  );
 }
 
 export default function LandingPage() {
   const { scrollY } = useScroll();
-  const navBg = useTransform(scrollY, [0, 80], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']);
-  const navBorder = useTransform(scrollY, [0, 80], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.05)']);
-  const heroScale = useTransform(scrollY, [0, 600], [1, 1.06]);
+  const navBg = useTransform(scrollY, [0, 80], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.92)']);
+  const navBorder = useTransform(scrollY, [0, 80], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.04)']);
+  const heroScale = useTransform(scrollY, [0, 600], [1, 1.08]);
+  const heroOverlay = useTransform(scrollY, [0, 400], [0.4, 0.7]);
   const connectY = useTransform(scrollY, [2800, 4200], [40, -40]);
   const ctaY = useTransform(scrollY, [4400, 5800], [50, -50]);
+
+  const brands = ['Y Combinator', 'Stripe', 'Figma', 'Notion', 'Linear', 'Vercel'];
 
   return (
     <div className="bg-white text-[#0F172A]">
 
       {/* ── Nav ── */}
-      <motion.nav style={{ backgroundColor: navBg, borderBottomColor: navBorder }}
-        className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl border-b">
+      <motion.nav
+        style={{ backgroundColor: navBg, borderBottomColor: navBorder }}
+        className="fixed top-0 inset-x-0 z-50 backdrop-blur-2xl border-b"
+      >
         <div className="mx-auto max-w-7xl flex items-center justify-between px-6 sm:px-10 h-[72px]">
-          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1, ease }}
-            className="font-[family-name:var(--font-playfair)] text-[22px] font-semibold tracking-[-0.01em]">
+          <motion.span
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease }}
+            className="font-[family-name:var(--font-playfair)] text-[22px] font-semibold tracking-[-0.01em]"
+          >
             Meetra
           </motion.span>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2, ease }}
-            className="flex items-center gap-2">
-            <Link href="/login" className="text-[13px] text-[#64748B] hover:text-[#0F172A] transition-colors px-4 py-2">Sign in</Link>
-            <Link href="/register" className="text-[13px] bg-[#0F172A] text-white px-5 py-2.5 rounded-full hover:bg-[#1E293B] transition-all hover:shadow-lg hover:shadow-black/8">Get started</Link>
+          <motion.div
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease }}
+            className="flex items-center gap-2"
+          >
+            <Link href="/login" className="text-[13px] text-[#64748B] hover:text-[#0F172A] transition-colors px-4 py-2">
+              Sign in
+            </Link>
+            <Link href="/register" className="text-[13px] bg-[#0F172A] text-white px-5 py-2.5 rounded-full hover:bg-[#1E293B] transition-all hover:shadow-lg hover:shadow-black/8">
+              Get started
+            </Link>
           </motion.div>
         </div>
       </motion.nav>
@@ -66,24 +116,58 @@ export default function LandingPage() {
       <section className="relative h-screen flex items-end overflow-hidden">
         <motion.div style={{ scale: heroScale }} className="absolute inset-0 will-change-transform">
           <img src="/hero-bg.jpg" alt="" className="w-full h-full object-cover" fetchPriority="high" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/40 to-transparent" />
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              background: useMotionTemplate`linear-gradient(to top, rgba(15,23,42,${heroOverlay}), rgba(15,23,42,0.25), transparent)`,
+            }}
+          />
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6, ease }}
+          className="absolute top-28 left-6 sm:left-10 z-10"
+        >
+          <span className="inline-flex items-center gap-2 text-[11px] font-medium text-white/70 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Invite-only beta
+          </span>
+        </motion.div>
+
         <div className="relative z-10 w-full px-6 sm:px-10 pb-16 sm:pb-24">
           <motion.div initial="hidden" animate="visible" className="mx-auto max-w-7xl">
-            <motion.h1 custom={0} variants={fade}
-              className="font-[family-name:var(--font-playfair)] text-[clamp(2.6rem,6.5vw,5rem)] font-medium leading-[1.05] tracking-[-0.02em] text-white max-w-2xl">
-              Where the right{'\u00A0'}people find you
+            <motion.h1
+              custom={0} variants={fade}
+              className="font-[family-name:var(--font-playfair)] text-[clamp(2.6rem,6.5vw,5.5rem)] font-medium leading-[1.02] tracking-[-0.025em] text-white max-w-3xl"
+            >
+              Where the right{'\u00A0'}people find&nbsp;you
             </motion.h1>
-            <motion.p custom={1} variants={fade} className="mt-5 text-base sm:text-lg text-white/60 max-w-md leading-relaxed">
+            <motion.p custom={1} variants={fade} className="mt-6 text-base sm:text-lg text-white/50 max-w-md leading-relaxed">
               Curated events. Intelligent matching. Conversations that turn into opportunities.
             </motion.p>
-            <motion.div custom={2} variants={fade} className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/register" className="bg-white text-[#0F172A] px-7 py-3.5 rounded-full text-sm font-medium hover:bg-white/90 transition-all hover:shadow-xl hover:shadow-white/10">
-                Join the community
+            <motion.div custom={2} variants={fade} className="mt-10 flex flex-wrap items-center gap-4">
+              <Link href="/register" className="bg-white text-[#0F172A] px-8 py-4 rounded-full text-sm font-medium hover:bg-white/95 transition-all hover:shadow-2xl hover:shadow-white/15">
+                Request an invite
               </Link>
-              <Link href="/login" className="text-sm text-white/40 hover:text-white transition-colors py-3.5">
+              <Link href="/login" className="text-sm text-white/35 hover:text-white/80 transition-colors py-4">
                 I have an account →
               </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 1 }}
+              className="mt-16 flex items-center gap-3"
+            >
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center p-1.5"
+              >
+                <div className="w-1 h-1.5 rounded-full bg-white/40" />
+              </motion.div>
+              <span className="text-[11px] text-white/25 tracking-wider uppercase">Scroll to explore</span>
             </motion.div>
           </motion.div>
         </div>
@@ -92,16 +176,61 @@ export default function LandingPage() {
       {/* ── Scroll Video ── */}
       <ScrollVideo />
 
-      {/* ── Stats ── */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-          className="mx-auto max-w-7xl">
-          <motion.p custom={0} variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-[2.5rem] font-medium leading-[1.35] tracking-tight max-w-3xl">
-            One platform for people who&apos;d rather have one great conversation than collect a hundred business cards.
+      {/* ── Trusted By ── */}
+      <section className="py-24 sm:py-28 px-6 sm:px-10">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          className="mx-auto max-w-7xl text-center"
+        >
+          <motion.p custom={0} variants={fade} className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#94A3B8] mb-14">
+            Trusted by teams at
           </motion.p>
-          <motion.div custom={1} variants={fade}
-            className="mt-16 pt-10 border-t border-[#F1F5F9] grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6">
+          <motion.div
+            custom={1}
+            variants={fade}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-y-10 gap-x-8 items-center justify-items-center"
+          >
+            {brands.map((name, i) => (
+              <motion.span
+                key={name}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.06, ease }}
+                className="text-[15px] sm:text-base font-medium text-[#CBD5E1] hover:text-[#94A3B8] transition-colors duration-300 tracking-wide cursor-default select-none"
+              >
+                {name}
+              </motion.span>
+            ))}
+          </motion.div>
+          <motion.div custom={2} variants={fade} className="mt-14 mx-auto max-w-lg">
+            <div className="h-px bg-gradient-to-r from-transparent via-[#E2E8F0] to-transparent" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ── Stats ── */}
+      <section className="py-24 sm:py-28 px-6 sm:px-10">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          className="mx-auto max-w-7xl"
+        >
+          <motion.div custom={0} variants={fade} className="max-w-3xl">
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#3B82F6] mb-5">
+              By the numbers
+            </p>
+            <p className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl lg:text-[2.5rem] font-medium leading-[1.3] tracking-tight">
+              One platform for people who&apos;d rather have one great conversation than collect a hundred business cards.
+            </p>
+          </motion.div>
+          <motion.div
+            custom={1} variants={fade}
+            className="mt-14 pt-10 border-t border-[#F1F5F9] grid grid-cols-2 sm:grid-cols-4 gap-10 sm:gap-6"
+          >
             {[
               { target: 500, suffix: '+', label: 'Events hosted' },
               { target: 10, suffix: 'k+', label: 'Connections made' },
@@ -110,104 +239,112 @@ export default function LandingPage() {
             ].map((s) => (
               <div key={s.label}>
                 <CountUp target={s.target} suffix={s.suffix} />
-                <p className="mt-2 text-sm text-[#94A3B8]">{s.label}</p>
+                <p className="mt-3 text-sm text-[#94A3B8]">{s.label}</p>
               </div>
             ))}
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ── Connect — full-width parallax image ── */}
-      <section className="px-6 sm:px-10 pb-24 sm:pb-32 overflow-hidden">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
-          className="mx-auto max-w-7xl">
-          <motion.div variants={up}>
-            <TiltCard className="w-full">
-              <div className="w-full aspect-[16/9] overflow-hidden rounded-2xl">
-                <motion.img src="/connect.jpg" alt="People connecting at a tech event"
-                  style={{ y: connectY, scale: 1.1 }}
-                  className="w-full h-full object-cover will-change-transform" loading="lazy" />
-              </div>
-            </TiltCard>
-          </motion.div>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-16 items-start">
-            <motion.div variants={up}>
-              <h2 className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl font-medium tracking-tight leading-[1.2]">
-                Real conversations.<br />Real opportunities.
+      {/* ── Events Showcase ── */}
+      <section className="py-24 sm:py-28 px-6 sm:px-10 bg-[#FAFBFC]">
+        <div className="mx-auto max-w-7xl">
+          <motion.div
+            initial="hidden" whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12"
+          >
+            <motion.div custom={0} variants={fade}>
+              <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#3B82F6]">Upcoming</p>
+              <h2 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl font-medium tracking-tight leading-[1.15]">
+                Curated, not crowded
               </h2>
             </motion.div>
-            <motion.p variants={up} className="text-[15px] text-[#64748B] leading-[1.75] sm:pt-2">
-              Before you arrive, we surface the people you should meet — matched on shared interests, background, and goals. Walk in knowing exactly who to find.
+            <motion.p custom={1} variants={fade} className="text-[13px] text-[#94A3B8] sm:text-right max-w-xs">
+              Every event is hand-picked. Small groups, high signal.
             </motion.p>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── Three pillars ── */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 bg-[#0F172A]">
-        <div className="mx-auto max-w-7xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}>
-            <motion.p custom={0} variants={fade} className="text-xs font-semibold tracking-[0.25em] uppercase text-[#3B82F6]">
-              Why Meetra
-            </motion.p>
-            <motion.h2 custom={1} variants={fade}
-              className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl font-medium text-white tracking-tight leading-[1.15]">
-              Built different
-            </motion.h2>
           </motion.div>
-
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-            variants={stagger}
-            className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                num: '01',
-                title: 'Event-first',
-                desc: 'Every connection starts with a shared experience. We don\'t ask you to swipe — we ask you to show up.',
-              },
-              {
-                num: '02',
-                title: 'Private by default',
-                desc: 'Your data stays yours. Share only what you want, when you want, with who you want.',
-              },
-              {
-                num: '03',
-                title: 'Zero friction',
-                desc: 'From sign-up to showing up, every step is designed to feel effortless. One tap and you\'re in.',
-              },
-            ].map((item) => (
-              <motion.div key={item.num} variants={up}>
-                <TiltCard className="h-full">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 sm:p-10 h-full hover:bg-white/8 transition-colors duration-300">
-                    <span className="text-[#3B82F6] font-[family-name:var(--font-playfair)] text-4xl font-medium opacity-40">
-                      {item.num}
-                    </span>
-                    <h3 className="mt-4 text-lg font-semibold text-white tracking-tight">{item.title}</h3>
-                    <p className="mt-3 text-sm text-[#94A3B8] leading-relaxed">{item.desc}</p>
-                  </div>
-                </TiltCard>
-              </motion.div>
-            ))}
-          </motion.div>
+          <EventCardStack />
         </div>
       </section>
 
-      {/* ── Testimonial strip ── */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 border-b border-[#F1F5F9]">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-          className="mx-auto max-w-4xl text-center">
-          <motion.div custom={0} variants={fade}>
-            <svg className="mx-auto w-8 h-8 text-[#E2E8F0]" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
-            </svg>
+      {/* ── Connect ── */}
+      <section className="px-6 sm:px-10 py-24 sm:py-28 overflow-hidden">
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          className="mx-auto max-w-7xl"
+        >
+          <motion.div variants={up}>
+            <TiltCard className="w-full">
+              <div className="relative w-full aspect-[16/9] sm:aspect-[2.2/1] overflow-hidden rounded-2xl sm:rounded-3xl">
+                <motion.img
+                  src="/connect.jpg" alt="People connecting at a tech event"
+                  style={{ y: connectY, scale: 1.1 }}
+                  className="absolute inset-0 w-full h-full object-cover will-change-transform"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-[#0F172A]/30 to-transparent" />
+                <div className="relative z-10 h-full flex flex-col justify-end p-8 sm:p-12 lg:p-16">
+                  <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA] mb-4">
+                    The experience
+                  </p>
+                  <h2 className="font-[family-name:var(--font-playfair)] text-2xl sm:text-4xl lg:text-5xl font-medium text-white tracking-tight leading-[1.1] max-w-xl">
+                    Real conversations.{' '}
+                    <span className="text-white/50">Real opportunities.</span>
+                  </h2>
+                  <p className="mt-5 text-[14px] sm:text-[15px] text-white/45 leading-relaxed max-w-md">
+                    Before you arrive, we surface the people you should meet — matched on shared interests, background, and goals.
+                  </p>
+                </div>
+              </div>
+            </TiltCard>
           </motion.div>
-          <motion.p custom={1} variants={fade}
-            className="mt-6 font-[family-name:var(--font-playfair)] text-xl sm:text-2xl lg:text-3xl font-medium text-[#0F172A] tracking-tight leading-[1.35]">
-            I walked into an AI Summit knowing exactly who to talk to. Left with a co-founder and two advisors. Meetra changed how I network.
-          </motion.p>
-          <motion.div custom={2} variants={fade} className="mt-8">
-            <p className="text-sm font-medium text-[#0F172A]">Sarah K.</p>
-            <p className="text-xs text-[#94A3B8] mt-0.5">Product Lead · Stripe</p>
+        </motion.div>
+      </section>
+
+      {/* ── Why Meetra ── */}
+      <WhyMeetra />
+
+      {/* ── Testimonials ── */}
+      <section className="py-24 sm:py-28 px-6 sm:px-10">
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          className="mx-auto max-w-7xl"
+        >
+          <motion.div custom={0} variants={fade} className="text-center mb-16">
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#3B82F6]">Testimonials</p>
+            <h2 className="mt-4 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl font-medium tracking-tight">
+              In their words
+            </h2>
+          </motion.div>
+
+          <motion.div
+            variants={stagger} initial="hidden" whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-6"
+          >
+            {[
+              { quote: 'I walked into an AI Summit knowing exactly who to talk to. Left with a co-founder and two advisors.', name: 'Sarah K.', role: 'Product Lead · Stripe' },
+              { quote: 'Meetra replaced every networking app I had. The pre-event matching is genuinely magical.', name: 'James R.', role: 'Founding Engineer · Linear' },
+              { quote: 'The quality of people at Meetra events is unmatched. Every conversation felt intentional.', name: 'Priya M.', role: 'Partner · Sequoia' },
+            ].map((t) => (
+              <motion.div key={t.name} variants={up}>
+                <div className="group relative rounded-2xl border border-[#F1F5F9] bg-[#FAFBFC] p-8 h-full hover:border-[#E2E8F0] hover:shadow-lg hover:shadow-black/[0.03] transition-all duration-500">
+                  <svg className="w-7 h-7 text-[#E2E8F0] group-hover:text-[#CBD5E1] transition-colors mb-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
+                  </svg>
+                  <p className="font-[family-name:var(--font-playfair)] text-[17px] font-medium text-[#0F172A] leading-[1.5] tracking-tight">
+                    {t.quote}
+                  </p>
+                  <div className="mt-6 pt-5 border-t border-[#F1F5F9]">
+                    <p className="text-sm font-medium text-[#0F172A]">{t.name}</p>
+                    <p className="text-xs text-[#94A3B8] mt-0.5">{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </motion.div>
       </section>
@@ -215,37 +352,60 @@ export default function LandingPage() {
       {/* ── CTA ── */}
       <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <motion.img src="/cta-bg.jpg" alt=""
+          <motion.img
+            src="/cta-bg.jpg" alt=""
             style={{ y: ctaY, scale: 1.12 }}
-            className="w-full h-full object-cover will-change-transform" loading="lazy" />
-          <div className="absolute inset-0 bg-[#0F172A]/72" />
+            className="w-full h-full object-cover will-change-transform" loading="lazy"
+          />
+          <div className="absolute inset-0 bg-[#0F172A]/75 backdrop-blur-[2px]" />
         </div>
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-          className="relative z-10 text-center px-6 py-20">
-          <motion.h2 custom={0} variants={fade}
-            className="font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight leading-[1.1]">
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          className="relative z-10 text-center px-6 py-20"
+        >
+          <motion.div
+            custom={0} variants={fade}
+            className="inline-flex items-center gap-2 text-[11px] font-medium text-white/50 bg-white/[0.06] backdrop-blur-xl px-4 py-2 rounded-full border border-white/[0.08] mb-8"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Limited spots available
+          </motion.div>
+          <motion.h2
+            custom={1} variants={fade}
+            className="font-[family-name:var(--font-playfair)] text-3xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight leading-[1.08]"
+          >
             Your next conversation<br />is waiting
           </motion.h2>
-          <motion.p custom={1} variants={fade} className="mt-5 text-base text-white/50 max-w-md mx-auto">
-            Join a community built on real connections.
+          <motion.p custom={2} variants={fade} className="mt-6 text-base text-white/40 max-w-md mx-auto leading-relaxed">
+            Join a community built on real connections, not vanity metrics.
           </motion.p>
-          <motion.div custom={2} variants={fade} className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/register" className="bg-white text-[#0F172A] px-8 py-3.5 rounded-full text-sm font-medium hover:bg-white/90 transition-all hover:shadow-xl hover:shadow-white/10">
-              Create your free account
+          <motion.div custom={3} variants={fade} className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link href="/register" className="bg-white text-[#0F172A] px-8 py-4 rounded-full text-sm font-medium hover:bg-white/95 transition-all hover:shadow-2xl hover:shadow-white/15">
+              Request an invite
             </Link>
-            <Link href="/login" className="text-sm text-white/40 hover:text-white transition-colors py-3.5">Sign in →</Link>
+            <Link href="/login" className="text-sm text-white/35 hover:text-white/80 transition-colors py-4">
+              Sign in →
+            </Link>
           </motion.div>
         </motion.div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-[#F1F5F9] py-12 px-6 sm:px-10">
-        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-[family-name:var(--font-playfair)] text-sm font-medium">Meetra</span>
-          <p className="text-xs text-[#94A3B8]">&copy; {new Date().getFullYear()} Meetra. All rights reserved.</p>
-          <div className="flex items-center gap-6 text-xs text-[#94A3B8]">
-            <a href="#" className="hover:text-[#64748B] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#64748B] transition-colors">Terms</a>
+      <footer className="border-t border-[#F1F5F9] py-12 px-6 sm:px-10 bg-white">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <span className="font-[family-name:var(--font-playfair)] text-base font-semibold">Meetra</span>
+              <span className="text-[11px] text-[#CBD5E1]">·</span>
+              <span className="text-[11px] text-[#94A3B8]">Event-first networking</span>
+            </div>
+            <p className="text-xs text-[#94A3B8]">&copy; {new Date().getFullYear()} Meetra. All rights reserved.</p>
+            <div className="flex items-center gap-8 text-xs text-[#94A3B8]">
+              <a href="#" className="hover:text-[#64748B] transition-colors">Privacy</a>
+              <a href="#" className="hover:text-[#64748B] transition-colors">Terms</a>
+              <a href="#" className="hover:text-[#64748B] transition-colors">Contact</a>
+            </div>
           </div>
         </div>
       </footer>
