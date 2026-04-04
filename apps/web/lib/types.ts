@@ -78,6 +78,8 @@ export interface ResumeVersionOut {
   original_filename: string;
   mime_type: string;
   sha256: string;
+  is_selected?: boolean;
+  selected_at?: string | null;
   status: ResumeVersionStatus;
   error_code: string | null;
   error_message: string | null;
