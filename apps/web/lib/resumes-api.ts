@@ -51,6 +51,26 @@ export async function getLatestResume(
   return apiRequest<ResumeVersionOut>('/resumes/latest', { token });
 }
 
+export async function listResumes(
+  token: string | null,
+): Promise<{ data?: ResumeVersionOut[]; error?: { detail: unknown; statusCode: number } }> {
+  return apiRequest<ResumeVersionOut[]>('/resumes', { token });
+}
+
+export async function selectAndParseResume(
+  token: string | null,
+  resumeId: string,
+): Promise<{ data?: ResumeVersionOut; error?: { detail: unknown; statusCode: number } }> {
+  return apiRequest<ResumeVersionOut>(`/resumes/${resumeId}/select-and-parse`, { token, method: 'POST' });
+}
+
+export async function reparseResume(
+  token: string | null,
+  resumeId: string,
+): Promise<{ data?: ResumeVersionOut; error?: { detail: unknown; statusCode: number } }> {
+  return apiRequest<ResumeVersionOut>(`/resumes/${resumeId}/reparse`, { token, method: 'POST' });
+}
+
 export function pollResumeUntilDone(
   token: string | null,
   resumeId: string,
