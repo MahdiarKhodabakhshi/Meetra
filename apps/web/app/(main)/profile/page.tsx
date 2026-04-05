@@ -10,7 +10,10 @@ import {
   uploadResume,
   getResumeStatus,
   getLatestResume,
+  listResumes,
+  selectAndParseResume,
   pollResumeUntilDone,
+  reparseResume,
   isAllowedFile,
   resumeErrorCodeMessage,
   POLL_INTERVAL_MS,
@@ -85,6 +88,9 @@ export default function ProfilePage() {
     Awaited<ReturnType<typeof getLatestResume>>['data'] | null
   >(null);
   const [latestResumeLoading, setLatestResumeLoading] = useState(false);
+  const [resumes, setResumes] = useState<Awaited<ReturnType<typeof listResumes>>['data']>([]);
+  const [resumesLoading, setResumesLoading] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pollingStatus, setPollingStatus] = useState<ResumeStatusOut | null>(null);
@@ -118,12 +124,23 @@ export default function ProfilePage() {
     setLatestResume(data ?? null);
   }, [accessToken]);
 
+  const loadResumes = useCallback(async () => {
+    if (!accessToken) return;
+    setResumesLoading(true);
+    const { data } = await listResumes(accessToken);
+    setResumesLoading(false);
+    setResumes(data ?? []);
+    const selected = (data ?? []).find((r) => r.is_selected);
+    if (selected) setSelectedResumeId(selected.id);
+  }, [accessToken]);
+
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
 
   useEffect(() => {
     loadLatestResume();
+    loadResumes();
   }, [loadLatestResume]);
 
   const saveProfile = async () => {
@@ -190,39 +207,124 @@ export default function ProfilePage() {
         setUploadError('Upload did not return a resume.');
         return;
       }
-      setPollingStatus({
-        id: data.id,
-        status: data.status,
-        error_code: data.error_code,
-        error_message: data.error_message,
-        parsed_at: data.parsed_at,
-        progress_stage: data.status.toLowerCase(),
-      });
-      try {
-        const final = await pollResumeUntilDone(accessToken, data.id, (s) => {
-          setPollingStatus(s);
-        });
-        if (final.status === 'PARSED') {
-          setUploadError(null);
-          loadProfile();
-          loadLatestResume();
-        } else {
-          setUploadError(
-            resumeErrorCodeMessage(
-              final.error_code,
-              final.error_message || 'Processing failed.',
-            ),
-          );
-        }
-      } catch (e) {
-        setUploadError(e instanceof Error ? e.message : 'Status check failed.');
-      } finally {
-        setUploading(false);
-        setPollingStatus(null);
-      }
+      // Upload does not auto-parse. User selects a resume and then parses it.
+      setUploading(false);
+      setSelectedResumeId(data.id);
+      loadLatestResume();
+      loadResumes();
     },
-    [accessToken, uploading, loadProfile, loadLatestResume],
+    [accessToken, uploading, loadLatestResume, loadResumes],
   );
+
+  const handleParseSelected = useCallback(async () => {
+    if (!accessToken || uploading || !selectedResumeId) return;
+    setUploadError(null);
+    setUploading(true);
+    setPollingStatus(null);
+    const { data, error } = await selectAndParseResume(accessToken, selectedResumeId);
+    if (error) {
+      setUploading(false);
+      const code =
+        typeof error.detail === 'object' && error.detail && 'code' in error.detail
+          ? String((error.detail as { code?: string }).code)
+          : null;
+      setUploadError(
+        resumeErrorCodeMessage(
+          code,
+          getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }),
+        ),
+      );
+      return;
+    }
+    if (!data) {
+      setUploading(false);
+      setUploadError('Parse did not return a resume.');
+      return;
+    }
+    setPollingStatus({
+      id: data.id,
+      status: data.status,
+      error_code: data.error_code,
+      error_message: data.error_message,
+      parsed_at: data.parsed_at,
+      progress_stage: data.status.toLowerCase(),
+    });
+    try {
+      const final = await pollResumeUntilDone(accessToken, data.id, (s) => {
+        setPollingStatus(s);
+      });
+      if (final.status === 'PARSED') {
+        setUploadError(null);
+        loadProfile();
+        loadLatestResume();
+        loadResumes();
+      } else {
+        setUploadError(
+          resumeErrorCodeMessage(final.error_code, final.error_message || 'Processing failed.'),
+        );
+      }
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Status check failed.');
+    } finally {
+      setUploading(false);
+      setPollingStatus(null);
+    }
+  }, [accessToken, loadLatestResume, loadProfile, loadResumes, selectedResumeId, uploading]);
+
+  const handleReparseLatest = useCallback(async () => {
+    if (!accessToken || uploading || !latestResume) return;
+    setUploadError(null);
+    setUploading(true);
+    setPollingStatus(null);
+    const { data, error } = await reparseResume(accessToken, latestResume.id);
+    if (error) {
+      setUploading(false);
+      const code =
+        typeof error.detail === 'object' && error.detail && 'code' in error.detail
+          ? String((error.detail as { code?: string }).code)
+          : null;
+      setUploadError(
+        resumeErrorCodeMessage(
+          code,
+          getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }),
+        ),
+      );
+      return;
+    }
+    if (!data) {
+      setUploading(false);
+      setUploadError('Re-parse did not return a resume.');
+      return;
+    }
+    const resume = data as NonNullable<typeof latestResume>;
+    setPollingStatus({
+      id: resume.id,
+      status: resume.status,
+      error_code: resume.error_code,
+      error_message: resume.error_message,
+      parsed_at: resume.parsed_at,
+      progress_stage: resume.status.toLowerCase(),
+    });
+    try {
+      const final = await pollResumeUntilDone(accessToken, resume.id, (s) => {
+        setPollingStatus(s);
+      });
+      if (final.status === 'PARSED') {
+        setUploadError(null);
+        loadProfile();
+        loadLatestResume();
+      } else {
+        setUploadError(
+          resumeErrorCodeMessage(final.error_code, final.error_message || 'Processing failed.'),
+        );
+      }
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Status check failed.');
+    } finally {
+      setUploading(false);
+      setPollingStatus(null);
+    }
+  }, [accessToken, latestResume, loadLatestResume, loadProfile, uploading]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -256,9 +358,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>Resume</CardTitle>
           <CardDescription>
-            Upload a PDF or DOCX (max 10 MB). We scan for security, extract text, and parse your
-            profile. You can re-upload anytime; your last successful parse stays active if a new one
-            fails.
+            Upload multiple resumes. Select exactly one resume to parse and use for your profile.
           </CardDescription>
         </CardHeader>
         <div className="space-y-4">
@@ -336,10 +436,47 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <p className="text-xs text-[var(--muted)]">
-            Pipeline: Upload → Security scan → Text extraction → Field extraction. Polling every{' '}
-            {POLL_INTERVAL_MS / 1000}s until done.
-          </p>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-[var(--muted)]">Select a resume to parse:</p>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleParseSelected}
+                disabled={!selectedResumeId || uploading}
+              >
+                Parse selected
+              </Button>
+            </div>
+            {resumesLoading ? (
+              <p className="text-sm text-[var(--muted)]">Loading resumes…</p>
+            ) : resumes && resumes.length > 0 ? (
+              <div className="space-y-2">
+                {resumes.map((r) => (
+                  <label key={r.id} className="flex items-start gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="selected-resume"
+                      checked={selectedResumeId === r.id}
+                      onChange={() => setSelectedResumeId(r.id)}
+                    />
+                    <span>
+                      <span className="font-medium">{r.original_filename}</span>
+                      <span className="text-[var(--muted)]">
+                        {` · ${RESUME_STATUS_STEPS[r.status]} · uploaded ${new Date(r.created_at).toLocaleString()}`}
+                        {r.is_selected ? ' · selected' : ''}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">No resumes uploaded yet.</p>
+            )}
+            <p className="text-xs text-[var(--muted)]">
+              Parsing polls every {POLL_INTERVAL_MS / 1000}s until done.
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -383,9 +520,23 @@ export default function ProfilePage() {
               {latestResume.parsed_at &&
                 ` · Parsed ${new Date(latestResume.parsed_at).toLocaleString()}`}
             </p>
-            <Button variant="secondary" size="sm" onClick={() => document.getElementById('resume-upload')?.click()}>
-              Re-upload & re-parse
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => document.getElementById('resume-upload')?.click()}
+              >
+                Upload a new file
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleReparseLatest}
+                disabled={!latestResume || uploading}
+              >
+                Re-parse latest
+              </Button>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-[var(--muted)]">No resume uploaded yet.</p>
