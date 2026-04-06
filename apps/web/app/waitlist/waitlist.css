@@ -1,0 +1,120 @@
+/* Waitlist page design system — scoped under .wl-root */
+
+.wl-root {
+  --wl-bg: #0B0F1A;
+  --wl-surface: #121828;
+  --wl-surface-border: rgba(255, 255, 255, 0.06);
+  --wl-text: #F1F5F9;
+  --wl-text-muted: #94A3B8;
+  --wl-gradient-from: #4F46E5;
+  --wl-gradient-to: #7C3AED;
+  --wl-accent: #8B5CF6;
+  --wl-success: #22C55E;
+  --wl-error: #EF4444;
+
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background-color: var(--wl-bg);
+  color: var(--wl-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Gradient text utility */
+.wl-gradient-text {
+  background: linear-gradient(135deg, var(--wl-gradient-from), var(--wl-gradient-to));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Primary gradient button */
+.wl-btn-gradient {
+  background: linear-gradient(135deg, var(--wl-gradient-from), var(--wl-gradient-to));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 24px rgba(79, 70, 229, 0.3);
+}
+
+.wl-btn-gradient:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 40px rgba(79, 70, 229, 0.5);
+}
+
+.wl-btn-gradient:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 0 24px rgba(79, 70, 229, 0.2);
+}
+
+/* Glass card */
+.wl-glass-card {
+  background: var(--wl-surface);
+  border: 1px solid var(--wl-surface-border);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+}
+
+/* Section micro-label */
+.wl-micro-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wl-accent);
+}
+
+/* Section headline */
+.wl-section-headline {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--wl-text);
+}
+
+/* Form input */
+.wl-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--wl-surface-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--wl-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.wl-input::placeholder {
+  color: var(--wl-text-muted);
+  opacity: 0.6;
+}
+
+.wl-input:focus {
+  border-color: var(--wl-accent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.wl-input.wl-input-error {
+  border-color: var(--wl-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wl-root * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
