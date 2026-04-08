@@ -2,15 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useUser, SignOutButton } from '@clerk/nextjs';
 import { Button } from '@/app/components/ui/button';
+import { useAppMe } from '@/lib/use-app-me';
 
-function NavLinks() {
+function NavLinks({ isOrganizer, isAdmin }: { isOrganizer: boolean; isAdmin: boolean }) {
   const path = usePathname();
-  const { user } = useAuth();
-  const role = user?.role?.toLowerCase();
-  const isOrganizer = role === 'organizer' || role === 'admin';
-  const isAdmin = role === 'admin';
 
   return (
     <nav className="flex flex-wrap items-center gap-4 text-sm">
@@ -63,9 +60,14 @@ function NavLinks() {
 }
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoaded } = useUser();
+  const { me, loading } = useAppMe();
+  const role = me?.role?.toLowerCase();
 
-  if (isLoading) {
+  const isOrganizer = role === 'organizer' || role === 'admin';
+  const isAdmin = role === 'admin';
+
+  if (!isLoaded || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <span className="inline-block size-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
@@ -78,7 +80,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-screen items-center justify-center">
         <div className="card max-w-sm p-6 text-center">
           <p className="mb-4 text-[var(--muted)]">You need to sign in to view this page.</p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex justify-center gap-3">
             <Link href="/login">
               <Button variant="primary">Log in</Button>
             </Link>
@@ -91,6 +93,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
+  const email = me?.email ?? user.primaryEmailAddress?.emailAddress ?? '';
+  const displayName = me?.name || user.fullName || email || user.id;
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur">
@@ -99,19 +104,21 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             Meetra
           </Link>
           <div className="flex items-center gap-4">
-            <NavLinks />
+            <NavLinks isOrganizer={isOrganizer} isAdmin={isAdmin} />
             <div className="flex items-center gap-2 border-l border-[var(--border)] pl-4">
-              <span className="text-sm text-[var(--muted)]" title={user.email ?? undefined}>
-                {user.name || user.email || user.user_id}
+              <span className="text-sm text-[var(--muted)]" title={email || undefined}>
+                {displayName}
               </span>
-              <Button variant="ghost" size="sm" onClick={() => logout()}>
-                Sign out
-              </Button>
+              <SignOutButton>
+                <Button variant="ghost" size="sm">
+                  Sign out
+                </Button>
+              </SignOutButton>
             </div>
           </div>
         </div>
       </header>
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">{children}</main>
     </div>
   );
 }

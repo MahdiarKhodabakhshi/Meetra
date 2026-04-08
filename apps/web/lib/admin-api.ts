@@ -2,7 +2,7 @@ import { apiRequest } from './api-client';
 import type { AdminUserOut } from './types';
 
 /** Paths start with /auth/ so requests go to NEXT_PUBLIC_AUTH_API_URL (auth microservice). */
-const BASE = '/auth/admin/users';
+const BASE = '/admin/users';
 
 export async function listAdminUsers(
   token: string | null,
@@ -16,8 +16,8 @@ export async function listAdminUsers(
 }
 
 export interface UpdateUserIn {
-  role?: 'attendee' | 'organizer' | 'admin';
-  status?: 'active' | 'inactive' | 'suspended';
+  role?: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN';
+  status?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 }
 
 export async function updateAdminUser(token: string | null, userId: string, payload: UpdateUserIn) {

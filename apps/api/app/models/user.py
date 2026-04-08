@@ -27,9 +27,9 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         sa.Index("ix_users_email_lower", sa.text("lower(email)"), unique=True),
     )
-
+    clerk_user_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True, index=True)    
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
-    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    
     role: Mapped[UserRole] = mapped_column(
         sa.Enum(UserRole, name="user_role"),
         nullable=False,

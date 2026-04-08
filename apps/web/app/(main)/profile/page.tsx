@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
@@ -17,12 +17,7 @@ import {
 } from '@/lib/resumes-api';
 import { getMyProfile, updateMyProfile } from '@/lib/profiles-api';
 import { getApiErrorMessage } from '@/lib/api-client';
-import type {
-  ResumeVersionStatus,
-  ResumeStatusOut,
-  ProfileOut,
-  ConfidenceJson,
-} from '@/lib/types';
+import type { ResumeVersionStatus, ResumeStatusOut, ProfileOut, ConfidenceJson } from '@/lib/types';
 
 const RESUME_STATUS_STEPS: Record<ResumeVersionStatus, string> = {
   UPLOADED: 'Queued',
@@ -32,13 +27,7 @@ const RESUME_STATUS_STEPS: Record<ResumeVersionStatus, string> = {
   FAILED: 'Failed',
 };
 
-function ProvenanceBadge({
-  confidence,
-  field,
-}: {
-  confidence: ConfidenceJson;
-  field: string;
-}) {
+function ProvenanceBadge({ confidence, field }: { confidence: ConfidenceJson; field: string }) {
   const manual = confidence?.manual_overrides?.includes(field);
   const fieldMeta = confidence?.[field];
   const source =
@@ -59,7 +48,10 @@ function ProvenanceBadge({
   }
   if (source && value != null) {
     return (
-      <span className="text-xs text-[var(--muted)]" title={`From resume (confidence ${Math.round(value * 100)}%)`}>
+      <span
+        className="text-xs text-[var(--muted)]"
+        title={`From resume (confidence ${Math.round(value * 100)}%)`}
+      >
         From resume
       </span>
     );
@@ -68,7 +60,9 @@ function ProvenanceBadge({
 }
 
 export default function ProfilePage() {
-  const { user, accessToken } = useAuth();
+  const { getToken } = useAuth();
+  const { user } = useUser();
+
   const [profile, setProfile] = useState<ProfileOut | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -91,15 +85,21 @@ export default function ProfilePage() {
   const [dragOver, setDragOver] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    if (!accessToken) return;
+    const token = await getToken();
+    if (!token) return;
+
     setProfileLoading(true);
     setProfileError(null);
-    const { data, error } = await getMyProfile(accessToken);
+
+    const { data, error } = await getMyProfile(token);
+
     setProfileLoading(false);
+
     if (error) {
       setProfileError(getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }));
       return;
     }
+
     if (data) {
       setProfile(data);
       setHeadline(data.headline ?? '');
@@ -108,15 +108,17 @@ export default function ProfilePage() {
       setTitles(data.titles ?? []);
       setIndustries(data.industries ?? []);
     }
-  }, [accessToken]);
+  }, [getToken]);
 
   const loadLatestResume = useCallback(async () => {
-    if (!accessToken) return;
+    const token = await getToken();
+    if (!token) return;
+
     setLatestResumeLoading(true);
-    const { data } = await getLatestResume(accessToken);
+    const { data } = await getLatestResume(token);
     setLatestResumeLoading(false);
     setLatestResume(data ?? null);
-  }, [accessToken]);
+  }, [getToken]);
 
   useEffect(() => {
     loadProfile();
@@ -127,11 +129,15 @@ export default function ProfilePage() {
   }, [loadLatestResume]);
 
   const saveProfile = async () => {
-    if (!accessToken || !profile) return;
+    const token = await getToken();
+    if (!token || !profile) return;
+
     setProfileSaving(true);
     setProfileError(null);
     setProfileSaveSuccess(false);
+
     const payload: Parameters<typeof updateMyProfile>[1] = {};
+
     if ((headline.trim() || '') !== (profile.headline ?? '')) {
       payload.headline = headline.trim() || null;
     }
@@ -147,16 +153,21 @@ export default function ProfilePage() {
     if (JSON.stringify(industries) !== JSON.stringify(profile.industries ?? [])) {
       payload.industries = industries;
     }
+
     if (Object.keys(payload).length === 0) {
       setProfileSaving(false);
       return;
     }
-    const { data, error } = await updateMyProfile(accessToken, payload);
+
+    const { data, error } = await updateMyProfile(token, payload);
+
     setProfileSaving(false);
+
     if (error) {
       setProfileError(getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }));
       return;
     }
+
     if (data) {
       setProfile(data);
       setProfileSaveSuccess(true);
@@ -167,29 +178,42 @@ export default function ProfilePage() {
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      if (!accessToken || uploading) return;
+      const token = await getToken();
+      if (!token || uploading) return;
+
       const allowed = isAllowedFile(file);
       if (!allowed.ok) {
         setUploadError(allowed.reason);
         return;
       }
+
       setUploadError(null);
       setUploading(true);
       setPollingStatus(null);
-      const { data, error } = await uploadResume(accessToken, file);
+
+      const { data, error } = await uploadResume(token, file);
+
       if (error) {
         setUploading(false);
-        const code = typeof error.detail === 'object' && error.detail && 'code' in error.detail
-          ? String((error.detail as { code?: string }).code)
-          : null;
-        setUploadError(resumeErrorCodeMessage(code, getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode })));
+        const code =
+          typeof error.detail === 'object' && error.detail && 'code' in error.detail
+            ? String((error.detail as { code?: string }).code)
+            : null;
+        setUploadError(
+          resumeErrorCodeMessage(
+            code,
+            getApiErrorMessage({ detail: error.detail, statusCode: error.statusCode }),
+          ),
+        );
         return;
       }
+
       if (!data) {
         setUploading(false);
         setUploadError('Upload did not return a resume.');
         return;
       }
+
       setPollingStatus({
         id: data.id,
         status: data.status,
@@ -198,20 +222,19 @@ export default function ProfilePage() {
         parsed_at: data.parsed_at,
         progress_stage: data.status.toLowerCase(),
       });
+
       try {
-        const final = await pollResumeUntilDone(accessToken, data.id, (s) => {
+        const final = await pollResumeUntilDone(token, data.id, (s) => {
           setPollingStatus(s);
         });
+
         if (final.status === 'PARSED') {
           setUploadError(null);
           loadProfile();
           loadLatestResume();
         } else {
           setUploadError(
-            resumeErrorCodeMessage(
-              final.error_code,
-              final.error_message || 'Processing failed.',
-            ),
+            resumeErrorCodeMessage(final.error_code, final.error_message || 'Processing failed.'),
           );
         }
       } catch (e) {
@@ -221,7 +244,7 @@ export default function ProfilePage() {
         setPollingStatus(null);
       }
     },
-    [accessToken, uploading, loadProfile, loadLatestResume],
+    [getToken, uploading, loadProfile, loadLatestResume],
   );
 
   const onDrop = (e: React.DragEvent) => {
@@ -240,18 +263,16 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Account (email / name) */}
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
           <CardDescription>Your email is used to sign in.</CardDescription>
         </CardHeader>
         <div className="space-y-4">
-          <Input label="Email" value={user?.email ?? ''} disabled />
+          <Input label="Email" value={user?.primaryEmailAddress?.emailAddress ?? ''} disabled />
         </div>
       </Card>
 
-      {/* Resume upload */}
       <Card>
         <CardHeader>
           <CardTitle>Resume</CardTitle>
@@ -264,7 +285,10 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div
             onDrop={onDrop}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragOver ? 'border-[var(--accent)] bg-[var(--muted-bg)]' : 'border-[var(--border)]'
@@ -306,15 +330,24 @@ export default function ProfilePage() {
               >
                 {RESUME_STATUS_STEPS[pollingStatus.status]}
               </span>
-              {pollingStatus.status === 'UPLOADED' && <span className="text-sm text-[var(--muted)]">Queued…</span>}
-              {pollingStatus.status === 'SCANNING' && <span className="text-sm text-[var(--muted)]">Scanning…</span>}
-              {pollingStatus.status === 'PARSING' && <span className="text-sm text-[var(--muted)]">Extracting…</span>}
+              {pollingStatus.status === 'UPLOADED' && (
+                <span className="text-sm text-[var(--muted)]">Queued…</span>
+              )}
+              {pollingStatus.status === 'SCANNING' && (
+                <span className="text-sm text-[var(--muted)]">Scanning…</span>
+              )}
+              {pollingStatus.status === 'PARSING' && (
+                <span className="text-sm text-[var(--muted)]">Extracting…</span>
+              )}
               {pollingStatus.status === 'PARSED' && (
                 <span className="text-sm text-[var(--success)]">Ready for matching.</span>
               )}
               {pollingStatus.status === 'FAILED' && (
                 <span className="text-sm text-[var(--destructive)]">
-                  {resumeErrorCodeMessage(pollingStatus.error_code, pollingStatus.error_message || 'Failed.')}
+                  {resumeErrorCodeMessage(
+                    pollingStatus.error_code,
+                    pollingStatus.error_message || 'Failed.',
+                  )}
                 </span>
               )}
             </div>
@@ -343,21 +376,17 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      {/* View last resume parse job */}
       <Card>
         <CardHeader>
           <CardTitle>Last resume</CardTitle>
-          <CardDescription>
-            Most recent resume version and parse status.
-          </CardDescription>
+          <CardDescription>Most recent resume version and parse status.</CardDescription>
         </CardHeader>
         {latestResumeLoading ? (
           <p className="text-sm text-[var(--muted)]">Loading…</p>
         ) : latestResume ? (
           <div className="space-y-2 text-sm">
             <p>
-              <span className="text-[var(--muted)]">File:</span>{' '}
-              {latestResume.original_filename}
+              <span className="text-[var(--muted)]">File:</span> {latestResume.original_filename}
             </p>
             <p>
               <span className="text-[var(--muted)]">Status:</span>{' '}
@@ -383,7 +412,11 @@ export default function ProfilePage() {
               {latestResume.parsed_at &&
                 ` · Parsed ${new Date(latestResume.parsed_at).toLocaleString()}`}
             </p>
-            <Button variant="secondary" size="sm" onClick={() => document.getElementById('resume-upload')?.click()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => document.getElementById('resume-upload')?.click()}
+            >
               Re-upload & re-parse
             </Button>
           </div>
@@ -392,7 +425,6 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Profile fields */}
       <Card>
         <CardHeader>
           <CardTitle>Profile fields</CardTitle>
@@ -421,7 +453,9 @@ export default function ProfilePage() {
                 <div className="grid gap-4">
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <label className="text-sm font-medium text-[var(--foreground)]">Headline</label>
+                      <label className="text-sm font-medium text-[var(--foreground)]">
+                        Headline
+                      </label>
                       <ProvenanceBadge confidence={profile.confidence_json} field="headline" />
                     </div>
                     <Input
@@ -432,7 +466,9 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <label className="text-sm font-medium text-[var(--foreground)]">Summary</label>
+                      <label className="text-sm font-medium text-[var(--foreground)]">
+                        Summary
+                      </label>
                       <ProvenanceBadge confidence={profile.confidence_json} field="summary" />
                     </div>
                     <textarea
@@ -447,26 +483,22 @@ export default function ProfilePage() {
                       <span className="text-sm font-medium text-[var(--foreground)]">Skills</span>
                       <ProvenanceBadge confidence={profile.confidence_json} field="skills" />
                     </div>
-                    <TagList
-                      values={skills}
-                      onChange={setSkills}
-                      placeholder="Add a skill…"
-                    />
+                    <TagList values={skills} onChange={setSkills} placeholder="Add a skill…" />
                   </div>
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-sm font-medium text-[var(--foreground)]">Job titles</span>
+                      <span className="text-sm font-medium text-[var(--foreground)]">
+                        Job titles
+                      </span>
                       <ProvenanceBadge confidence={profile.confidence_json} field="titles" />
                     </div>
-                    <TagList
-                      values={titles}
-                      onChange={setTitles}
-                      placeholder="Add a title…"
-                    />
+                    <TagList values={titles} onChange={setTitles} placeholder="Add a title…" />
                   </div>
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-sm font-medium text-[var(--foreground)]">Industries</span>
+                      <span className="text-sm font-medium text-[var(--foreground)]">
+                        Industries
+                      </span>
                       <ProvenanceBadge confidence={profile.confidence_json} field="industries" />
                     </div>
                     <TagList

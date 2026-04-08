@@ -1,18 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (!isLoaded) return;
     if (user) router.replace('/events');
-  }, [user, isLoading, router]);
+  }, [user, isLoaded, router]);
 
   return (
     <div className="min-h-screen flex flex-col">

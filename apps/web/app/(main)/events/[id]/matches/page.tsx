@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@clerk/nextjs';
 import { fetchEvent } from '@/lib/events-api';
 import { fetchMatchesForEvent } from '@/lib/matches-api';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
@@ -12,37 +12,57 @@ import type { Match } from '@/lib/types';
 
 export default function EventMatchesPage() {
   const params = useParams();
-  const { accessToken } = useAuth();
+  const { getToken } = useAuth();
   const eventId = params.id as string;
+
   const [event, setEvent] = useState<Event | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken || !eventId) return;
     let mounted = true;
-    Promise.all([
-      fetchEvent(accessToken, eventId).then((r) => r.data),
-      fetchMatchesForEvent(accessToken, eventId).then((r) => r.data ?? []),
-    ])
-      .then(([ev, list]) => {
+
+    const load = async () => {
+      if (!eventId) {
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      const token = await getToken();
+      if (!token) {
         if (mounted) {
-          setEvent(ev ?? null);
-          setMatches(Array.isArray(list) ? list : []);
+          setError('You need to sign in to view matches.');
           setLoading(false);
         }
-      })
-      .catch(() => {
+        return;
+      }
+
+      try {
+        const [eventRes, matchesRes] = await Promise.all([
+          fetchEvent(token, eventId),
+          fetchMatchesForEvent(token, eventId),
+        ]);
+
+        if (!mounted) return;
+
+        setEvent(eventRes.data ?? null);
+        setMatches(Array.isArray(matchesRes.data) ? matchesRes.data : []);
+        setLoading(false);
+      } catch {
         if (mounted) {
           setError('Failed to load');
           setLoading(false);
         }
-      });
+      }
+    };
+
+    load();
+
     return () => {
       mounted = false;
     };
-  }, [accessToken, eventId]);
+  }, [getToken, eventId]);
 
   if (loading && !event) {
     return (

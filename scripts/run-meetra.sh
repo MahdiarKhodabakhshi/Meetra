@@ -181,7 +181,7 @@ EOF
 
   echo "[5/5] Running. Press Ctrl+C to stop."
   # Wait for any job to exit; then cleanup via trap.
-  wait -n
+  wait
 }
 
 status() {

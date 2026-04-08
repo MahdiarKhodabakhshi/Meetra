@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@clerk/nextjs';
 import { createEvent } from '@/lib/organizer-api';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
+import { useAppMe } from '@/lib/use-app-me';
 
 export default function OrganizerDashboardPage() {
-  const { accessToken, user } = useAuth();
+  const { getToken } = useAuth();
+  const { me, loading: meLoading } = useAppMe();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -21,8 +24,17 @@ export default function OrganizerDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ eventId: string; joinCode: string } | null>(null);
 
-  const role = user?.role?.toLowerCase();
+  const role = me?.role?.toLowerCase();
   const isOrganizer = role === 'organizer' || role === 'admin';
+
+  if (meLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <span className="inline-block size-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+      </div>
+    );
+  }
+
   if (!isOrganizer) {
     return (
       <Card>
@@ -35,12 +47,21 @@ export default function OrganizerDashboardPage() {
     e.preventDefault();
     setError(null);
     setCreated(null);
+
     if (!title.trim()) {
       setError('Title is required.');
       return;
     }
+
+    const token = await getToken();
+    if (!token) {
+      setError('You need to sign in to create an event.');
+      return;
+    }
+
     setLoading(true);
-    const { data, error: err } = await createEvent(accessToken, {
+
+    const { data, error: err } = await createEvent(token, {
       title: title.trim(),
       description: description.trim() || null,
       location: location.trim() || null,
@@ -49,7 +70,9 @@ export default function OrganizerDashboardPage() {
       rsvp_deadline: rsvpDeadline ? new Date(rsvpDeadline).toISOString() : null,
       capacity: capacity ? parseInt(capacity, 10) : null,
     });
+
     setLoading(false);
+
     if (err) {
       setError(
         typeof err.detail === 'string'
@@ -58,6 +81,7 @@ export default function OrganizerDashboardPage() {
       );
       return;
     }
+
     if (data) {
       setCreated({ eventId: data.event_id, joinCode: data.join_code });
       setTitle('');
@@ -88,6 +112,7 @@ export default function OrganizerDashboardPage() {
             it visible and open for RSVPs.
           </CardDescription>
         </CardHeader>
+
         <form onSubmit={handleCreate} className="space-y-4">
           <Input
             label="Title"
@@ -96,6 +121,7 @@ export default function OrganizerDashboardPage() {
             onChange={(e) => setTitle(e.target.value)}
             required
           />
+
           <div>
             <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">
               Description (optional)
@@ -107,13 +133,15 @@ export default function OrganizerDashboardPage() {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
+
           <Input
             label="Location (optional)"
             placeholder="Venue or address"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Starts at (optional, ISO/local)"
               type="datetime-local"
@@ -127,6 +155,7 @@ export default function OrganizerDashboardPage() {
               onChange={(e) => setEndsAt(e.target.value)}
             />
           </div>
+
           <Input
             label="RSVP deadline (optional)"
             type="datetime-local"
@@ -134,6 +163,7 @@ export default function OrganizerDashboardPage() {
             onChange={(e) => setRsvpDeadline(e.target.value)}
             hint="Must be before event start. Registration allowed while now &lt; deadline."
           />
+
           <Input
             label="Capacity (optional)"
             type="number"
@@ -142,22 +172,25 @@ export default function OrganizerDashboardPage() {
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
           />
+
           {error && (
             <p className="text-sm text-[var(--destructive)]" role="alert">
               {error}
             </p>
           )}
+
           <Button type="submit" loading={loading}>
             Create event (draft)
           </Button>
         </form>
+
         {created && (
-          <div className="mt-4 p-4 rounded-lg bg-[var(--success-bg)] text-[var(--success)]">
+          <div className="mt-4 rounded-lg bg-[var(--success-bg)] p-4 text-[var(--success)]">
             <p className="font-medium">Event created.</p>
-            <p className="text-sm mt-1">
-              Join code: <code className="bg-black/10 px-1 rounded">{created.joinCode}</code>
+            <p className="mt-1 text-sm">
+              Join code: <code className="rounded bg-black/10 px-1">{created.joinCode}</code>
             </p>
-            <Link href={`/events/${created.eventId}`} className="link text-sm mt-2 inline-block">
+            <Link href={`/events/${created.eventId}`} className="link mt-2 inline-block text-sm">
               Open event →
             </Link>
           </div>

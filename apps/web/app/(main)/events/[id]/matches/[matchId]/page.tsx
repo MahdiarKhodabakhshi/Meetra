@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@clerk/nextjs';
 import { fetchEvent } from '@/lib/events-api';
 import { fetchMatchDetail } from '@/lib/matches-api';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
@@ -12,9 +12,10 @@ import type { Match } from '@/lib/types';
 
 export default function MatchDetailPage() {
   const params = useParams();
-  const { accessToken } = useAuth();
+  const { getToken } = useAuth();
   const eventId = params.id as string;
   const matchId = params.matchId as string;
+
   const [event, setEvent] = useState<Event | null>(null);
   const [match, setMatch] = useState<
     (Match & { profile_summary?: string; strategy?: string; explanation?: string }) | null
@@ -23,29 +24,48 @@ export default function MatchDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken || !eventId || !matchId) return;
     let mounted = true;
-    Promise.all([
-      fetchEvent(accessToken, eventId).then((r) => r.data),
-      fetchMatchDetail(accessToken, eventId, matchId).then((r) => r.data),
-    ])
-      .then(([ev, m]) => {
+
+    const load = async () => {
+      if (!eventId || !matchId) {
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      const token = await getToken();
+      if (!token) {
         if (mounted) {
-          setEvent(ev ?? null);
-          setMatch(m ?? null);
+          setError('You need to sign in to view this match.');
           setLoading(false);
         }
-      })
-      .catch(() => {
+        return;
+      }
+
+      try {
+        const [eventRes, matchRes] = await Promise.all([
+          fetchEvent(token, eventId),
+          fetchMatchDetail(token, eventId, matchId),
+        ]);
+
+        if (!mounted) return;
+
+        setEvent(eventRes.data ?? null);
+        setMatch(matchRes.data ?? null);
+        setLoading(false);
+      } catch {
         if (mounted) {
           setError('Failed to load');
           setLoading(false);
         }
-      });
+      }
+    };
+
+    load();
+
     return () => {
       mounted = false;
     };
-  }, [accessToken, eventId, matchId]);
+  }, [getToken, eventId, matchId]);
 
   if (loading && !match) {
     return (

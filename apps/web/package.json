@@ -12,6 +12,7 @@
     "format": "prettier -w ."
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.0.8",
     "@meetra/shared": "workspace:^",
     "next": "16.1.0",
     "react": "19.2.3",

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useAppMe } from '@/lib/use-app-me';
 import {
   fetchEvent,
   rsvpEvent,
@@ -20,8 +21,11 @@ import type { Event } from '@/lib/types';
 
 export default function EventDetailPage() {
   const params = useParams();
-  const { accessToken, user } = useAuth();
+  const { getToken } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
+  const { me, loading: meLoading } = useAppMe();
   const eventId = params.id as string;
+
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,64 +35,95 @@ export default function EventDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const role = user?.role?.toLowerCase();
-  const isOrganizer =
-    user &&
-    (role === 'organizer' || role === 'admin') &&
-    event?.organizer_id === user.user_id;
+  const role = me?.role?.toLowerCase();
+  const isOrganizer = role === 'organizer' || role === 'admin';
 
   useEffect(() => {
-    if (!accessToken || !eventId) return;
     let mounted = true;
-    fetchEvent(accessToken, eventId)
-      .then(({ data, error: err }) => {
-        if (!mounted) return;
-        if (err) setError(getApiErrorMessage(err) || 'Event not found');
-        else setEvent(data ?? null);
-        setLoading(false);
-      })
-      .catch(() => {
+
+    const loadEvent = async () => {
+      if (!isLoaded || !isSignedIn || !eventId) {
         if (mounted) setLoading(false);
-      });
+        return;
+      }
+
+      const token = await getToken();
+      if (!token) {
+        if (mounted) {
+          setError('You need to sign in to view this event.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data, error: err } = await fetchEvent(token, eventId);
+
+      if (!mounted) return;
+
+      if (err) setError(getApiErrorMessage(err) || 'Event not found');
+      else setEvent(data ?? null);
+
+      setLoading(false);
+    };
+
+    loadEvent();
+
     return () => {
       mounted = false;
     };
-  }, [accessToken, eventId]);
+  }, [getToken, isLoaded, isSignedIn, eventId]);
 
   const registrationOpen = event ? isRegistrationOpen(event) : false;
 
   const handleRsvp = async () => {
-    if (!accessToken || !eventId) return;
+    if (!eventId) return;
+
+    const token = await getToken();
+    if (!token) return;
+
     setActionError(null);
     setActionLoading(true);
-    const { data, error: err } = await rsvpEvent(accessToken, eventId);
+    const { data, error: err } = await rsvpEvent(token, eventId);
     setActionLoading(false);
+
     if (err) {
       setActionError(getApiErrorMessage(err));
       return;
     }
+
     if (data) setRsvpStatus(data.status as 'joined' | 'already_joined');
   };
 
   const handleCancelRsvp = async () => {
-    if (!accessToken || !eventId) return;
+    if (!eventId) return;
+
+    const token = await getToken();
+    if (!token) return;
+
     setActionError(null);
     setActionLoading(true);
-    const { error: err } = await cancelRsvp(accessToken, eventId);
+    const { error: err } = await cancelRsvp(token, eventId);
     setActionLoading(false);
+
     if (err) {
       setActionError(typeof err.detail === 'string' ? err.detail : 'Failed to cancel');
       return;
     }
+
     setRsvpStatus('cancelled');
   };
 
   const handlePublish = async () => {
-    if (!accessToken || !eventId) return;
+    if (!eventId) return;
+
+    const token = await getToken();
+    if (!token) return;
+
     setActionError(null);
     setActionLoading(true);
-    const { data, error: err } = await publishEvent(accessToken, eventId);
+    const { data, error: err } = await publishEvent(token, eventId);
     setActionLoading(false);
+
     if (err) {
       setActionError(
         typeof err.detail === 'string'
@@ -97,24 +132,30 @@ export default function EventDetailPage() {
       );
       return;
     }
+
     if (data) setEvent(data);
   };
 
   const handleCancelEvent = async () => {
-    if (!accessToken || !eventId || !confirm('Cancel this event? Registration will be closed.'))
-      return;
+    if (!eventId || !confirm('Cancel this event? Registration will be closed.')) return;
+
+    const token = await getToken();
+    if (!token) return;
+
     setActionError(null);
     setActionLoading(true);
-    const { data, error: err } = await cancelEvent(accessToken, eventId);
+    const { data, error: err } = await cancelEvent(token, eventId);
     setActionLoading(false);
+
     if (err) {
       setActionError(typeof err.detail === 'string' ? err.detail : 'Failed to cancel event');
       return;
     }
+
     if (data) setEvent(data);
   };
 
-  if (loading && !event) {
+  if ((loading && !event) || meLoading) {
     return (
       <div className="flex justify-center py-12">
         <span className="inline-block size-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
@@ -148,10 +189,10 @@ export default function EventDetailPage() {
         <span className="text-sm font-medium truncate">{event.title}</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--foreground)]">{event.title}</h1>
-          <p className="text-[var(--muted)] mt-1">
+          <p className="mt-1 text-[var(--muted)]">
             {formatEventDate(event.starts_at)}
             {event.ends_at && ` – ${formatEventDate(event.ends_at)}`}
           </p>
@@ -161,6 +202,7 @@ export default function EventDetailPage() {
             </Badge>
           </div>
         </div>
+
         <div className="flex flex-wrap gap-2">
           {isOrganizer && (
             <>
@@ -176,11 +218,13 @@ export default function EventDetailPage() {
               )}
             </>
           )}
+
           {registrationOpen && !isJoined && !isCancelled && (
             <Button onClick={handleRsvp} loading={actionLoading}>
               RSVP
             </Button>
           )}
+
           {isJoined && (
             <>
               <Badge status="joined">You&apos;re going</Badge>
@@ -192,6 +236,7 @@ export default function EventDetailPage() {
               </Link>
             </>
           )}
+
           {isCancelled && registrationOpen && (
             <Button onClick={handleRsvp} loading={actionLoading}>
               Re-register
@@ -215,19 +260,21 @@ export default function EventDetailPage() {
       <Card>
         {event.description && (
           <div className="mb-4">
-            <h2 className="text-sm font-medium text-[var(--muted)] mb-1">Description</h2>
-            <p className="text-[var(--foreground)] whitespace-pre-wrap">{event.description}</p>
+            <h2 className="mb-1 text-sm font-medium text-[var(--muted)]">Description</h2>
+            <p className="whitespace-pre-wrap text-[var(--foreground)]">{event.description}</p>
           </div>
         )}
+
         {event.location && (
           <div className="mb-4">
-            <h2 className="text-sm font-medium text-[var(--muted)] mb-1">Location</h2>
+            <h2 className="mb-1 text-sm font-medium text-[var(--muted)]">Location</h2>
             <p>{event.location}</p>
           </div>
         )}
+
         {event.rsvp_deadline && (
           <div>
-            <h2 className="text-sm font-medium text-[var(--muted)] mb-1">RSVP deadline</h2>
+            <h2 className="mb-1 text-sm font-medium text-[var(--muted)]">RSVP deadline</h2>
             <p>{formatEventDate(event.rsvp_deadline)}</p>
           </div>
         )}

@@ -23,9 +23,7 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app.auth.deps import (
-    CurrentTokenUser,
-    require_core_legacy_auth_routes,
-    require_role,
+    require_role_orm,
 )
 from app.db import get_db
 from app.models import RefreshToken, User
@@ -34,13 +32,12 @@ from app.models.user import UserRole, UserStatus
 router = APIRouter(
     prefix="/admin/users",
     tags=["admin"],
-    dependencies=[Depends(require_role(UserRole.ADMIN))],
+    dependencies=[Depends(require_role_orm(UserRole.ADMIN))],
 )
 
-from app.auth.deps import TokenUser
 
 DBSession = Annotated[Session, Depends(get_db)]
-AdminUser = Annotated[TokenUser, Depends(require_role(UserRole.ADMIN))]
+AdminUser = Annotated[User, Depends(require_role_orm(UserRole.ADMIN))]
 
 
 class UserOut(BaseModel):
@@ -92,8 +89,8 @@ class UpdateUserIn(BaseModel):
 @router.patch(
     "/{user_id}",
     response_model=UserOut,
-    dependencies=[Depends(require_core_legacy_auth_routes)],
 )
+
 def update_user(user_id: str, payload: UpdateUserIn, db: DBSession, admin: AdminUser):
     if payload.role is None and payload.status is None:
         raise HTTPException(status_code=400, detail="no changes provided")
@@ -132,7 +129,6 @@ def update_user(user_id: str, payload: UpdateUserIn, db: DBSession, admin: Admin
 
 @router.post(
     "/{user_id}/revoke-sessions",
-    dependencies=[Depends(require_core_legacy_auth_routes)],
 )
 def revoke_sessions(user_id: str, db: DBSession):
     try:

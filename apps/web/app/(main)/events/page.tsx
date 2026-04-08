@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
-import { fetchEvents } from '@/lib/events-api';
-import { formatEventDate } from '@/lib/events-api';
+import { useAuth } from '@clerk/nextjs';
+import { fetchEvents, formatEventDate } from '@/lib/events-api';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
@@ -12,7 +11,7 @@ import { Badge } from '@/app/components/ui/badge';
 import type { Event } from '@/lib/types';
 
 export default function EventsListPage() {
-  const { accessToken } = useAuth();
+  const { getToken } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -20,25 +19,41 @@ export default function EventsListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
     let mounted = true;
-    fetchEvents(accessToken, { page, page_size: 20 })
-      .then(({ data, error }) => {
-        if (!mounted) return;
-        if (error) setError(getApiErrorMessage(error) || 'Failed to load events');
-        else if (data) {
-          setEvents(data.items);
-          setTotal(data.total);
+
+    const loadEvents = async () => {
+      setLoading(true);
+      setError(null);
+
+      const token = await getToken();
+      if (!token) {
+        if (mounted) {
+          setError('You need to sign in to view events.');
+          setLoading(false);
         }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (mounted) setLoading(false);
-      });
+        return;
+      }
+
+      const { data, error } = await fetchEvents(token, { page, page_size: 20 });
+
+      if (!mounted) return;
+
+      if (error) {
+        setError(getApiErrorMessage(error));
+      } else if (data) {
+        setEvents(data.items);
+        setTotal(data.total);
+      }
+
+      setLoading(false);
+    };
+
+    loadEvents();
+
     return () => {
       mounted = false;
     };
-  }, [accessToken, page]);
+  }, [getToken, page]);
 
   if (loading && events.length === 0) {
     return (
@@ -50,7 +65,7 @@ export default function EventsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--foreground)]">Events</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -65,9 +80,9 @@ export default function EventsListPage() {
         </div>
       )}
 
-      {!error && events.length === 0 && (
+      {!error && events.length === 0 && !loading && (
         <Card>
-          <p className="text-center text-[var(--muted)] py-8">No published events yet.</p>
+          <p className="py-8 text-center text-[var(--muted)]">No published events yet.</p>
         </Card>
       )}
 
@@ -87,12 +102,12 @@ export default function EventsListPage() {
                           </span>
                         )}
                       </h2>
-                      <p className="text-sm text-[var(--muted)] mt-1">
+                      <p className="mt-1 text-sm text-[var(--muted)]">
                         {formatEventDate(event.starts_at)}
                         {event.location && ` · ${event.location}`}
                       </p>
                       {event.description && (
-                        <p className="text-sm text-[var(--muted)] mt-2 line-clamp-2">
+                        <p className="mt-2 text-sm text-[var(--muted)] line-clamp-2">
                           {event.description}
                         </p>
                       )}
@@ -101,7 +116,7 @@ export default function EventsListPage() {
                       {event.status}
                     </Badge>
                   </div>
-                  <p className="text-xs text-[var(--muted)] mt-3">
+                  <p className="mt-3 text-xs text-[var(--muted)]">
                     {event.capacity != null ? `Capacity ${event.capacity}` : 'No capacity limit'} ·
                     View details &amp; RSVP
                   </p>

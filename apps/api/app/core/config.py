@@ -52,6 +52,8 @@ class Settings:
         default=(os.getenv("ENV", "local") == "local"),
     )
     dev_api_key: str | None = os.getenv("DEV_API_KEY") or None
+    clerk_secret_key: str = os.getenv("CLERK_SECRET_KEY", "")
+    clerk_webhook_signing_secret: str = os.getenv("CLERK_WEBHOOK_SIGNING_SECRET", "")
 
     # JWT verification (RS256 public key from auth-service)
     jwt_public_key_path: str = os.getenv("JWT_PUBLIC_KEY_PATH", "")

@@ -5,17 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Annotated, Callable
 
-import uuid
-
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.jwt import verify_access_token
 from app.core.config import settings
 from app.db import get_db
 from app.models import User
 from app.models.user import UserRole, UserStatus
+from clerk_backend_api import Clerk
+from clerk_backend_api.security.types import AuthenticateRequestOptions
+
+clerk = Clerk(bearer_auth=settings.clerk_secret_key)
 
 DBSession = Annotated[Session, Depends(get_db)]
 
@@ -42,7 +43,7 @@ def _unauthorized(detail: str = "unauthorized") -> HTTPException:
 @dataclass
 class TokenUser:
 
-    id: uuid.UUID
+    id: str
     email: str | None
     role: UserRole
     status: UserStatus
@@ -73,49 +74,76 @@ def get_token_user(request: Request) -> TokenUser:
             raise _unauthorized("invalid email in token")
 
         return TokenUser(
-            id=uuid.uuid5(uuid.NAMESPACE_DNS, email),
+            id=f"dev_{email}",
             email=email,
             role=UserRole.ATTENDEE,
             status=UserStatus.ACTIVE,
         )
 
     try:
-        payload = verify_access_token(token)
-    except ValueError:
-        raise _unauthorized("invalid access token")
+        request_state = clerk.authenticate_request(
+            request,
+            AuthenticateRequestOptions(
+                # add your frontend origin here later if needed
+                authorized_parties=settings.cors_allow_origins,
+            ),
+        )
+    except Exception:
+        raise _unauthorized("invalid clerk token")
 
-    sub = payload.get("sub")
-    if not sub:
+    if not request_state.is_signed_in:
+        raise _unauthorized("invalid clerk token")
+
+    payload = request_state.payload or {}
+    user_id = payload.get("sub")
+    if not user_id:
         raise _unauthorized("invalid token: missing sub")
 
-    try:
-        user_id = uuid.UUID(str(sub))
-    except ValueError:
-        raise _unauthorized("invalid token: invalid sub format")
-
-    role_str = payload.get("role", "ATTENDEE")
-    status_str = payload.get("status", "ACTIVE")
     email = payload.get("email")
 
-    try:
-        role = UserRole(role_str)
-    except ValueError:
-        role = UserRole.ATTENDEE
-
-    try:
-        status = UserStatus(status_str)
-    except ValueError:
-        status = UserStatus.ACTIVE
-
-    # Validate status from token
-    if status != UserStatus.ACTIVE:
-        raise _unauthorized("user is not active")
-
-    return TokenUser(id=user_id, email=email, role=role, status=status)
+    return TokenUser(
+        id=user_id,
+        email=email,
+        role=UserRole.ATTENDEE,
+        status=UserStatus.ACTIVE,
+    )
 
 
 CurrentTokenUser = Annotated[TokenUser, Depends(get_token_user)]
 
+def _get_clerk_user_info(clerk_user_id: str):
+    try:
+        cu = clerk.users.get(user_id=clerk_user_id)
+        print("CLERK USER OBJECT:", cu)
+        print("CLERK USER TYPE:", type(cu))
+        print("CLERK USER DICT:", getattr(cu, "__dict__", None))
+    except Exception as e:
+        print("CLERK USER FETCH ERROR:", clerk_user_id, repr(e))
+        return None, None, None
+
+    email = None
+    if cu.email_addresses:
+        for addr in cu.email_addresses:
+            if getattr(addr, "id", None) == getattr(cu, "primary_email_address_id", None):
+                email = getattr(addr, "email_address", None)
+                break
+
+        if email is None:
+            email = getattr(cu.email_addresses[0], "email_address", None)
+
+    first = getattr(cu, "first_name", "") or ""
+    last = getattr(cu, "last_name", "") or ""
+    name = f"{first} {last}".strip() or None
+
+    print("EMAIL ADDRESSES:", getattr(cu, "email_addresses", None))
+    print("PRIMARY EMAIL ID:", getattr(cu, "primary_email_address_id", None))
+    print("FIRST NAME:", getattr(cu, "first_name", None))
+    print("LAST NAME:", getattr(cu, "last_name", None))
+    print("IMAGE URL:", getattr(cu, "image_url", None))
+
+    avatar = getattr(cu, "image_url", None)
+
+    return email, name, avatar
 
 def get_current_user(request: Request, db: DBSession) -> User:
 
@@ -125,22 +153,32 @@ def get_current_user(request: Request, db: DBSession) -> User:
     if settings.auth_mode == "dev" and settings.env == "local":
         user = db.scalar(select(User).where(User.email == token_user.email))
         if not user:
-            user = User(id=token_user.id, email=token_user.email, name=None)
+            user = User(
+                email=token_user.email,
+                clerk_user_id=f"dev_{token_user.email}",
+                name=None,
+                role=UserRole.ATTENDEE,
+                status=UserStatus.ACTIVE,
+            )
             db.add(user)
             db.commit()
             db.refresh(user)
         return user
 
-    # In JWT mode: public.users is domain cache (profiles FK). Provision/sync from JWT
-    # so auth-service remains the issuer of identity while core stays consistent.
-    user = db.get(User, token_user.id)
+    
+    user = db.scalar(
+        select(User).where(User.clerk_user_id == token_user.id)
+    )
     if not user:
+        email, name, avatar = _get_clerk_user_info(token_user.id)
+
         user = User(
-            id=token_user.id,
-            email=token_user.email,
-            role=token_user.role,
-            status=token_user.status,
-            password_hash=None,
+            clerk_user_id=token_user.id,
+            email=email,
+            name=name,
+            avatar_url=avatar,
+            role=UserRole.ATTENDEE,
+            status=UserStatus.ACTIVE,
         )
         db.add(user)
         db.commit()
@@ -148,15 +186,25 @@ def get_current_user(request: Request, db: DBSession) -> User:
         return user
 
     changed = False
-    if token_user.email and user.email != token_user.email:
-        user.email = token_user.email
+
+    # Backfill identity fields from Clerk when missing or outdated.
+    email_from_clerk, name_from_clerk, avatar_from_clerk = _get_clerk_user_info(token_user.id)
+
+    if email_from_clerk and user.email != email_from_clerk:
+        user.email = email_from_clerk
         changed = True
-    if user.role != token_user.role:
-        user.role = token_user.role
+
+    if name_from_clerk and user.name != name_from_clerk:
+        user.name = name_from_clerk
         changed = True
-    if user.status != token_user.status:
-        user.status = token_user.status
+
+    if avatar_from_clerk and user.avatar_url != avatar_from_clerk:
+        user.avatar_url = avatar_from_clerk
         changed = True
+
+    # Never sync role/status from Clerk token.
+    # Those are app-owned fields in your DB.
+
     if changed:
         db.add(user)
         db.commit()
