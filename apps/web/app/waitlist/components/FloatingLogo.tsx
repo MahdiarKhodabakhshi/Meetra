@@ -16,7 +16,7 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   });
 
   // Scroll-driven values (only used before lock)
-  const topAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['12px', '50%']);
+  const topAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['12px', '254px']);
   const scaleAnimated = useTransform(scrollYProgress, [0.05, 0.917], [1, 2.55]);
   const xShiftAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['0px', '-16.4em']);
 
@@ -33,7 +33,7 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
       className="fixed z-50 pointer-events-none left-1/2"
       style={
         locked
-          ? { top: '50%', x: '-50%', marginLeft: '-16.4em' }
+          ? { top: '254px', x: '-50%', marginLeft: '-16.4em' }
           : { top: topAnimated, x: '-50%', marginLeft: xShiftAnimated }
       }
     >
