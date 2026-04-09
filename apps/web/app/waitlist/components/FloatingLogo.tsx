@@ -1,9 +1,14 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
+
+  // Debug log
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
+  });
 
   /*
    * The logo travels from nav (top center) to section 2 (center of viewport).
