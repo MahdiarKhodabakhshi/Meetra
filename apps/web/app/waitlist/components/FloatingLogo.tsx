@@ -1,40 +1,48 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * Math.min(Math.max(t, 0), 1);
+}
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
 
-  // Debug log
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
+  const [styles, setStyles] = useState({
+    topVh: 0,
+    scale: 1,
+    xEm: 0,
+    raOpacity: 1,
+    raX: 0,
+    raBlur: 0,
   });
 
-  /*
-   * The logo travels from nav (top center) to section 2 (center of viewport).
-   * Section 2 is a sticky 100vh so the text stays centered in the viewport.
-   * That means we just need to go from top:24px → top:50% and shift left.
-   *
-   * The transform-origin is 'left baseline' so scale grows rightward from Meet.
-   * We use translateY(-50%) at the end so top:50% actually centers it.
-   */
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
 
-  // Vertical: nav → center of viewport, stops at 81.4%
-  const topPercent = useTransform(scrollYProgress, [0.05, 0.814, 1], [0, 42, 42]);
-  const topVal = useMotionTemplate`calc(${topPercent}vh + 12px)`;
+    // Clamp at 81.4% — nothing changes after this
+    const clamped = Math.min(v, 0.814);
 
-  // Scale, stops at 81.4%
-  const scale = useTransform(scrollYProgress, [0.05, 0.814, 1], [1, 2.55, 2.55]);
+    // Position/scale: 0.05 → 0.814
+    const t = Math.min(Math.max((clamped - 0.05) / (0.814 - 0.05), 0), 1);
+    const topVh = lerp(0, 42, t);
+    const scale = lerp(1, 2.55, t);
+    const xEm = lerp(0, -16.4, t);
 
-  // Shift left, stops at 81.4%
-  const xEm = useTransform(scrollYProgress, [0.05, 0.814, 1], [0, -16.4, -16.4]);
-  const xVal = useMotionTemplate`calc(-50% + ${xEm}em)`;
+    // Ra: 0.7 → 0.85 (also clamped)
+    const raT = Math.min(Math.max((clamped - 0.7) / (0.85 - 0.7), 0), 1);
 
-  // "ra" peels off
-  const raOpacity = useTransform(scrollYProgress, [0.7, 0.85], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.7, 0.85], [0, 30]);
-  const raBlurVal = useTransform(scrollYProgress, [0.7, 0.85], [0, 12]);
-  const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
+    setStyles({
+      topVh,
+      scale,
+      xEm,
+      raOpacity: 1 - raT,
+      raX: raT * 30,
+      raBlur: raT * 12,
+    });
+  });
 
   if (!visible) return null;
 
@@ -45,13 +53,13 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        top: topVal,
-        x: xVal,
+        top: `calc(${styles.topVh}vh + 12px)`,
+        transform: `translateX(calc(-50% + ${styles.xEm}em))`,
       }}
     >
-      <motion.div
+      <div
         className="flex items-baseline select-none origin-left"
-        style={{ scale }}
+        style={{ transform: `scale(${styles.scale})` }}
       >
         <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-white"
@@ -59,18 +67,18 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
         >
           Meet
         </span>
-        <motion.span
+        <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-[#60A5FA]"
           style={{
             fontSize: '22px',
-            opacity: raOpacity,
-            x: raXOffset,
-            filter: raFilter,
+            opacity: styles.raOpacity,
+            transform: `translateX(${styles.raX}px)`,
+            filter: `blur(${styles.raBlur}px)`,
           }}
         >
           ra
-        </motion.span>
-      </motion.div>
+        </span>
+      </div>
     </motion.div>
   );
 }
