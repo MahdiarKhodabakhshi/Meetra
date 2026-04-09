@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const smooth = { duration: 1.2, ease: [0.22, 1, 0.36, 1] as const };
-const ease = [0.22, 1, 0.36, 1] as const;
+const smooth = { duration: 1.4, ease: [0.16, 1, 0.3, 1] as const };
+const ease = [0.16, 1, 0.3, 1] as const;
 
 /* All similar visual width for ticker feel */
 const words = ['mentors.', 'founders.', 'partners.', 'investors.', 'advisors.'];
@@ -151,24 +151,24 @@ export default function HeroIntro() {
                 {isRolling ? (
                   <motion.span
                     key={words[wordIndex]}
-                    className="absolute left-[0.2em] font-[family-name:var(--font-playfair)] font-normal italic tracking-[-0.01em] text-[#94A3B8] leading-none whitespace-nowrap"
-                    style={{ fontSize: 'clamp(2.2rem, 5.5vw, 5rem)' }}
-                    initial={{ y: '120%', opacity: 0, filter: 'blur(6px)' }}
+                    className="absolute left-0 bottom-0 font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#3B82F6] leading-none whitespace-nowrap"
+                    style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
+                    initial={{ y: '120%', opacity: 0, filter: 'blur(8px)' }}
                     animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
-                    transition={{ duration: 0.7, ease }}
+                    exit={{ y: '-120%', opacity: 0, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.85, ease }}
                   >
                     {words[wordIndex]}
                   </motion.span>
                 ) : (
                   <motion.span
                     key="ra"
-                    className="font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#3B82F6] leading-none"
+                    className="absolute left-0 bottom-0 font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#3B82F6] leading-none"
                     style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
-                    initial={phase === 'rejoin' ? { y: '120%', opacity: 0, filter: 'blur(6px)' } : false}
+                    initial={phase === 'rejoin' ? { y: '120%', opacity: 0, filter: 'blur(8px)' } : false}
                     animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
-                    transition={{ duration: 0.7, ease }}
+                    exit={{ y: '-120%', opacity: 0, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.85, ease }}
                   >
                     ra
                   </motion.span>
