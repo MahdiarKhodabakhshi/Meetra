@@ -53,7 +53,7 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
 
 
   return (
-    <div ref={sectionRef} className="relative bg-[#0A0F1C] h-screen">
+    <div ref={sectionRef} className="relative bg-[#0A0F1C] h-screen mb-16">
       <div className="h-full flex items-center justify-center overflow-hidden">
         <div className="px-6 max-w-4xl text-center relative z-10">
           <h2 className="font-[family-name:var(--font-playfair)] text-[clamp(1.8rem,4.2vw,3.5rem)] font-medium tracking-[-0.025em] leading-[1.3]">

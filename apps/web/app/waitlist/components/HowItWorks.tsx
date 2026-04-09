@@ -16,7 +16,7 @@ export default function HowItWorks() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="bg-[#0A0F1C] py-24 sm:py-32 px-6 sm:px-10">
+    <section ref={ref} className="bg-[#0A0F1C] border-t border-white/[0.06] py-24 sm:py-32 px-6 sm:px-10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
         {/* Image */}
