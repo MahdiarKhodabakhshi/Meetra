@@ -1,105 +1,175 @@
 'use client';
 
-import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const steps = [
-  { num: '01', text: 'Upload your resume — our AI learns who you should meet.' },
-  { num: '02', text: 'RSVP to a curated event. One tap, you\u2019re in.' },
-  { num: '03', text: 'Walk in knowing exactly who to talk to and why.' },
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const panels = [
+  {
+    label: 'What is Meetra',
+    keyword: 'The feeling',
+    headline: 'Walk into every room like you belong there.',
+    body: 'Meetra tells you who to meet, why they matter to your goals, and exactly what to say. No more wandering. No more wasted conversations. Just the right people, at the right time.',
+    image: '/connect.jpg',
+  },
+  {
+    label: 'For founders & recruiters',
+    keyword: 'The edge',
+    headline: 'Your next hire, investor, or co-founder is in the room.',
+    body: 'Stop hoping you\u2019ll bump into the right person. Meetra scans every attendee and surfaces the ones who align with what you\u2019re building — before you even show up.',
+    image: '/newhero.png',
+  },
+  {
+    label: 'For students & interns',
+    keyword: 'The start',
+    headline: 'Your career starts with one conversation.',
+    body: 'First events are intimidating. Meetra removes the guesswork — you\u2019ll know who the mentors are, who\u2019s hiring, and how to introduce yourself with confidence.',
+    image: '/bottomcta.png',
+  },
 ];
 
 export default function HowItWorks() {
-  const ref = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const isScrolling = useRef(false);
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
+  // Scroll-snap driven: detect which panel is in view
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current || isScrolling.current) return;
+    const el = containerRef.current;
+    const scrollTop = el.scrollTop;
+    const h = el.clientHeight;
+    const idx = Math.round(scrollTop / h);
+    if (idx !== active && idx >= 0 && idx < panels.length) {
+      setActive(idx);
+    }
+  }, [active]);
 
-  // Image zoom: starts at 1, slowly zooms to 1.15 as user scrolls
-  const imgScale = useTransform(scrollYProgress, [0.0, 0.8], [1, 1.2]);
-
-  // Darken overlay as text appears
-  const overlayOp = useTransform(scrollYProgress, [0.15, 0.35], [0.2, 0.55]);
-
-  // Label
-  const labelOp = useTransform(scrollYProgress, [0.2, 0.32], [0, 1]);
-  const labelY = useTransform(scrollYProgress, [0.2, 0.32], [12, 0]);
-
-  // Heading
-  const headOp = useTransform(scrollYProgress, [0.25, 0.38], [0, 1]);
-  const headY = useTransform(scrollYProgress, [0.25, 0.38], [16, 0]);
-
-  // Steps staggered
-  const s1Op = useTransform(scrollYProgress, [0.32, 0.42], [0, 1]);
-  const s1Y = useTransform(scrollYProgress, [0.32, 0.42], [14, 0]);
-  const s2Op = useTransform(scrollYProgress, [0.37, 0.47], [0, 1]);
-  const s2Y = useTransform(scrollYProgress, [0.37, 0.47], [14, 0]);
-  const s3Op = useTransform(scrollYProgress, [0.42, 0.52], [0, 1]);
-  const s3Y = useTransform(scrollYProgress, [0.42, 0.52], [14, 0]);
-
-  const stepAnims = [
-    { op: s1Op, y: s1Y },
-    { op: s2Op, y: s2Y },
-    { op: s3Op, y: s3Y },
-  ];
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   return (
-    <div ref={ref} className="relative h-screen overflow-hidden">
-      {/* Full-bleed image with scroll zoom */}
-      <motion.div
-        className="absolute inset-0 z-0 origin-center"
-        style={{ scale: imgScale }}
-      >
-        <img
-          src="/connect.jpg"
-          alt=""
-          className="w-full h-full object-cover"
-        />
-      </motion.div>
-
-      {/* Dark overlay — intensifies as text appears */}
-      <motion.div
-        className="absolute inset-0 z-[1] bg-[#0A0F1C]"
-        style={{ opacity: overlayOp }}
-      />
-
-      {/* Text content */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="px-8 sm:px-14 max-w-xl">
-          <motion.p
-            className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-4"
-            style={{ opacity: labelOp, y: labelY }}
+    <div
+      ref={containerRef}
+      className="relative h-screen overflow-y-auto"
+      style={{ scrollSnapType: 'y mandatory' }}
+    >
+      {/* Background images — crossfade */}
+      <div className="fixed inset-0 z-0 pointer-events-none" style={{ height: '100vh' }}>
+        {panels.map((p, i) => (
+          <motion.div
+            key={p.label}
+            className="absolute inset-0"
+            initial={false}
+            animate={{ opacity: active === i ? 1 : 0 }}
+            transition={{ duration: 0.8, ease }}
           >
-            How it works
-          </motion.p>
+            <img
+              src={p.image}
+              alt=""
+              className="w-full h-full object-cover"
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+            <div className="absolute inset-0 bg-[#0A0F1C]/65" />
+          </motion.div>
+        ))}
+      </div>
 
-          <motion.h2
-            className="font-[family-name:var(--font-playfair)] text-[clamp(1.6rem,3.5vw,2.5rem)] font-medium text-white tracking-[-0.02em] leading-[1.2] mb-10"
-            style={{ opacity: headOp, y: headY }}
-          >
-            Three steps.<br />Zero awkwardness.
-          </motion.h2>
+      {/* Snap panels */}
+      {panels.map((panel, i) => (
+        <div
+          key={panel.label}
+          className="h-screen flex items-center relative z-10"
+          style={{ scrollSnapAlign: 'start' }}
+        >
+          <div className="px-8 sm:px-14 lg:px-20 w-full max-w-7xl mx-auto">
+            <div className="max-w-xl">
+              {/* Micro label */}
+              <AnimatePresence mode="wait">
+                {active === i && (
+                  <motion.p
+                    key={`label-${i}`}
+                    className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-5"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.5, ease }}
+                  >
+                    {panel.label}
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
-          <div className="space-y-5">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.num}
-                className="flex gap-4 items-start"
-                style={{ opacity: stepAnims[i].op, y: stepAnims[i].y }}
-              >
-                <span className="text-[12px] font-mono text-[#60A5FA]/40 mt-0.5 shrink-0">
-                  {step.num}
-                </span>
-                <p className="text-[15px] text-white/60 leading-relaxed">
-                  {step.text}
-                </p>
-              </motion.div>
-            ))}
+              {/* Keyword */}
+              <AnimatePresence mode="wait">
+                {active === i && (
+                  <motion.p
+                    key={`kw-${i}`}
+                    className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#60A5FA]/40 mb-3 tabular-nums"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, ease }}
+                  >
+                    0{i + 1} — {panel.keyword}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              {/* Headline */}
+              <AnimatePresence mode="wait">
+                {active === i && (
+                  <motion.h2
+                    key={`head-${i}`}
+                    className="font-[family-name:var(--font-playfair)] text-[clamp(1.8rem,4.5vw,3.2rem)] font-medium text-white tracking-[-0.02em] leading-[1.15] mb-5"
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.6, delay: 0.05, ease }}
+                  >
+                    {panel.headline}
+                  </motion.h2>
+                )}
+              </AnimatePresence>
+
+              {/* Body */}
+              <AnimatePresence mode="wait">
+                {active === i && (
+                  <motion.p
+                    key={`body-${i}`}
+                    className="text-[15px] text-white/40 leading-relaxed max-w-md"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.5, delay: 0.1, ease }}
+                  >
+                    {panel.body}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Progress dots */}
+            <div className="mt-10 flex gap-2">
+              {panels.map((_, j) => (
+                <div
+                  key={j}
+                  className={`h-[3px] rounded-full transition-all duration-500 ${
+                    j === active
+                      ? 'w-8 bg-[#60A5FA]/60'
+                      : 'w-3 bg-white/15'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
