@@ -182,20 +182,22 @@ def get_current_user(request: Request, db: DBSession) -> User:
 
     changed = False
 
-    # Backfill identity fields from Clerk when missing or outdated.
-    email_from_clerk, name_from_clerk, avatar_from_clerk = _get_clerk_user_info(token_user.id)
+    # Only call Clerk API to backfill when identity fields are missing.
+    # The webhook handler keeps these in sync for normal updates.
+    if not user.email or not user.name or not user.avatar_url:
+        email_from_clerk, name_from_clerk, avatar_from_clerk = _get_clerk_user_info(token_user.id)
 
-    if email_from_clerk and user.email != email_from_clerk:
-        user.email = email_from_clerk
-        changed = True
+        if email_from_clerk and user.email != email_from_clerk:
+            user.email = email_from_clerk
+            changed = True
 
-    if name_from_clerk and user.name != name_from_clerk:
-        user.name = name_from_clerk
-        changed = True
+        if name_from_clerk and user.name != name_from_clerk:
+            user.name = name_from_clerk
+            changed = True
 
-    if avatar_from_clerk and user.avatar_url != avatar_from_clerk:
-        user.avatar_url = avatar_from_clerk
-        changed = True
+        if avatar_from_clerk and user.avatar_url != avatar_from_clerk:
+            user.avatar_url = avatar_from_clerk
+            changed = True
 
     # Never sync role/status from Clerk token.
     # Those are app-owned fields in your DB.
