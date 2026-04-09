@@ -5,46 +5,42 @@ import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motio
 /**
  * The ONE "Meetra" on the page. Fixed position, z-50.
  *
- * - Hero phase: sits at top center as the nav logo (always visible)
- * - As user scrolls past hero: physically moves down toward section 2
- *   and scales up to match the sentence font size
- * - "ra" peels off with blur as it approaches the docking position
- * - "Meet" lands perfectly aligned with "ing the right people"
+ * Hero: sits at very top center (like a nav logo).
+ * On scroll: descends to section 2 center, scales up, "ra" peels off,
+ * "Meet" docks into "Meeting the right people".
  */
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
 
-  // Position: nav top → sentence center
-  const top = useTransform(scrollYProgress, [0.05, 0.25], ['32px', '46vh']);
+  // Position: very top → vertically centered in viewport
+  const top = useTransform(scrollYProgress, [0.05, 0.3], ['24px', '50%']);
 
-  // Scale: 1 (22px nav) → scaled to match ~3.5rem headline
-  const scale = useTransform(scrollYProgress, [0.05, 0.25], [1, 2.55]);
+  // Scale: nav size (22px) → headline size (~3.5rem ≈ 56px → 56/22 ≈ 2.55)
+  const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
 
-  // Horizontal offset: centered → shift left to align with gap in sentence
-  const x = useTransform(scrollYProgress, [0.05, 0.25], ['0%', '-3.2em']);
+  // Horizontal: starts centered, shifts left to align "Meet" with sentence gap
+  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-4em']);
 
-  // "ra" fades out — slower, more dramatic
-  const raOpacity = useTransform(scrollYProgress, [0.2, 0.34], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.2, 0.34], [0, 24]);
-  const raBlurVal = useTransform(scrollYProgress, [0.2, 0.34], [0, 10]);
+  // "ra" peels off
+  const raOpacity = useTransform(scrollYProgress, [0.22, 0.38], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.22, 0.38], [0, 24]);
+  const raBlurVal = useTransform(scrollYProgress, [0.22, 0.38], [0, 10]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
-  // All hooks above — safe to conditionally render below
   if (!visible) return null;
 
   return (
     <motion.div
-      className="fixed z-50 pointer-events-none"
+      className="fixed z-50 pointer-events-none left-1/2"
       style={{
         top,
-        left: '50%',
         x: '-50%',
-        translateX: x,
+        marginLeft: xShift,
       }}
     >
       <motion.div
-        className="flex items-baseline select-none"
-        style={{ scale, transformOrigin: 'left baseline' }}
+        className="flex items-baseline select-none origin-left"
+        style={{ scale }}
       >
         <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-white"
