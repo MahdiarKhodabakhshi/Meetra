@@ -1,17 +1,9 @@
 export const dynamic = 'force-dynamic';
 
-import Navbar from './components/Navbar';
-import ScrollNarrative from './components/ScrollNarrative';
-import WaitlistForm from './components/WaitlistForm';
-import Footer from './components/Footer';
-
 export default function WaitlistPage() {
   return (
-    <main>
-      <Navbar />
-      <ScrollNarrative />
-      <WaitlistForm />
-      <Footer />
+    <main className="min-h-screen flex items-center justify-center bg-[#0A0F1C]">
+      <p className="text-white/30 text-sm">Waitlist — coming soon</p>
     </main>
   );
 }
