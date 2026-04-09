@@ -1,19 +1,28 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 
-/**
- * Section 2 — sentence waits for "Meet" to dock.
- * Text starts blurry/dim, pops to crisp white when Meet locks at 91.7%.
- */
 export default function ProblemStatement() {
   const { scrollYProgress } = useScroll();
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  // Log the position of "ing" text so we can align Meet to it
+  useEffect(() => {
+    const log = () => {
+      if (textRef.current) {
+        const rect = textRef.current.getBoundingClientRect();
+        console.log(`[ProblemText] top: ${rect.top.toFixed(1)}px, left: ${rect.left.toFixed(1)}px`);
+      }
+    };
+    window.addEventListener('scroll', log, { passive: true });
+    log();
+    return () => window.removeEventListener('scroll', log);
+  }, []);
 
   // Text blur: blurry → sharp at 91.7%
   const blurVal = useTransform(scrollYProgress, [0.7, 0.917], [8, 0]);
   const textFilter = useMotionTemplate`blur(${blurVal}px)`;
-
-  // Text opacity: dim → full at 91.7%
   const textOpacity = useTransform(scrollYProgress, [0.7, 0.917], [0.3, 1]);
 
   return (
@@ -29,7 +38,7 @@ export default function ProblemStatement() {
         >
           <span className="text-white">
             <span className="invisible inline">Meet</span>
-            <span>ing the right people</span>
+            <span ref={textRef}>ing the right people</span>
           </span>
           <br />
           <span className="text-white/50">{`shouldn\u2019t be left to chance.`}</span>
