@@ -1,9 +1,14 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
+
+  // Log scroll progress so we can find the exact lock position
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
+  });
 
   // Position: very top → vertically centered — clamps at target
   const top = useTransform(scrollYProgress, [0.05, 0.28, 1], ['12px', '50%', '50%']);
