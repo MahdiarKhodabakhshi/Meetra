@@ -33,7 +33,7 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
   }, [heroReady]);
 
   // Single normalized progress
-  const eased = useTransform(scrollYProgress, [0.08, 0.43], [0, 1], { clamp: true });
+  const eased = useTransform(scrollYProgress, [0.1, 0.6], [0, 1], { clamp: true });
 
   // Meet: translate from nav to home
   const meetTx = useTransform(eased, [0, 1], [offsets.offsetX, 0]);
@@ -53,7 +53,7 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
 
 
   return (
-    <div ref={sectionRef} className="relative bg-[#0A0F1C]" style={{ height: '160vh' }}>
+    <div ref={sectionRef} className="relative bg-[#0A0F1C]" style={{ height: '110vh' }}>
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
         <div className="px-6 max-w-4xl text-center relative z-10">
           <h2 className="font-[family-name:var(--font-playfair)] text-[clamp(1.8rem,4.2vw,3.5rem)] font-medium tracking-[-0.025em] leading-[1.3]">
