@@ -12,7 +12,7 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
 
   // Shift left more to align with "ing"
-  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-17em']);
+  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-16.3em']);
 
   // "ra" peels off — starts late, takes a long time
   const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
