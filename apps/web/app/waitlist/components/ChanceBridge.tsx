@@ -1,67 +1,56 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
-/**
- * Self-contained scroll section.
- * 
- * Uses a tall scrollable div with a sticky viewport.
- * The scroll target is an INNER sentinel div that sits
- * inside the sticky area, so we get clean 0→1 progress
- * from when the section pins to when it unpins.
- */
 export default function ChanceBridge() {
   const outerRef = useRef<HTMLDivElement>(null);
 
-  // Track scroll of the outer container
   const { scrollYProgress } = useScroll({
     target: outerRef,
-    offset: ['start start', 'end end'],
+    offset: ['start end', 'end start'],
   });
 
-  // Debug: log progress to verify range
-  // useMotionValueEvent(scrollYProgress, 'change', (v) => console.log('CB:', v.toFixed(3)));
+  // Visible range is ~0.22 to ~0.75
+  // 0.22 = text centered on screen
+  // 0.75 = section scrolling out
 
-  // ── PHASE 1: Text visible (progress 0.0 → 0.25) ──
-  // Text is fully visible, centered. No image yet.
-  const textOp = useTransform(scrollYProgress, [0.0, 0.05, 0.25, 0.4], [0, 1, 1, 0]);
+  // ── Text: visible from 0.22, fades out 0.35–0.45 ──
+  const textOp = useTransform(scrollYProgress, [0.18, 0.22, 0.35, 0.45], [0, 1, 1, 0]);
 
-  // ── PHASE 2: Image appears and grows (progress 0.2 → 0.6) ──
-  // Starts as a small rectangle behind text, grows to fill viewport
-  const imgOp = useTransform(scrollYProgress, [0.2, 0.35], [0, 1]);
-  // clipPath: inset shrinks from 35% on each side to 0
-  const clipInset = useTransform(scrollYProgress, [0.2, 0.6], [35, 0]);
+  // ── Image: clip-path reveal from 0.28 to 0.52 ──
+  const imgOp = useTransform(scrollYProgress, [0.28, 0.34], [0, 1]);
+  const clipInset = useTransform(scrollYProgress, [0.28, 0.52], [30, 0]);
 
-  // ── PHASE 3: Overlay text (progress 0.6 → 0.8) ──
-  const olOp = useTransform(scrollYProgress, [0.6, 0.72], [0, 1]);
-  const olY = useTransform(scrollYProgress, [0.6, 0.72], [20, 0]);
-  const ol2Op = useTransform(scrollYProgress, [0.68, 0.78], [0, 1]);
-  const ol2Y = useTransform(scrollYProgress, [0.68, 0.78], [14, 0]);
+  // Slow zoom once image is full
+  const imgZoom = useTransform(scrollYProgress, [0.52, 0.75], [1, 1.06]);
 
-  // ── PHASE 4: Fade out (progress 0.85 → 1.0) ──
-  const fadeOut = useTransform(scrollYProgress, [0.85, 1.0], [1, 0]);
+  // ── Overlay text: 0.54–0.66 ──
+  const olOp = useTransform(scrollYProgress, [0.54, 0.62], [0, 1]);
+  const olY = useTransform(scrollYProgress, [0.54, 0.62], [16, 0]);
+  const ol2Op = useTransform(scrollYProgress, [0.60, 0.68], [0, 1]);
+  const ol2Y = useTransform(scrollYProgress, [0.60, 0.68], [12, 0]);
 
-  // Slight zoom on image once full-bleed
-  const imgZoom = useTransform(scrollYProgress, [0.6, 1.0], [1, 1.08]);
+  // ── Fade out: 0.70–0.78 ──
+  const fadeOut = useTransform(scrollYProgress, [0.70, 0.78], [1, 0]);
 
   return (
     <div
       ref={outerRef}
-      className="relative"
-      style={{ height: '350vh' }}
+      className="relative bg-[#0A0F1C]"
+      style={{ height: '300vh' }}
     >
       <motion.div
         className="sticky top-0 h-screen overflow-hidden bg-[#0A0F1C]"
         style={{ opacity: fadeOut }}
       >
-        {/* ── Image layer — revealed via clipPath ── */}
+        {/* ── Image — clipPath inset reveal ── */}
         <motion.div
           className="absolute inset-0 z-0"
           style={{
             opacity: imgOp,
             scale: imgZoom,
-            clipPath: useTransform(clipInset, (v) => `inset(${v}% ${v}% ${v}% ${v}%)`),
+            clipPath: useTransform(clipInset, (v) => `inset(${v}%)`),
           }}
         >
           <img
@@ -72,7 +61,7 @@ export default function ChanceBridge() {
           <div className="absolute inset-0 bg-[#0A0F1C]/30" />
         </motion.div>
 
-        {/* ── Big text — centered ── */}
+        {/* ── Big text ── */}
         <motion.div
           className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
           style={{ opacity: textOp }}
@@ -87,7 +76,7 @@ export default function ChanceBridge() {
           </div>
         </motion.div>
 
-        {/* ── Overlay text on full image ── */}
+        {/* ── Overlay text ── */}
         <div className="absolute inset-0 z-20 flex items-end pointer-events-none">
           <div className="px-8 sm:px-14 pb-14 sm:pb-20 max-w-xl">
             <motion.p
