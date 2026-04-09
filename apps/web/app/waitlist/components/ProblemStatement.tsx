@@ -50,8 +50,7 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
   const line2Opacity = useTransform(eased, [0.55, 0.9], [0, 1], { clamp: true });
   const line2Y = useTransform(eased, [0.55, 0.9], [24, 0], { clamp: true });
 
-  const subOpacity = useTransform(eased, [0.85, 1], [0, 1], { clamp: true });
-  const subY = useTransform(eased, [0.85, 1], [8, 0], { clamp: true });
+
 
   return (
     <div ref={sectionRef} className="relative bg-[#0A0F1C]" style={{ height: '160vh' }}>
@@ -93,13 +92,6 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
               {`shouldn\u2019t be left to chance.`}
             </motion.span>
           </h2>
-
-          <motion.p
-            className="mt-8 text-[14px] text-white/20 max-w-sm mx-auto leading-relaxed"
-            style={{ opacity: subOpacity, y: subY }}
-          >
-            That&apos;s why we built Meetra.
-          </motion.p>
         </div>
       </div>
     </div>

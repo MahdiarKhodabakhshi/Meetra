@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useRef } from 'react';
 import HeroIntro from './components/HeroIntro';
 import ProblemStatement from './components/ProblemStatement';
+import ChanceBridge from './components/ChanceBridge';
 import WaitlistCTA from './components/WaitlistCTA';
 import WaitlistFooter from './components/WaitlistFooter';
 
@@ -16,6 +17,7 @@ export default function WaitlistPage() {
     <main>
       <HeroIntro onHeroReady={() => setHeroReady(true)} />
       <ProblemStatement sectionRef={sectionRef} heroReady={heroReady} />
+      <ChanceBridge />
       <WaitlistCTA />
       <WaitlistFooter />
     </main>
