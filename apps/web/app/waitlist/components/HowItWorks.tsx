@@ -8,17 +8,17 @@ const steps = [
   {
     num: '01',
     title: 'Tell Meetra about you',
-    desc: 'Share your background, skills, and what you're looking for — a job, a co-founder, a mentor. Takes under 2 minutes. Upload your resume or paste your LinkedIn.',
+    desc: `Share your background, skills, and what you're looking for — a job, a co-founder, a mentor. Takes under 2 minutes. Upload your resume or paste your LinkedIn.`,
   },
   {
     num: '02',
     title: 'See who matters most',
-    desc: 'When you join an event, Meetra analyzes the attendees and surfaces the people most relevant to your specific goals. Each match comes with a clear reason why.',
+    desc: `When you join an event, Meetra analyzes the attendees and surfaces the people most relevant to your specific goals. Each match comes with a clear reason why.`,
   },
   {
     num: '03',
     title: 'Approach with confidence',
-    desc: 'For every recommended person, Meetra gives you context: what they work on, where your interests overlap, and a suggested conversation angle.',
+    desc: `For every recommended person, Meetra gives you context: what they work on, where your interests overlap, and a suggested conversation angle.`,
   },
 ];
 

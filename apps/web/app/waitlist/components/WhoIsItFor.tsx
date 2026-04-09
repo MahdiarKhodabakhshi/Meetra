@@ -8,22 +8,22 @@ const ease = [0.22, 1, 0.36, 1] as const;
 const personas = [
   {
     keyword: 'Students & new grads',
-    desc: 'Find recruiters, alumni, and engineers who match your interests at career fairs and campus events. Walk in with a plan instead of anxiety.',
+    desc: `Find recruiters, alumni, and engineers who match your interests at career fairs and campus events. Walk in with a plan instead of anxiety.`,
     image: '/rsvp.jpg',
   },
   {
     keyword: 'Startup founders',
-    desc: 'Identify investors, advisors, early hires, and design partners at demo days and startup meetups. Stop pitching to the wrong people.',
+    desc: `Identify investors, advisors, early hires, and design partners at demo days and startup meetups. Stop pitching to the wrong people.`,
     image: '/cta-bg.jpg',
   },
   {
     keyword: 'Sales & BD professionals',
-    desc: 'Stop spraying business cards. Focus on the high-value contacts that actually convert. Every conversation with a purpose.',
+    desc: `Stop spraying business cards. Focus on the high-value contacts that actually convert. Every conversation with a purpose.`,
     image: '/discover.jpg',
   },
   {
     keyword: 'Career changers',
-    desc: 'Moving to a new city or industry? Walk into events with a clear plan. Meetra surfaces the people who can open the right doors.',
+    desc: `Moving to a new city or industry? Walk into events with a clear plan. Meetra surfaces the people who can open the right doors.`,
     image: '/connect.jpg',
   },
 ];
@@ -53,7 +53,7 @@ export default function WhoIsItFor() {
           {/* Left — interactive keywords */}
           <div>
             <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA] mb-6">
-              Who it's for
+              Who it&apos;s for
             </p>
             <h2 className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-5xl font-medium text-white tracking-tight leading-[1.15]">
               Built for{' '}

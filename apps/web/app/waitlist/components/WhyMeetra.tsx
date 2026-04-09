@@ -7,15 +7,15 @@ const ease = [0.22, 1, 0.36, 1] as const;
 const diffs = [
   {
     title: 'Personalized, not generic',
-    desc: 'Meetra doesn't show you a list of attendees. It shows you your list — filtered, ranked, and explained based on what you're actually trying to do.',
+    desc: `Meetra doesn't show you a list of attendees. It shows you your list — filtered, ranked, and explained based on what you're actually trying to do.`,
   },
   {
     title: 'Context, not just names',
-    desc: 'Knowing someone's title isn't enough. Meetra tells you why they're relevant to you and gives you a real reason to walk up to them.',
+    desc: `Knowing someone's title isn't enough. Meetra tells you why they're relevant to you and gives you a real reason to walk up to them.`,
   },
   {
     title: 'Built for the shy, the new, the underestimated',
-    desc: 'Most networking tools make extroverts more powerful. Meetra gives everyone the same advantage: information, context, and a clear plan.',
+    desc: `Most networking tools make extroverts more powerful. Meetra gives everyone the same advantage: information, context, and a clear plan.`,
   },
 ];
 

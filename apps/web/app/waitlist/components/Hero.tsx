@@ -27,7 +27,7 @@ export default function Hero() {
       {/* Parallax background */}
       <motion.div style={{ scale: heroScale }} className="absolute inset-0 will-change-transform">
         <img
-          src="/hero-bg.jpg"
+          src="/rooftop.png"
           alt=""
           className="w-full h-full object-cover"
           fetchPriority="high"

@@ -8,22 +8,22 @@ const problems = [
   {
     num: '01',
     title: 'Wasted time, missed people',
-    desc: 'You spend 3 hours at an event talking to whoever is nearby. The one person who could've changed your trajectory was 10 feet away.',
+    desc: `You spend 3 hours at an event talking to whoever is nearby. The one person who could've changed your trajectory was 10 feet away.`,
   },
   {
     num: '02',
     title: 'No context, no confidence',
-    desc: 'You spot someone interesting but don't know what they work on or how to start a conversation that isn't awkward small talk.',
+    desc: `You spot someone interesting but don't know what they work on or how to start a conversation that isn't awkward small talk.`,
   },
   {
     num: '03',
     title: 'Networking favors the extroverted',
-    desc: 'Confident, well-connected people dominate these spaces. Everyone else — equally talented — gets left behind.',
+    desc: `Confident, well-connected people dominate these spaces. Everyone else — equally talented — gets left behind.`,
   },
   {
     num: '04',
     title: 'Events end. Connections disappear.',
-    desc: 'You had a good conversation but forgot to follow up. The momentum died. The opportunity vanished.',
+    desc: `You had a good conversation but forgot to follow up. The momentum died. The opportunity vanished.`,
   },
 ];
 
@@ -32,7 +32,7 @@ export default function ProblemSection() {
     <section className="relative overflow-hidden bg-[#0F172A] py-24 sm:py-32 lg:py-40">
       {/* Background image */}
       <div className="absolute inset-0">
-        <img src="/discover.jpg" alt="" className="w-full h-full object-cover opacity-20" />
+        <img src="/disconnected.png" alt="" className="w-full h-full object-cover opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/60 via-[#0F172A]/80 to-[#0F172A]" />
       </div>
 

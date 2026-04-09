@@ -128,7 +128,7 @@ export default function WaitlistForm() {
               transition={{ duration: 0.6, delay: 0.1, ease }}
               className="text-base text-white/30 leading-relaxed max-w-sm"
             >
-              Join a community built on real connections, not vanity metrics. We're building something new — help us shape it.
+              Join a community built on real connections, not vanity metrics. We&apos;re building something new — help us shape it.
             </motion.p>
 
             <motion.div
@@ -187,9 +187,9 @@ export default function WaitlistForm() {
                       />
                     </svg>
                   </motion.div>
-                  <h3 className="font-[family-name:var(--font-playfair)] text-2xl font-medium text-white mb-3">You're in.</h3>
+                  <h3 className="font-[family-name:var(--font-playfair)] text-2xl font-medium text-white mb-3">You&apos;re in.</h3>
                   <p className="text-sm text-white/40 mb-8">
-                    Thanks for joining the Meetra waitlist. We'll reach out with early access details soon.
+                    Thanks for joining the Meetra waitlist. We&apos;ll reach out with early access details soon.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <button
@@ -225,7 +225,7 @@ export default function WaitlistForm() {
                 >
                   {duplicateEmail && (
                     <div className="rounded-xl p-4 text-sm bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                      You're already on the list. We'll be in touch soon.
+                      You&apos;re already on the list. We&apos;ll be in touch soon.
                     </div>
                   )}
 
@@ -284,7 +284,7 @@ export default function WaitlistForm() {
 
                   {/* Use case */}
                   <div>
-                    <label htmlFor="wl-usecase" className="block text-sm font-medium text-white/70 mb-1.5">I'd use Meetra mostly for...</label>
+                    <label htmlFor="wl-usecase" className="block text-sm font-medium text-white/70 mb-1.5">I&apos;d use Meetra mostly for...</label>
                     <select
                       id="wl-usecase"
                       value={useCase}
