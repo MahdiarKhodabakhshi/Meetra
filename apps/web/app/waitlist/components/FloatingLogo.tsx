@@ -12,12 +12,12 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
 
   // Shift left more to align with "ing"
-  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-13em']);
+  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-16em']);
 
   // "ra" peels off — starts late, takes a long time
-  const raOpacity = useTransform(scrollYProgress, [0.45, 0.65], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.45, 0.65], [0, 30]);
-  const raBlurVal = useTransform(scrollYProgress, [0.45, 0.65], [0, 12]);
+  const raOpacity = useTransform(scrollYProgress, [0.55, 0.75], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.55, 0.75], [0, 30]);
+  const raBlurVal = useTransform(scrollYProgress, [0.55, 0.75], [0, 12]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
   if (!visible) return null;
