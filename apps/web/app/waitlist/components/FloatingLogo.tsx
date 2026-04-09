@@ -1,20 +1,26 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { useState } from 'react';
+import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
+  const [locked, setLocked] = useState(false);
 
-  // Position: very top → vertically centered — locks at 91.7%
-  const top = useTransform(scrollYProgress, [0.05, 0.917, 1], ['12px', '50%', '50%']);
+  // Log scroll progress
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
+    if (v >= 0.917 && !locked) {
+      setLocked(true);
+    }
+  });
 
-  // Scale: nav size → headline size — locks at 91.7%
-  const scale = useTransform(scrollYProgress, [0.05, 0.917, 1], [1, 2.55, 2.55]);
+  // Scroll-driven values (only used before lock)
+  const topAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['12px', '50%']);
+  const scaleAnimated = useTransform(scrollYProgress, [0.05, 0.917], [1, 2.55]);
+  const xShiftAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['0px', '-16.4em']);
 
-  // Shift left — locks at 91.7%
-  const xShift = useTransform(scrollYProgress, [0.05, 0.917, 1], ['0px', '-16.4em', '-16.4em']);
-
-  // "ra" peels off — starts late, takes a long time
+  // "ra" peels off
   const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
   const raXOffset = useTransform(scrollYProgress, [0.6, 0.8], [0, 30]);
   const raBlurVal = useTransform(scrollYProgress, [0.6, 0.8], [0, 12]);
@@ -25,15 +31,15 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   return (
     <motion.div
       className="fixed z-50 pointer-events-none left-1/2"
-      style={{
-        top,
-        x: '-50%',
-        marginLeft: xShift,
-      }}
+      style={
+        locked
+          ? { top: '50%', x: '-50%', marginLeft: '-16.4em' }
+          : { top: topAnimated, x: '-50%', marginLeft: xShiftAnimated }
+      }
     >
       <motion.div
         className="flex items-baseline select-none origin-left"
-        style={{ scale }}
+        style={locked ? { scale: 2.55 } : { scale: scaleAnimated }}
       >
         <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-white"
@@ -45,9 +51,9 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-[#60A5FA]"
           style={{
             fontSize: '22px',
-            opacity: raOpacity,
-            x: raXOffset,
-            filter: raFilter,
+            opacity: locked ? 0 : raOpacity,
+            x: locked ? 30 : raXOffset,
+            filter: locked ? 'blur(12px)' : raFilter,
           }}
         >
           ra
