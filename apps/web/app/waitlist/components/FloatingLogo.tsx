@@ -1,23 +1,18 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
 
-  // Log scroll progress so we can find the exact lock position
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
-  });
+  // Position: very top → vertically centered — locks at 91.7%
+  const top = useTransform(scrollYProgress, [0.05, 0.917, 1], ['12px', '50%', '50%']);
 
-  // Position: very top → vertically centered — clamps at target
-  const top = useTransform(scrollYProgress, [0.05, 0.28, 1], ['12px', '50%', '50%']);
+  // Scale: nav size → headline size — locks at 91.7%
+  const scale = useTransform(scrollYProgress, [0.05, 0.917, 1], [1, 2.55, 2.55]);
 
-  // Scale: nav size → headline size — clamps at target
-  const scale = useTransform(scrollYProgress, [0.05, 0.28, 1], [1, 2.55, 2.55]);
-
-  // Shift left — clamps at target
-  const xShift = useTransform(scrollYProgress, [0.05, 0.28, 1], ['0px', '-16.4em', '-16.4em']);
+  // Shift left — locks at 91.7%
+  const xShift = useTransform(scrollYProgress, [0.05, 0.917, 1], ['0px', '-16.4em', '-16.4em']);
 
   // "ra" peels off — starts late, takes a long time
   const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
