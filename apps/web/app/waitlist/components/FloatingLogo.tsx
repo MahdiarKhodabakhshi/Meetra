@@ -1,66 +1,114 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useState, useRef, useEffect, type RefObject } from 'react';
+import { useScroll, useMotionValueEvent } from 'framer-motion';
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * Math.min(Math.max(t, 0), 1);
 }
 
-export default function FloatingLogo({ visible }: { visible: boolean }) {
-  const { scrollYProgress } = useScroll();
+interface Props {
+  visible: boolean;
+  /** Ref to the invisible "Meet" span in section 2 — we snap to its position */
+  meetGapRef: RefObject<HTMLSpanElement | null>;
+  /** Ref to the section 2 container — we scope scroll tracking to it */
+  sectionRef: RefObject<HTMLDivElement | null>;
+}
 
+export default function FloatingLogo({ visible, meetGapRef, sectionRef }: Props) {
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const [locked, setLocked] = useState(false);
+  const [lockPos, setLockPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Animated (non-locked) styles
   const [styles, setStyles] = useState({
-    topVh: 0,
+    top: 24,
+    left: 0,
     scale: 1,
-    xEm: 0,
     raOpacity: 1,
     raX: 0,
     raBlur: 0,
   });
 
+  // Read the gap position on scroll to know where to lock
+  const readGapPosition = () => {
+    if (!meetGapRef.current) return null;
+    const rect = meetGapRef.current.getBoundingClientRect();
+    return { top: rect.top, left: rect.left };
+  };
+
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
+    console.log(`[FloatingLogo] section scroll: ${(v * 100).toFixed(1)}%`);
 
-    // Clamp at 81.4% — nothing changes after this
-    const clamped = Math.min(v, 0.814);
+    // Lock when section is ~40% scrolled in
+    if (v >= 0.4 && !locked) {
+      const pos = readGapPosition();
+      if (pos) {
+        setLockPos(pos);
+        setLocked(true);
+      }
+    }
 
-    // Position/scale: 0.05 → 0.814
-    const t = Math.min(Math.max((clamped - 0.05) / (0.814 - 0.05), 0), 1);
-    const topVh = lerp(0, 22.5, t);
-    const scale = lerp(1, 2.55, t);
-    const xEm = lerp(0, -16.4, t);
+    // Unlock if scrolling back
+    if (v < 0.3 && locked) {
+      setLocked(false);
+      setLockPos(null);
+    }
 
-    // Ra: 0.7 → 0.85 (also clamped)
-    const raT = Math.min(Math.max((clamped - 0.7) / (0.85 - 0.7), 0), 1);
+    if (!locked) {
+      // Animate from nav position toward center
+      // v goes 0→1 as section scrolls through viewport
+      // We want the animation to happen roughly 0.1 → 0.4
+      const t = Math.min(Math.max((v - 0.1) / 0.3, 0), 1);
 
-    setStyles({
-      topVh,
-      scale,
-      xEm,
-      raOpacity: 1 - raT,
-      raX: raT * 30,
-      raBlur: raT * 12,
-    });
+      // Read where the gap currently is for the target
+      const gapPos = readGapPosition();
+      const targetTop = gapPos ? gapPos.top : window.innerHeight * 0.4;
+      const targetLeft = gapPos ? gapPos.left : window.innerWidth * 0.3;
+
+      setStyles({
+        top: lerp(24, targetTop, t),
+        left: lerp(window.innerWidth / 2 - 30, targetLeft, t),
+        scale: lerp(1, 2.55, t),
+        raOpacity: 1 - Math.min(Math.max((v - 0.25) / 0.15, 0), 1),
+        raX: lerp(0, 30, Math.min(Math.max((v - 0.25) / 0.15, 0), 1)),
+        raBlur: lerp(0, 12, Math.min(Math.max((v - 0.25) / 0.15, 0), 1)),
+      });
+    }
   });
+
+  // Update lock position on resize
+  useEffect(() => {
+    if (!locked) return;
+    const update = () => {
+      const pos = readGapPosition();
+      if (pos) setLockPos(pos);
+    };
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [locked]);
 
   if (!visible) return null;
 
+  const pos = locked && lockPos ? lockPos : { top: styles.top, left: styles.left };
+  const scale = locked ? 2.55 : styles.scale;
+
   return (
-    <motion.div
-      className="fixed z-50 pointer-events-none left-1/2"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+    <div
+      className="fixed z-50 pointer-events-none"
       style={{
-        top: `calc(${styles.topVh}vh + 12px)`,
-        transform: `translateX(calc(-50% + ${styles.xEm}em))`,
+        top: `${pos.top}px`,
+        left: `${pos.left}px`,
+        transform: `scale(${scale})`,
+        transformOrigin: 'left top',
+        transition: locked ? 'none' : undefined,
       }}
     >
-      <div
-        className="flex items-baseline select-none origin-left"
-        style={{ transform: `scale(${styles.scale})` }}
-      >
+      <div className="flex items-baseline select-none">
         <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-white"
           style={{ fontSize: '22px' }}
@@ -71,14 +119,14 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-[#60A5FA]"
           style={{
             fontSize: '22px',
-            opacity: styles.raOpacity,
-            transform: `translateX(${styles.raX}px)`,
-            filter: `blur(${styles.raBlur}px)`,
+            opacity: locked ? 0 : styles.raOpacity,
+            transform: `translateX(${locked ? 30 : styles.raX}px)`,
+            filter: `blur(${locked ? 12 : styles.raBlur}px)`,
           }}
         >
           ra
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,19 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { useScroll, useMotionValueEvent } from 'framer-motion';
 
-export default function ProblemStatement() {
-  const { scrollYProgress } = useScroll();
+interface Props {
+  sectionRef: RefObject<HTMLDivElement | null>;
+  meetGapRef: RefObject<HTMLSpanElement | null>;
+}
+
+export default function ProblemStatement({ sectionRef, meetGapRef }: Props) {
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
   const [popped, setPopped] = useState(false);
 
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    if (v >= 0.814 && !popped) setPopped(true);
-    if (v < 0.75 && popped) setPopped(false);
+    if (v >= 0.4 && !popped) setPopped(true);
+    if (v < 0.3 && popped) setPopped(false);
   });
 
   return (
-    <div className="relative bg-[#0A0F1C]" style={{ height: '120vh' }}>
+    <div ref={sectionRef} className="relative bg-[#0A0F1C]" style={{ height: '120vh' }}>
       <div className="sticky top-0 h-screen flex items-center justify-center">
         <div className="px-6 max-w-4xl text-center">
           <h2
@@ -24,7 +33,7 @@ export default function ProblemStatement() {
             }}
           >
             <span className="text-white">
-              <span className="invisible inline">Meet</span>
+              <span ref={meetGapRef} className="invisible inline">Meet</span>
               <span>ing the right people</span>
             </span>
             <br />
