@@ -9,6 +9,8 @@ export default function WaitlistPage() {
     <main>
       <FloatingLogo />
       <HeroIntro />
+      {/* Spacer so there's scroll room for the logo to travel */}
+      <div className="bg-[#0A0F1C]" style={{ height: '60vh' }} />
       <ProblemStatement />
     </main>
   );
