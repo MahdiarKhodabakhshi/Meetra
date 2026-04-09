@@ -2,88 +2,106 @@
 
 import { motion } from 'framer-motion';
 
+const ease = [0.22, 1, 0.36, 1] as const;
+
 const steps = [
   {
     num: '01',
     title: 'Tell Meetra about you',
-    desc: 'Share your background, skills, and what you\u2019re looking for \u2014 a job, a co-founder, a mentor, a collaborator, a customer. Takes under 2 minutes. You can also upload your resume or paste your LinkedIn.',
+    desc: 'Share your background, skills, and what you're looking for — a job, a co-founder, a mentor. Takes under 2 minutes. Upload your resume or paste your LinkedIn.',
   },
   {
     num: '02',
     title: 'See who matters most',
-    desc: 'When you join an event, Meetra analyzes the attendees and shows you the people most relevant to your specific goals. Not everyone \u2014 just the right ones. Each match comes with a clear reason why they matter to you.',
+    desc: 'When you join an event, Meetra analyzes the attendees and surfaces the people most relevant to your specific goals. Each match comes with a clear reason why.',
   },
   {
     num: '03',
     title: 'Approach with confidence',
-    desc: 'For every recommended person, Meetra gives you context: what they work on, where your interests overlap, and a suggested conversation angle. You walk up prepared, not guessing.',
+    desc: 'For every recommended person, Meetra gives you context: what they work on, where your interests overlap, and a suggested conversation angle.',
   },
 ];
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15 } },
-};
-
-const stepVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
-};
-
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative px-6 py-24 sm:py-32 lg:py-40">
-      <div className="max-w-[1200px] mx-auto">
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4 }}
-          className="wl-micro-label mb-4"
-        >
-          HOW IT WORKS
-        </motion.p>
+    <section id="how-it-works" className="py-24 sm:py-32 lg:py-40 px-6 sm:px-10 bg-[#FAFBFC]">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
 
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="wl-section-headline max-w-2xl mb-12 lg:mb-16"
-        >
-          Three steps. Better conversations. Real results.
-        </motion.h2>
+          {/* Left — text */}
+          <div>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.5, ease }}
+              className="wl-micro-label mb-5"
+            >
+              How it works
+            </motion.p>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          {steps.map((s) => (
-            <motion.div key={s.num} variants={stepVariants} className="wl-glass-card p-8">
-              <span
-                className="wl-gradient-text text-4xl font-bold tracking-tight block mb-4"
-              >
-                {s.num}
-              </span>
-              <h3 className="font-semibold text-lg mb-3 text-[var(--wl-text)]">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-[var(--wl-text-muted)]">{s.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, delay: 0.05, ease }}
+              className="wl-section-headline mb-14"
+            >
+              Three steps. Better conversations. Real results.
+            </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-10 text-sm text-[var(--wl-text-muted)] opacity-60 text-center lg:text-left"
-        >
-          Coming soon: post-event follow-up support, conversation notes, and suggested follow-up
-          messages.
-        </motion.p>
+            <div className="space-y-10">
+              {steps.map((s, i) => (
+                <motion.div
+                  key={s.num}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.6, delay: i * 0.1, ease }}
+                  className="flex gap-6"
+                >
+                  <div className="flex-shrink-0 pt-1">
+                    <span className="font-[family-name:var(--font-playfair)] text-2xl font-medium text-[#E2E8F0]">
+                      {s.num}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-[family-name:var(--font-playfair)] text-lg font-medium text-[#0F172A] mb-2">
+                      {s.title}
+                    </h3>
+                    <p className="text-[14px] text-[#64748B] leading-relaxed">{s.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — image */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.8, ease }}
+            className="relative aspect-[4/5] rounded-2xl overflow-hidden"
+          >
+            <img
+              src="/connect.jpg"
+              alt="Two professionals in conversation"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA] mb-2">
+                The result
+              </p>
+              <p className="font-[family-name:var(--font-playfair)] text-xl font-medium text-white leading-[1.3]">
+                Real conversations.<br />
+                <span className="text-white/50">Real opportunities.</span>
+              </p>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
