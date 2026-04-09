@@ -80,6 +80,10 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
   // Subtle glow behind text as it reveals
   const glowOpacity = textEased * 0.06;
 
+  // Subtext fade-in (appears after main text is revealed)
+  const subT = Math.min(Math.max((eased - 0.85) / 0.15, 0), 1);
+  const subEased = 1 - Math.pow(1 - subT, 3);
+
   return (
     <div ref={sectionRef} className="relative bg-[#0A0F1C]" style={{ height: '160vh' }}>
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
@@ -89,6 +93,14 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
           style={{
             background: `radial-gradient(ellipse 60% 40% at 50% 50%, rgba(59, 130, 246, ${glowOpacity}), transparent)`,
             transition: 'background 0.3s ease',
+          }}
+        />
+
+        {/* Grain overlay for texture */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.015] z-[1]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
         />
 
@@ -145,6 +157,19 @@ export default function ProblemStatement({ sectionRef, heroReady }: Props) {
               {`shouldn\u2019t be left to chance.`}
             </span>
           </h2>
+
+          {/* Subtle subtext that appears after reveal */}
+          <p
+            className="mt-8 text-[14px] text-white/20 max-w-sm mx-auto leading-relaxed"
+            style={{
+              opacity: subEased,
+              transform: `translateY(${8 * (1 - subEased)}px)`,
+              filter: `blur(${4 * (1 - subEased)}px)`,
+              transition: 'filter 0.1s linear',
+            }}
+          >
+            That&apos;s why we built Meetra.
+          </p>
         </div>
       </div>
     </div>
