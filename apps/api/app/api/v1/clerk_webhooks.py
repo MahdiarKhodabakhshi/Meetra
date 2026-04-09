@@ -3,12 +3,15 @@ from __future__ import annotations
 from fastapi import APIRouter, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+import structlog
 from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.core.config import settings
 from app.db import SessionLocal
 from app.models.user import User
 from app.models.user import UserRole, UserStatus
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/webhooks/clerk", tags=["clerk-webhooks"])
 
@@ -74,15 +77,12 @@ async def clerk_webhook(
     avatar_url = data.get("image_url")
 
     if not email:
-        print("WARNING: Clerk user has no email, skipping user sync:", clerk_user_id)
+        logger.warning("clerk_webhook_no_email", clerk_user_id=clerk_user_id)
         return {"status": "skipped_no_email"}
 
     db: Session = SessionLocal()
     try:
-        print("CLERK WEBHOOK type:", event_type)
-        print("CLERK WEBHOOK clerk_user_id:", clerk_user_id)
-        print("CLERK WEBHOOK email:", email)
-        print("CLERK WEBHOOK name:", name)
+        logger.info("clerk_webhook_received", event_type=event_type, clerk_user_id=clerk_user_id)
 
         user = db.scalar(select(User).where(User.clerk_user_id == clerk_user_id))
 
@@ -133,7 +133,7 @@ async def clerk_webhook(
 
     except Exception as e:
         db.rollback()
-        print("CLERK WEBHOOK ERROR:", repr(e))
+        logger.error("clerk_webhook_error", error=repr(e), event_type=event_type, clerk_user_id=clerk_user_id)
         raise
 
     finally:

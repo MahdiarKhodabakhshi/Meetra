@@ -9,12 +9,16 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import structlog
+
 from app.core.config import settings
 from app.db import get_db
 from app.models import User
 from app.models.user import UserRole, UserStatus
 from clerk_backend_api import Clerk
 from clerk_backend_api.security.types import AuthenticateRequestOptions
+
+logger = structlog.get_logger(__name__)
 
 clerk = Clerk(bearer_auth=settings.clerk_secret_key)
 
@@ -114,11 +118,8 @@ CurrentTokenUser = Annotated[TokenUser, Depends(get_token_user)]
 def _get_clerk_user_info(clerk_user_id: str):
     try:
         cu = clerk.users.get(user_id=clerk_user_id)
-        print("CLERK USER OBJECT:", cu)
-        print("CLERK USER TYPE:", type(cu))
-        print("CLERK USER DICT:", getattr(cu, "__dict__", None))
     except Exception as e:
-        print("CLERK USER FETCH ERROR:", clerk_user_id, repr(e))
+        logger.warning("clerk_user_fetch_error", clerk_user_id=clerk_user_id, error=repr(e))
         return None, None, None
 
     email = None
@@ -134,12 +135,6 @@ def _get_clerk_user_info(clerk_user_id: str):
     first = getattr(cu, "first_name", "") or ""
     last = getattr(cu, "last_name", "") or ""
     name = f"{first} {last}".strip() or None
-
-    print("EMAIL ADDRESSES:", getattr(cu, "email_addresses", None))
-    print("PRIMARY EMAIL ID:", getattr(cu, "primary_email_address_id", None))
-    print("FIRST NAME:", getattr(cu, "first_name", None))
-    print("LAST NAME:", getattr(cu, "last_name", None))
-    print("IMAGE URL:", getattr(cu, "image_url", None))
 
     avatar = getattr(cu, "image_url", None)
 
