@@ -153,7 +153,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
         }}
         transition={{ duration: 2.5, ease }}
       >
-        <img src="/rooftop.png" alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" fetchPriority="high" />
+        <img src="/rooftop.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/40 via-[#0F172A]/50 to-[#0F172A]/70" />
       </motion.div>
 
@@ -169,7 +169,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
             ].map((img, i) => (
               <motion.div
                 key={img.src}
-                className="absolute rounded-lg overflow-hidden z-[3] will-change-transform"
+                className="absolute rounded-lg overflow-hidden z-[3]"
                 style={{
                   width: img.w, height: img.h,
                   left: img.left, right: img.right,
@@ -208,7 +208,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
 
         {/* Logo unit */}
         <motion.div
-          className="select-none will-change-transform"
+          className="select-none"
           animate={{
             opacity: isHero ? 0 : 1,
             scale: isHero ? 0.35 : 1,

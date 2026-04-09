@@ -5,10 +5,10 @@ import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motio
 export default function ProblemStatement() {
   const { scrollYProgress } = useScroll();
 
-  // Text: blurry/dim → sharp/white when Meet arrives (~0.814 scroll)
-  const blurVal = useTransform(scrollYProgress, [0.6, 0.814], [8, 0]);
+  // Text: blurry/dim → sharp/white when Meet locks at 81.4%
+  const blurVal = useTransform(scrollYProgress, [0.75, 0.814], [8, 0]);
   const textFilter = useMotionTemplate`blur(${blurVal}px)`;
-  const textOpacity = useTransform(scrollYProgress, [0.6, 0.814], [0.25, 1]);
+  const textOpacity = useTransform(scrollYProgress, [0.75, 0.814], [0.25, 1]);
 
   return (
     <div className="relative bg-[#0A0F1C]" style={{ height: '120vh' }}>
