@@ -11,8 +11,11 @@ import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motio
  * - "ra" peels off with blur as it approaches the docking position
  * - "Meet" lands perfectly aligned with "ing the right people"
  */
-export default function FloatingLogo() {
+export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
+
+  // Hidden until hero intro is done
+  if (!visible) return null;
 
   /*
    * Page scroll timeline:

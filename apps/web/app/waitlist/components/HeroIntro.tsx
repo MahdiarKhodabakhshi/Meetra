@@ -59,7 +59,7 @@ const dividerColorSteps = [
 
 type Phase = 'intro' | 'split' | 'rolling' | 'rejoin' | 'hero';
 
-export default function HeroIntro() {
+export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void }) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [wordIndex, setWordIndex] = useState(0);
 
@@ -103,7 +103,10 @@ export default function HeroIntro() {
 
   useEffect(() => {
     if (phase !== 'rejoin') return;
-    const t = setTimeout(() => setPhase('hero'), 1800);
+    const t = setTimeout(() => {
+      setPhase('hero');
+      onHeroReady?.();
+    }, 1800);
     return () => clearTimeout(t);
   }, [phase]);
 
