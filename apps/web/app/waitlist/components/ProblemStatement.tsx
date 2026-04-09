@@ -1,22 +1,27 @@
 'use client';
 
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { useState } from 'react';
+import { useScroll, useMotionValueEvent } from 'framer-motion';
 
 export default function ProblemStatement() {
   const { scrollYProgress } = useScroll();
+  const [popped, setPopped] = useState(false);
 
-  // Text: blurry/dim → sharp/white when Meet locks at 81.4%
-  const blurVal = useTransform(scrollYProgress, [0.75, 0.814], [8, 0]);
-  const textFilter = useMotionTemplate`blur(${blurVal}px)`;
-  const textOpacity = useTransform(scrollYProgress, [0.75, 0.814], [0.25, 1]);
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    if (v >= 0.814 && !popped) setPopped(true);
+    if (v < 0.75 && popped) setPopped(false);
+  });
 
   return (
     <div className="relative bg-[#0A0F1C]" style={{ height: '120vh' }}>
       <div className="sticky top-0 h-screen flex items-center justify-center">
         <div className="px-6 max-w-4xl text-center">
-          <motion.h2
-            className="font-[family-name:var(--font-playfair)] text-[clamp(1.8rem,4.2vw,3.5rem)] font-medium tracking-[-0.025em] leading-[1.3]"
-            style={{ filter: textFilter, opacity: textOpacity }}
+          <h2
+            className="font-[family-name:var(--font-playfair)] text-[clamp(1.8rem,4.2vw,3.5rem)] font-medium tracking-[-0.025em] leading-[1.3] transition-all duration-700"
+            style={{
+              filter: popped ? 'blur(0px)' : 'blur(8px)',
+              opacity: popped ? 1 : 0.25,
+            }}
           >
             <span className="text-white">
               <span className="invisible inline">Meet</span>
@@ -24,7 +29,7 @@ export default function ProblemStatement() {
             </span>
             <br />
             <span className="text-white/50">{`shouldn\u2019t be left to chance.`}</span>
-          </motion.h2>
+          </h2>
         </div>
       </div>
     </div>
