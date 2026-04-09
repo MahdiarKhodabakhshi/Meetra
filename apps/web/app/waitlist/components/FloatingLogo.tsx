@@ -1,24 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, useScroll, useTransform, useMotionTemplate, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
-  const [locked, setLocked] = useState(false);
 
-  // Log scroll progress
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    console.log(`[FloatingLogo] scroll: ${(v * 100).toFixed(1)}%`);
-    if (v >= 0.917 && !locked) {
-      setLocked(true);
-    }
-  });
+  /*
+   * The logo travels from nav (top center) to section 2 (center of viewport).
+   * Section 2 is a sticky 100vh so the text stays centered in the viewport.
+   * That means we just need to go from top:24px → top:50% and shift left.
+   *
+   * The transform-origin is 'left baseline' so scale grows rightward from Meet.
+   * We use translateY(-50%) at the end so top:50% actually centers it.
+   */
 
-  // Scroll-driven values (only used before lock)
-  const topAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['12px', '254px']);
-  const scaleAnimated = useTransform(scrollYProgress, [0.05, 0.917], [1, 2.55]);
-  const xShiftAnimated = useTransform(scrollYProgress, [0.05, 0.917], ['0px', '-16.4em']);
+  // Vertical: nav → center of viewport
+  const topPercent = useTransform(scrollYProgress, [0.05, 0.5], [0, 42]);
+  const topVal = useMotionTemplate`calc(${topPercent}vh + 12px)`;
+
+  // Scale
+  const scale = useTransform(scrollYProgress, [0.05, 0.5], [1, 2.55]);
+
+  // Shift left to align with invisible "Meet" gap in the sentence
+  const xEm = useTransform(scrollYProgress, [0.05, 0.5], [0, -16.4]);
+  const xVal = useMotionTemplate`calc(-50% + ${xEm}em)`;
 
   // "ra" peels off
   const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
@@ -31,15 +36,17 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   return (
     <motion.div
       className="fixed z-50 pointer-events-none left-1/2"
-      style={
-        locked
-          ? { top: '254px', x: '-50%', marginLeft: '-16.4em' }
-          : { top: topAnimated, x: '-50%', marginLeft: xShiftAnimated }
-      }
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        top: topVal,
+        x: xVal,
+      }}
     >
       <motion.div
         className="flex items-baseline select-none origin-left"
-        style={locked ? { scale: 2.55 } : { scale: scaleAnimated }}
+        style={{ scale }}
       >
         <span
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-white"
@@ -51,9 +58,9 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
           className="font-[family-name:var(--font-playfair)] font-semibold tracking-[-0.02em] leading-none text-[#60A5FA]"
           style={{
             fontSize: '22px',
-            opacity: locked ? 0 : raOpacity,
-            x: locked ? 30 : raXOffset,
-            filter: locked ? 'blur(12px)' : raFilter,
+            opacity: raOpacity,
+            x: raXOffset,
+            filter: raFilter,
           }}
         >
           ra

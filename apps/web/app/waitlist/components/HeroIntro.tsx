@@ -63,6 +63,16 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
   const [phase, setPhase] = useState<Phase>('intro');
   const [wordIndex, setWordIndex] = useState(0);
 
+  // Lock scroll during intro animation
+  useEffect(() => {
+    if (phase === 'hero') {
+      document.body.style.overflow = '';
+      return;
+    }
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [phase]);
+
   // Compute a single "step" index for color lookups
   const step = useMemo(() => {
     if (phase === 'intro') return 0;
