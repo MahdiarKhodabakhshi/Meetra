@@ -8,53 +8,53 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const words = ['mentors.', 'founders.', 'partners.', 'investors.', 'advisors.'];
 
-/* Background darkens progressively: warm white → slate → near-black */
+/* Background darkens progressively: white → cool slate → dark navy */
 const bgSteps = [
-  '#FAFAF8', // intro
-  '#F0EDE8', // split
-  '#D5CFC6', // word 0
-  '#9A9488', // word 1
-  '#5C574E', // word 2
-  '#2E2B26', // word 3
-  '#171614', // word 4
-  '#0F0E0D', // rejoin
+  '#FAFAFA', // intro
+  '#F1F5F9', // split
+  '#E2E8F0', // word 0
+  '#CBD5E1', // word 1
+  '#64748B', // word 2
+  '#334155', // word 3
+  '#1E293B', // word 4
+  '#0F172A', // rejoin
   '#0A0F1C', // hero
 ];
 
-/* Meet text color: black → white as bg darkens */
+/* Meet text color: dark → white */
 const meetColorSteps = [
   '#0F172A', // intro
   '#0F172A', // split
-  '#1A1814', // word 0
-  '#3D3A34', // word 1
-  '#C8C4BC', // word 2
-  '#E8E5DF', // word 3
-  '#F1F0ED', // word 4
-  '#F8F7F5', // rejoin
+  '#0F172A', // word 0
+  '#0F172A', // word 1
+  '#F1F5F9', // word 2
+  '#F8FAFC', // word 3
+  '#FFFFFF', // word 4
+  '#FFFFFF', // rejoin
   '#FFFFFF', // hero
 ];
 
-/* Rolling word color: gets lighter as bg darkens */
+/* Rolling word color */
 const wordColorSteps = [
   '#94A3B8',
-  '#8A9AAE',
-  '#7D8FA4',
-  '#A0AEBB',
-  '#B8C4D0',
-  '#C8D2DC',
+  '#94A3B8',
+  '#CBD5E1',
+  '#E2E8F0',
+  '#F1F5F9',
+  '#F8FAFC',
 ];
 
-/* Floating image opacity: increases as bg darkens */
-const imageOpacitySteps = [0.3, 0.4, 0.5, 0.6, 0.65];
+/* Floating image opacity */
+const imageOpacitySteps = [0.35, 0.45, 0.55, 0.65, 0.7];
 
-/* Divider color shifts */
+/* Divider color */
 const dividerColorSteps = [
   '#E2E8F0',
-  '#D0D5DC',
-  '#8A8E94',
-  '#5A5E64',
-  '#3A3E44',
-  '#2A2E34',
+  '#CBD5E1',
+  '#94A3B8',
+  '#64748B',
+  '#475569',
+  '#334155',
 ];
 
 type Phase = 'intro' | 'split' | 'rolling' | 'rejoin' | 'hero';
@@ -149,10 +149,10 @@ export default function HeroIntro() {
         {isRolling && (
           <>
             {[
-              { src: '/connect.jpg', left: '5%', top: '14%', w: 150, h: 100, r: -3 },
-              { src: '/rsvp.jpg', right: '7%', top: '10%', w: 135, h: 90, r: 3 },
-              { src: '/discover.jpg', left: '8%', bottom: '16%', w: 125, h: 85, r: 5 },
-              { src: '/disconnected.png', right: '5%', bottom: '13%', w: 140, h: 95, r: -4 },
+              { src: '/connect.jpg', left: '5%', top: '14%', w: 150, h: 100, r: -3, bobDelay: 0 },
+              { src: '/rsvp.jpg', right: '7%', top: '10%', w: 135, h: 90, r: 3, bobDelay: 0.5 },
+              { src: '/discover.jpg', left: '8%', bottom: '16%', w: 125, h: 85, r: 5, bobDelay: 1.0 },
+              { src: '/disconnected.png', right: '5%', bottom: '13%', w: 140, h: 95, r: -4, bobDelay: 1.5 },
             ].map((img, i) => (
               <motion.div
                 key={img.src}
@@ -163,9 +163,25 @@ export default function HeroIntro() {
                   top: img.top, bottom: img.bottom,
                 }}
                 initial={{ opacity: 0, scale: 0.9, rotate: 0, y: 15 }}
-                animate={{ opacity: floatOpacity, scale: 1, rotate: img.r, y: 0 }}
+                animate={{
+                  opacity: floatOpacity,
+                  scale: 1,
+                  rotate: img.r,
+                  y: [0, -8, 0],
+                }}
                 exit={{ opacity: 0, scale: 0.95, y: -8, transition: { duration: 1, ease } }}
-                transition={{ duration: 1.4, delay: i * 0.15, ease }}
+                transition={{
+                  opacity: { duration: 1.4, delay: i * 0.15, ease },
+                  scale: { duration: 1.4, delay: i * 0.15, ease },
+                  rotate: { duration: 1.4, delay: i * 0.15, ease },
+                  y: {
+                    duration: 3,
+                    delay: img.bobDelay,
+                    repeat: Infinity,
+                    repeatType: 'reverse',
+                    ease: 'easeInOut',
+                  },
+                }}
               >
                 <img src={img.src} alt="" className="w-full h-full object-cover" />
               </motion.div>
@@ -264,7 +280,7 @@ export default function HeroIntro() {
             className="text-center mt-5 text-[13px] tracking-[0.08em]"
             animate={{
               opacity: isSplit || isRolling ? 0.6 : 0,
-              color: step >= 4 ? '#8A9AAE' : '#94A3B8',
+              color: step >= 4 ? '#CBD5E1' : '#94A3B8',
             }}
             transition={smooth}
           >
