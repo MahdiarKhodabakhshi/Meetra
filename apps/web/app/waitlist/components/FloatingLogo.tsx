@@ -27,7 +27,7 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
 
     // Position/scale: 0.05 → 0.814
     const t = Math.min(Math.max((clamped - 0.05) / (0.814 - 0.05), 0), 1);
-    const topVh = lerp(0, 42, t);
+    const topVh = lerp(0, 22, t);
     const scale = lerp(1, 2.55, t);
     const xEm = lerp(0, -16.4, t);
 
