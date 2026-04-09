@@ -26,7 +26,7 @@ export default function WaitlistCTA() {
   };
 
   return (
-    <section className="relative bg-[#0A0F1C] py-32 sm:py-40 overflow-hidden">
+    <section id="waitlist-cta" className="relative bg-[#0A0F1C] py-32 sm:py-40 overflow-hidden">
       {/* Radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"

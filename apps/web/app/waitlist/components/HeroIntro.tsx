@@ -354,6 +354,30 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                 Every event has the right person for you. Meetra finds them.
               </motion.p>
 
+              {/* CTA button */}
+              <motion.a
+                href="#waitlist-cta"
+                className="
+                  mt-10 inline-flex items-center gap-2 bg-white text-[#0F172A] px-8 py-4 rounded-full
+                  text-[14px] font-medium
+                  hover:bg-white/90 active:bg-white/80
+                  transition-all duration-300
+                  hover:shadow-[0_8px_32px_rgba(255,255,255,0.12)]
+                "
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 1.7, ease }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('waitlist-cta')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Join the waitlist
+                <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </motion.a>
+
               {/* Scroll indicator */}
               <motion.div
                 className="absolute bottom-10 flex flex-col items-center gap-3"
