@@ -4,24 +4,16 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useRef } from 'react';
 import HeroIntro from './components/HeroIntro';
-import FloatingLogo from './components/FloatingLogo';
 import ProblemStatement from './components/ProblemStatement';
 
 export default function WaitlistPage() {
-  const [logoVisible, setLogoVisible] = useState(false);
-  const [docked, setDocked] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   return (
     <main>
-      <FloatingLogo
-        visible={logoVisible}
-        sectionRef={sectionRef}
-        onDock={() => setDocked(true)}
-        onUndock={() => setDocked(false)}
-      />
-      <HeroIntro onHeroReady={() => setLogoVisible(true)} />
-      <ProblemStatement sectionRef={sectionRef} docked={docked} />
+      <HeroIntro onHeroReady={() => setHeroReady(true)} />
+      <ProblemStatement sectionRef={sectionRef} heroReady={heroReady} />
 
       {/* Test footer */}
       <section className="bg-[#0A0F1C] border-t border-white/10 py-24">
