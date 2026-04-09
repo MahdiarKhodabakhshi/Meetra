@@ -9,14 +9,19 @@ import ProblemStatement from './components/ProblemStatement';
 
 export default function WaitlistPage() {
   const [logoVisible, setLogoVisible] = useState(false);
+  const [docked, setDocked] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const meetGapRef = useRef<HTMLSpanElement>(null);
 
   return (
     <main>
-      <FloatingLogo visible={logoVisible} meetGapRef={meetGapRef} sectionRef={sectionRef} />
+      <FloatingLogo
+        visible={logoVisible}
+        sectionRef={sectionRef}
+        onDock={() => setDocked(true)}
+        onUndock={() => setDocked(false)}
+      />
       <HeroIntro onHeroReady={() => setLogoVisible(true)} />
-      <ProblemStatement sectionRef={sectionRef} meetGapRef={meetGapRef} />
+      <ProblemStatement sectionRef={sectionRef} docked={docked} />
 
       {/* Test footer */}
       <section className="bg-[#0A0F1C] border-t border-white/10 py-24">
