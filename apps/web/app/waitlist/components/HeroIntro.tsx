@@ -3,100 +3,105 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const smooth = { duration: 1.2, ease: [0.22, 1, 0.36, 1] as const };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const words = [
-  'ra',
-  'your mentor.',
-  'a co-founder.',
-  'investors.',
-  'collaborators.',
-  'the right people.',
-  'ra',
-];
+/* All similar visual width for ticker feel */
+const words = ['mentors.', 'founders.', 'partners.', 'investors.', 'advisors.'];
+
+type Phase = 'intro' | 'split' | 'rolling' | 'rejoin' | 'hero';
 
 export default function HeroIntro() {
+  const [phase, setPhase] = useState<Phase>('intro');
   const [wordIndex, setWordIndex] = useState(0);
-  const [started, setStarted] = useState(false);
-  const [heroRevealed, setHeroRevealed] = useState(false);
 
-  // Start the sequence after initial fade-in
+  /* ── Sequencer ── */
+
+  // intro → split
   useEffect(() => {
-    const t = setTimeout(() => setStarted(true), 2000);
+    if (phase !== 'intro') return;
+    const t = setTimeout(() => setPhase('split'), 1800);
     return () => clearTimeout(t);
-  }, []);
+  }, [phase]);
 
-  // Cycle through words
+  // split → rolling
   useEffect(() => {
-    if (!started) return;
-    if (wordIndex >= words.length - 1) {
-      // Final "ra" — pause then reveal hero
-      const t = setTimeout(() => setHeroRevealed(true), 1400);
+    if (phase !== 'split') return;
+    const t = setTimeout(() => setPhase('rolling'), 1000);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // rolling: cycle words
+  useEffect(() => {
+    if (phase !== 'rolling') return;
+    if (wordIndex < words.length - 1) {
+      const t = setTimeout(() => setWordIndex((i) => i + 1), 1000);
       return () => clearTimeout(t);
     }
-    const delay = wordIndex === 0 ? 600 : 900;
-    const t = setTimeout(() => setWordIndex((i) => i + 1), delay);
+    // last word — hold then rejoin
+    const t = setTimeout(() => setPhase('rejoin'), 1400);
     return () => clearTimeout(t);
-  }, [started, wordIndex]);
+  }, [phase, wordIndex]);
 
-  const currentWord = words[wordIndex];
-  const isRa = currentWord === 'ra';
-  const isRolling = started && !heroRevealed;
+  // rejoin → hero
+  useEffect(() => {
+    if (phase !== 'rejoin') return;
+    const t = setTimeout(() => setPhase('hero'), 1800);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const isSplit = phase === 'split' || phase === 'rolling';
+  const isRolling = phase === 'rolling';
+  const isRejoined = phase === 'rejoin' || phase === 'hero';
+  const isHero = phase === 'hero';
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#FAFAF8]">
 
-      {/* Subtle warm grain texture */}
+      {/* Grain */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         }}
       />
 
       {/* ── Hero background ── */}
       <motion.div
         className="absolute inset-0 z-0"
-        initial={{ opacity: 0, scale: 1.05 }}
+        initial={{ opacity: 0, scale: 1.06 }}
         animate={{
-          opacity: heroRevealed ? 1 : 0,
-          scale: heroRevealed ? 1 : 1.05,
+          opacity: isHero ? 1 : 0,
+          scale: isHero ? 1 : 1.06,
         }}
-        transition={{ duration: 2, ease }}
+        transition={{ duration: 2.5, ease }}
       >
-        <img
-          src="/rooftop.png"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/50 via-[#0F172A]/60 to-[#0F172A]/80" />
+        <img src="/rooftop.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/45 via-[#0F172A]/55 to-[#0F172A]/75" />
       </motion.div>
 
       {/* ── Floating images during roll ── */}
       <AnimatePresence>
-        {isRolling && !isRa && wordIndex > 0 && (
+        {isRolling && (
           <>
             {[
-              { src: '/connect.jpg', left: '6%', top: '15%', w: 160, h: 110, r: -4, d: 0 },
-              { src: '/rsvp.jpg', right: '8%', top: '12%', w: 140, h: 95, r: 3, d: 0.15 },
-              { src: '/discover.jpg', left: '10%', bottom: '18%', w: 130, h: 90, r: 6, d: 0.3 },
-              { src: '/disconnected.png', right: '6%', bottom: '15%', w: 150, h: 100, r: -3, d: 0.2 },
-            ].map((img) => (
+              { src: '/connect.jpg', left: '5%', top: '14%', w: 150, h: 100, r: -3 },
+              { src: '/rsvp.jpg', right: '7%', top: '10%', w: 135, h: 90, r: 3 },
+              { src: '/discover.jpg', left: '8%', bottom: '16%', w: 125, h: 85, r: 5 },
+              { src: '/disconnected.png', right: '5%', bottom: '13%', w: 140, h: 95, r: -4 },
+            ].map((img, i) => (
               <motion.div
                 key={img.src}
                 className="absolute rounded-lg overflow-hidden"
                 style={{
-                  width: img.w,
-                  height: img.h,
-                  left: img.left,
-                  right: img.right,
-                  top: img.top,
-                  bottom: img.bottom,
+                  width: img.w, height: img.h,
+                  left: img.left, right: img.right,
+                  top: img.top, bottom: img.bottom,
                 }}
-                initial={{ opacity: 0, scale: 0.85, rotate: 0, y: 20 }}
-                animate={{ opacity: 0.5, scale: 1, rotate: img.r, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.6, ease } }}
-                transition={{ duration: 1, delay: img.d, ease }}
+                initial={{ opacity: 0, scale: 0.9, rotate: 0, y: 15 }}
+                animate={{ opacity: 0.4, scale: 1, rotate: img.r, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -8, transition: { duration: 1, ease } }}
+                transition={{ duration: 1.4, delay: i * 0.15, ease }}
               >
                 <img src={img.src} alt="" className="w-full h-full object-cover" />
               </motion.div>
@@ -108,73 +113,83 @@ export default function HeroIntro() {
       {/* ── Center stage ── */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center">
 
-        {/* The logo / word unit */}
+        {/* Logo unit — fades out and shrinks up for hero */}
         <motion.div
           className="select-none"
-          initial={{ opacity: 0, y: 8 }}
           animate={{
-            opacity: heroRevealed ? 0 : 1,
-            y: heroRevealed ? -60 : 0,
-            scale: heroRevealed ? 0.4 : 1,
+            opacity: isHero ? 0 : 1,
+            scale: isHero ? 0.35 : 1,
+            y: isHero ? '-38vh' : 0,
           }}
-          transition={{
-            opacity: { duration: heroRevealed ? 0.8 : 1.2, delay: heroRevealed ? 0 : 0.4, ease },
-            y: { duration: heroRevealed ? 1 : 1.2, delay: heroRevealed ? 0 : 0.4, ease },
-            scale: { duration: 1, ease },
-          }}
+          transition={{ duration: 1.6, ease }}
         >
-          <div className="flex items-baseline justify-center">
-            {/* "Meet" — always visible */}
-            <span
+          {/* The flex row: "Meet" + slot */}
+          <div className="flex items-baseline">
+
+            {/* "Meet" — slides left when split, back to center when rejoined */}
+            <motion.span
               className="font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#0F172A] leading-none"
               style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
+              animate={{
+                x: isSplit ? '-0.15em' : 0,
+              }}
+              transition={smooth}
             >
               Meet
-            </span>
+            </motion.span>
 
-            {/* The rolling suffix */}
-            <div
-              className="relative overflow-hidden inline-flex items-baseline"
+            {/* Ticker slot — fixed width container */}
+            <motion.div
+              className="relative overflow-hidden"
               style={{ height: 'clamp(3.5rem, 9vw, 8rem)' }}
+              animate={{
+                width: isSplit ? 'clamp(10rem, 26vw, 22rem)' : 'auto',
+              }}
+              transition={smooth}
             >
               <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={currentWord}
-                  className={`font-[family-name:var(--font-playfair)] leading-none inline-block ${
-                    isRa
-                      ? 'font-medium tracking-[-0.03em] text-[#3B82F6]'
-                      : 'font-normal tracking-[-0.02em] text-[#94A3B8] italic'
-                  }`}
-                  style={{
-                    fontSize: isRa ? 'clamp(3.5rem, 9vw, 8rem)' : 'clamp(2rem, 5vw, 4.5rem)',
-                    paddingLeft: isRa ? 0 : '0.3em',
-                  }}
-                  initial={{ y: '110%', opacity: 0, filter: 'blur(4px)' }}
-                  animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                  exit={{ y: '-110%', opacity: 0, filter: 'blur(4px)' }}
-                  transition={{ duration: 0.55, ease }}
-                >
-                  {currentWord}
-                </motion.span>
+                {isRolling ? (
+                  <motion.span
+                    key={words[wordIndex]}
+                    className="absolute left-[0.2em] font-[family-name:var(--font-playfair)] font-normal italic tracking-[-0.01em] text-[#94A3B8] leading-none whitespace-nowrap"
+                    style={{ fontSize: 'clamp(2.2rem, 5.5vw, 5rem)' }}
+                    initial={{ y: '120%', opacity: 0, filter: 'blur(6px)' }}
+                    animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
+                    transition={{ duration: 0.7, ease }}
+                  >
+                    {words[wordIndex]}
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="ra"
+                    className="font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#3B82F6] leading-none"
+                    style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
+                    initial={phase === 'rejoin' ? { y: '120%', opacity: 0, filter: 'blur(6px)' } : false}
+                    animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
+                    transition={{ duration: 0.7, ease }}
+                  >
+                    ra
+                  </motion.span>
+                )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           </div>
 
-          {/* Thin line under the logo */}
+          {/* Thin line */}
           <motion.div
-            className="mx-auto mt-6 bg-[#E2E8F0] rounded-full"
+            className="mx-auto mt-8 bg-[#E2E8F0] rounded-full"
             style={{ height: 1 }}
-            initial={{ width: 0 }}
-            animate={{ width: started ? 120 : 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease }}
+            animate={{ width: isSplit || isRolling ? 100 : 0, opacity: isRejoined ? 0 : 1 }}
+            transition={smooth}
           />
 
-          {/* Subtle tagline below */}
+          {/* Tagline */}
           <motion.p
-            className="text-center mt-5 text-[13px] text-[#94A3B8] tracking-wide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: started && !heroRevealed ? 0.7 : 0 }}
-            transition={{ duration: 0.8, ease }}
+            className="text-center mt-5 text-[13px] text-[#94A3B8] tracking-[0.08em]"
+            animate={{ opacity: isSplit || isRolling ? 0.6 : 0 }}
+            transition={smooth}
           >
             Networking, with intention.
           </motion.p>
@@ -182,29 +197,29 @@ export default function HeroIntro() {
 
         {/* ── Hero content ── */}
         <AnimatePresence>
-          {heroRevealed && (
+          {isHero && (
             <motion.div
               className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1.5, delay: 0.6, ease }}
+              transition={{ duration: 1.8, delay: 0.5, ease }}
             >
               {/* Nav logo */}
               <motion.p
                 className="absolute top-8 left-1/2 -translate-x-1/2 font-[family-name:var(--font-playfair)] text-[22px] font-semibold"
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.4, ease }}
+                transition={{ duration: 1, delay: 1.2, ease }}
               >
                 <span className="text-white">Meet</span>
                 <span className="text-[#60A5FA]">ra</span>
               </motion.p>
 
               <motion.p
-                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/80 mb-6"
-                initial={{ opacity: 0, y: 10 }}
+                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/70 mb-6"
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8, ease }}
+                transition={{ duration: 1, delay: 0.8, ease }}
               >
                 Join the waitlist
               </motion.p>
@@ -213,7 +228,7 @@ export default function HeroIntro() {
                 className="font-[family-name:var(--font-playfair)] text-[clamp(2rem,5vw,4.5rem)] font-medium text-white tracking-[-0.025em] leading-[1.08] max-w-3xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1, ease }}
+                transition={{ duration: 1.2, delay: 1, ease }}
               >
                 Meet the right people<br />at every event.
               </motion.h1>
@@ -222,17 +237,16 @@ export default function HeroIntro() {
                 className="mt-6 text-[15px] text-white/35 max-w-md leading-relaxed"
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.3, ease }}
+                transition={{ duration: 1, delay: 1.4, ease }}
               >
                 AI-powered networking that tells you who to talk to, why they matter, and what to say.
               </motion.p>
 
-              {/* Scroll cue */}
               <motion.div
                 className="absolute bottom-10 flex flex-col items-center gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 2.2, ease }}
+                transition={{ duration: 1, delay: 2.4, ease }}
               >
                 <motion.div
                   animate={{ y: [0, 6, 0] }}
@@ -241,9 +255,7 @@ export default function HeroIntro() {
                 >
                   <div className="w-[3px] h-[5px] rounded-full bg-white/30" />
                 </motion.div>
-                <span className="text-[10px] text-white/20 tracking-[0.2em] uppercase">
-                  Scroll
-                </span>
+                <span className="text-[10px] text-white/20 tracking-[0.2em] uppercase">Scroll</span>
               </motion.div>
             </motion.div>
           )}
