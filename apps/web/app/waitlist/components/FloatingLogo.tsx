@@ -11,13 +11,13 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
   // Scale: nav size → headline size
   const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
 
-  // Shift left more aggressively to align with "ing"
-  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-6em']);
+  // Shift left more to align with "ing"
+  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-9em']);
 
-  // "ra" peels off much slower
-  const raOpacity = useTransform(scrollYProgress, [0.28, 0.48], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.28, 0.48], [0, 30]);
-  const raBlurVal = useTransform(scrollYProgress, [0.28, 0.48], [0, 12]);
+  // "ra" peels off — starts late, takes a long time
+  const raOpacity = useTransform(scrollYProgress, [0.35, 0.55], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.35, 0.55], [0, 30]);
+  const raBlurVal = useTransform(scrollYProgress, [0.35, 0.55], [0, 12]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
   if (!visible) return null;
