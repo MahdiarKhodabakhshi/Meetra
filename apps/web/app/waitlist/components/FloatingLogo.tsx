@@ -34,10 +34,10 @@ export default function FloatingLogo() {
   // The sentence has "Meet" gap on the left, so logo needs to move left
   const x = useTransform(scrollYProgress, [0.05, 0.25], ['0%', '-3.2em']);
 
-  // "ra" fades out
-  const raOpacity = useTransform(scrollYProgress, [0.17, 0.26], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.17, 0.26], [0, 18]);
-  const raBlurVal = useTransform(scrollYProgress, [0.17, 0.26], [0, 10]);
+  // "ra" fades out — slower, more dramatic
+  const raOpacity = useTransform(scrollYProgress, [0.2, 0.34], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.2, 0.34], [0, 24]);
+  const raBlurVal = useTransform(scrollYProgress, [0.2, 0.34], [0, 10]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
   // "Meet" color: white throughout (it's on dark bg from hero onward)
