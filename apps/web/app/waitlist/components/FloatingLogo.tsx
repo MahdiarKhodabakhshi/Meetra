@@ -5,14 +5,14 @@ import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motio
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
 
-  // Position: very top of page → vertically centered
-  const top = useTransform(scrollYProgress, [0.05, 0.3], ['12px', '50%']);
+  // Position: very top → vertically centered — clamps at target
+  const top = useTransform(scrollYProgress, [0.05, 0.28, 1], ['12px', '50%', '50%']);
 
-  // Scale: nav size → headline size
-  const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
+  // Scale: nav size → headline size — clamps at target
+  const scale = useTransform(scrollYProgress, [0.05, 0.28, 1], [1, 2.55, 2.55]);
 
-  // Shift left more to align with "ing"
-  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-16.3em']);
+  // Shift left — clamps at target
+  const xShift = useTransform(scrollYProgress, [0.05, 0.28, 1], ['0px', '-16.4em', '-16.4em']);
 
   // "ra" peels off — starts late, takes a long time
   const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
