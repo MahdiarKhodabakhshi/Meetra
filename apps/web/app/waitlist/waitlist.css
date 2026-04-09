@@ -11,11 +11,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* GPU-accelerated smooth transitions */
-.wl-root * {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
+
 
 /* Section micro-label */
 .wl-micro-label {
@@ -53,7 +49,6 @@
   transition: background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
 }
 
 .wl-btn-primary:hover {
@@ -99,7 +94,6 @@
   transition: border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
 }
 
 .wl-card:hover {
