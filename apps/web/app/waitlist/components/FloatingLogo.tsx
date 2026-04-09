@@ -19,21 +19,21 @@ export default function FloatingLogo({ visible }: { visible: boolean }) {
    * We use translateY(-50%) at the end so top:50% actually centers it.
    */
 
-  // Vertical: nav → center of viewport
-  const topPercent = useTransform(scrollYProgress, [0.05, 0.5], [0, 42]);
+  // Vertical: nav → center of viewport, stops at 81.4%
+  const topPercent = useTransform(scrollYProgress, [0.05, 0.814, 1], [0, 42, 42]);
   const topVal = useMotionTemplate`calc(${topPercent}vh + 12px)`;
 
-  // Scale
-  const scale = useTransform(scrollYProgress, [0.05, 0.5], [1, 2.55]);
+  // Scale, stops at 81.4%
+  const scale = useTransform(scrollYProgress, [0.05, 0.814, 1], [1, 2.55, 2.55]);
 
-  // Shift left to align with invisible "Meet" gap in the sentence
-  const xEm = useTransform(scrollYProgress, [0.05, 0.5], [0, -16.4]);
+  // Shift left, stops at 81.4%
+  const xEm = useTransform(scrollYProgress, [0.05, 0.814, 1], [0, -16.4, -16.4]);
   const xVal = useMotionTemplate`calc(-50% + ${xEm}em)`;
 
   // "ra" peels off
-  const raOpacity = useTransform(scrollYProgress, [0.6, 0.8], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.6, 0.8], [0, 30]);
-  const raBlurVal = useTransform(scrollYProgress, [0.6, 0.8], [0, 12]);
+  const raOpacity = useTransform(scrollYProgress, [0.7, 0.85], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.7, 0.85], [0, 30]);
+  const raBlurVal = useTransform(scrollYProgress, [0.7, 0.85], [0, 12]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
   if (!visible) return null;
