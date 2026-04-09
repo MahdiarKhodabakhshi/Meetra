@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 import structlog
 from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.core.config import settings
-from app.db import SessionLocal
+from app.db import get_db
 from app.models.user import User
 from app.models.user import UserRole, UserStatus
 
@@ -38,6 +38,7 @@ def _extract_name(data: dict) -> str | None:
 @router.post("")
 async def clerk_webhook(
     request: Request,
+    db: Session = Depends(get_db),
     svix_id: str | None = Header(default=None, alias="svix-id"),
     svix_timestamp: str | None = Header(default=None, alias="svix-timestamp"),
     svix_signature: str | None = Header(default=None, alias="svix-signature"),
@@ -80,61 +81,51 @@ async def clerk_webhook(
         logger.warning("clerk_webhook_no_email", clerk_user_id=clerk_user_id)
         return {"status": "skipped_no_email"}
 
-    db: Session = SessionLocal()
-    try:
-        logger.info("clerk_webhook_received", event_type=event_type, clerk_user_id=clerk_user_id)
+    logger.info("clerk_webhook_received", event_type=event_type, clerk_user_id=clerk_user_id)
 
-        user = db.scalar(select(User).where(User.clerk_user_id == clerk_user_id))
+    user = db.scalar(select(User).where(User.clerk_user_id == clerk_user_id))
 
-        if event_type == "user.created":
-            if not user:
-                user = User(
-                    clerk_user_id=clerk_user_id,
-                    email=email,
-                    name=name,
-                    avatar_url=avatar_url,
-                    role=UserRole.ATTENDEE,
-                    status=UserStatus.ACTIVE,
-                )
-                db.add(user)
-            else:
-                user.email = email
-                user.name = name
-                user.avatar_url = avatar_url
-                db.add(user)
-
-        elif event_type == "user.updated":
-            if user:
-                user.email = email
-                user.name = name
-                user.avatar_url = avatar_url
-                db.add(user)
-            else:
-                user = User(
-                    clerk_user_id=clerk_user_id,
-                    email=email,
-                    name=name,
-                    avatar_url=avatar_url,
-                    role=UserRole.ATTENDEE,
-                    status=UserStatus.ACTIVE,
-                )
-                db.add(user)
-
-        elif event_type == "user.deleted":
-            if user:
-                user.status = UserStatus.DELETED
-                db.add(user)
-
+    if event_type == "user.created":
+        if not user:
+            user = User(
+                clerk_user_id=clerk_user_id,
+                email=email,
+                name=name,
+                avatar_url=avatar_url,
+                role=UserRole.ATTENDEE,
+                status=UserStatus.ACTIVE,
+            )
+            db.add(user)
         else:
-            return {"status": "ignored", "type": event_type}
+            user.email = email
+            user.name = name
+            user.avatar_url = avatar_url
+            db.add(user)
 
-        db.commit()
-        return {"status": "ok", "type": event_type}
+    elif event_type == "user.updated":
+        if user:
+            user.email = email
+            user.name = name
+            user.avatar_url = avatar_url
+            db.add(user)
+        else:
+            user = User(
+                clerk_user_id=clerk_user_id,
+                email=email,
+                name=name,
+                avatar_url=avatar_url,
+                role=UserRole.ATTENDEE,
+                status=UserStatus.ACTIVE,
+            )
+            db.add(user)
 
-    except Exception as e:
-        db.rollback()
-        logger.error("clerk_webhook_error", error=repr(e), event_type=event_type, clerk_user_id=clerk_user_id)
-        raise
+    elif event_type == "user.deleted":
+        if user:
+            user.status = UserStatus.DELETED
+            db.add(user)
 
-    finally:
-        db.close()
+    else:
+        return {"status": "ignored", "type": event_type}
+
+    db.commit()
+    return {"status": "ok", "type": event_type}
