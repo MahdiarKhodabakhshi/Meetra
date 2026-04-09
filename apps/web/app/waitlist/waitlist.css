@@ -7,6 +7,14 @@
   min-height: 100vh;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* GPU-accelerated smooth transitions */
+.wl-root * {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Section micro-label */
@@ -42,17 +50,27 @@
   font-weight: 500;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
 .wl-btn-primary:hover {
   background: #1E293B;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.2);
+  transform: translateY(-1px);
+}
+
+.wl-btn-primary:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
 }
 
 .wl-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Ghost button */
@@ -66,7 +84,7 @@
   padding: 16px 0;
   font-size: 14px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .wl-btn-ghost:hover {
@@ -78,12 +96,16 @@
   background: #FAFBFC;
   border: 1px solid #F1F5F9;
   border-radius: 16px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
 .wl-card:hover {
   border-color: #E2E8F0;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
 }
 
 /* Form input */
@@ -95,7 +117,8 @@
   padding: 12px 16px;
   font-size: 15px;
   color: #0F172A;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   outline: none;
   font-family: inherit;
 }
@@ -118,6 +141,19 @@
 .wl-divider {
   height: 1px;
   background: linear-gradient(to right, transparent, #E2E8F0, transparent);
+}
+
+/* Smooth section transitions */
+.wl-section-fade {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wl-section-fade.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Reduced motion */

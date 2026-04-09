@@ -1,37 +1,39 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const smooth = { duration: 1.2, ease: [0.22, 1, 0.36, 1] as const };
+/* Smoother easing curves */
+const smooth = { duration: 1.4, ease: [0.22, 1, 0.36, 1] as const };
 const ease = [0.22, 1, 0.36, 1] as const;
+const softSpring = { type: 'spring' as const, stiffness: 60, damping: 20, mass: 1 };
 
 const words = ['mentors.', 'founders.', 'partners.', 'investors.', 'advisors.'];
 
 /* Background darkens progressively: white → cool slate → dark navy */
 const bgSteps = [
-  '#FAFAFA', // intro
-  '#F1F5F9', // split
-  '#E2E8F0', // word 0
-  '#CBD5E1', // word 1
-  '#64748B', // word 2
-  '#334155', // word 3
-  '#1E293B', // word 4
-  '#0F172A', // rejoin
-  '#0A0F1C', // hero
+  '#FAFAFA',   // intro
+  '#F1F5F9',   // split
+  '#E2E8F0',   // word 0
+  '#CBD5E1',   // word 1
+  '#64748B',   // word 2
+  '#334155',   // word 3
+  '#1E293B',   // word 4
+  '#0F172A',   // rejoin
+  '#0A0F1C',   // hero
 ];
 
 /* Meet text color: dark → white */
 const meetColorSteps = [
-  '#0F172A', // intro
-  '#0F172A', // split
-  '#0F172A', // word 0
-  '#0F172A', // word 1
-  '#F1F5F9', // word 2
-  '#F8FAFC', // word 3
-  '#FFFFFF', // word 4
-  '#FFFFFF', // rejoin
-  '#FFFFFF', // hero
+  '#0F172A',   // intro
+  '#0F172A',   // split
+  '#0F172A',   // word 0
+  '#0F172A',   // word 1
+  '#F1F5F9',   // word 2
+  '#F8FAFC',   // word 3
+  '#FFFFFF',   // word 4
+  '#FFFFFF',   // rejoin
+  '#FFFFFF',   // hero
 ];
 
 /* Rolling word color */
@@ -45,7 +47,7 @@ const wordColorSteps = [
 ];
 
 /* Floating image opacity */
-const imageOpacitySteps = [0.35, 0.45, 0.55, 0.65, 0.7];
+const imageOpacitySteps = [0.3, 0.4, 0.5, 0.6, 0.65];
 
 /* Divider color */
 const dividerColorSteps = [
@@ -58,6 +60,14 @@ const dividerColorSteps = [
 ];
 
 type Phase = 'intro' | 'split' | 'rolling' | 'rejoin' | 'hero';
+
+/* Floating image config */
+const floatingImages = [
+  { src: '/connect.jpg', left: '5%', top: '14%', w: 150, h: 100, r: -3, bobDelay: 0 },
+  { src: '/rsvp.jpg', right: '7%', top: '10%', w: 135, h: 90, r: 3, bobDelay: 0.6 },
+  { src: '/discover.jpg', left: '8%', bottom: '16%', w: 125, h: 85, r: 5, bobDelay: 1.2 },
+  { src: '/disconnected.png', right: '5%', bottom: '13%', w: 140, h: 95, r: -4, bobDelay: 1.8 },
+];
 
 export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void }) {
   const [phase, setPhase] = useState<Phase>('intro');
@@ -91,23 +101,23 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
   /* ── Sequencer ── */
   useEffect(() => {
     if (phase !== 'intro') return;
-    const t = setTimeout(() => setPhase('split'), 1800);
+    const t = setTimeout(() => setPhase('split'), 2000);
     return () => clearTimeout(t);
   }, [phase]);
 
   useEffect(() => {
     if (phase !== 'split') return;
-    const t = setTimeout(() => setPhase('rolling'), 1000);
+    const t = setTimeout(() => setPhase('rolling'), 1100);
     return () => clearTimeout(t);
   }, [phase]);
 
   useEffect(() => {
     if (phase !== 'rolling') return;
     if (wordIndex < words.length - 1) {
-      const t = setTimeout(() => setWordIndex((i) => i + 1), 1000);
+      const t = setTimeout(() => setWordIndex((i) => i + 1), 1100);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setPhase('rejoin'), 1400);
+    const t = setTimeout(() => setPhase('rejoin'), 1500);
     return () => clearTimeout(t);
   }, [phase, wordIndex]);
 
@@ -116,9 +126,9 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
     const t = setTimeout(() => {
       setPhase('hero');
       onHeroReady?.();
-    }, 1800);
+    }, 2000);
     return () => clearTimeout(t);
-  }, [phase]);
+  }, [phase, onHeroReady]);
 
   const isSplit = phase === 'split' || phase === 'rolling';
   const isRolling = phase === 'rolling';
@@ -132,12 +142,12 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
       <motion.div
         className="absolute inset-0 z-0"
         animate={{ backgroundColor: bgColor }}
-        transition={{ duration: 1.4, ease }}
+        transition={{ duration: 1.6, ease }}
       />
 
       {/* Grain overlay */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03] z-[1]"
+        className="absolute inset-0 pointer-events-none opacity-[0.025] z-[1]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         }}
@@ -146,49 +156,44 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
       {/* ── Hero background image ── */}
       <motion.div
         className="absolute inset-0 z-[2]"
-        initial={{ opacity: 0, scale: 1.06 }}
+        initial={{ opacity: 0, scale: 1.08 }}
         animate={{
           opacity: isHero ? 1 : 0,
-          scale: isHero ? 1 : 1.06,
+          scale: isHero ? 1 : 1.08,
         }}
-        transition={{ duration: 2.5, ease }}
+        transition={{ duration: 3, ease }}
       >
         <img src="/rooftop.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/40 via-[#0F172A]/50 to-[#0F172A]/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/30 via-[#0F172A]/50 to-[#0F172A]/75" />
       </motion.div>
 
       {/* ── Floating images during roll ── */}
       <AnimatePresence>
         {isRolling && (
           <>
-            {[
-              { src: '/connect.jpg', left: '5%', top: '14%', w: 150, h: 100, r: -3, bobDelay: 0 },
-              { src: '/rsvp.jpg', right: '7%', top: '10%', w: 135, h: 90, r: 3, bobDelay: 0.5 },
-              { src: '/discover.jpg', left: '8%', bottom: '16%', w: 125, h: 85, r: 5, bobDelay: 1.0 },
-              { src: '/disconnected.png', right: '5%', bottom: '13%', w: 140, h: 95, r: -4, bobDelay: 1.5 },
-            ].map((img, i) => (
+            {floatingImages.map((img, i) => (
               <motion.div
                 key={img.src}
-                className="absolute rounded-lg overflow-hidden z-[3]"
+                className="absolute rounded-xl overflow-hidden z-[3] shadow-lg"
                 style={{
                   width: img.w, height: img.h,
                   left: img.left, right: img.right,
                   top: img.top, bottom: img.bottom,
                 }}
-                initial={{ opacity: 0, scale: 0.9, rotate: 0, y: 15 }}
+                initial={{ opacity: 0, scale: 0.85, rotate: 0, y: 20 }}
                 animate={{
                   opacity: floatOpacity,
                   scale: 1,
                   rotate: img.r,
-                  y: [0, -8, 0],
+                  y: [0, -10, 0],
                 }}
-                exit={{ opacity: 0, scale: 0.95, y: -8, transition: { duration: 1, ease } }}
+                exit={{ opacity: 0, scale: 0.9, y: -12, transition: { duration: 1.2, ease } }}
                 transition={{
-                  opacity: { duration: 1.4, delay: i * 0.15, ease },
-                  scale: { duration: 1.4, delay: i * 0.15, ease },
-                  rotate: { duration: 1.4, delay: i * 0.15, ease },
+                  opacity: { duration: 1.6, delay: i * 0.12, ease },
+                  scale: { duration: 1.6, delay: i * 0.12, ease },
+                  rotate: { duration: 1.6, delay: i * 0.12, ease },
                   y: {
-                    duration: 3,
+                    duration: 3.5,
                     delay: img.bobDelay,
                     repeat: Infinity,
                     repeatType: 'reverse',
@@ -211,10 +216,10 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
           className="select-none"
           animate={{
             opacity: isHero ? 0 : 1,
-            scale: isHero ? 0.35 : 1,
-            y: isHero ? '-38vh' : 0,
+            scale: isHero ? 0.3 : 1,
+            y: isHero ? '-40vh' : 0,
           }}
-          transition={{ duration: 1.6, ease }}
+          transition={{ duration: 1.8, ease }}
         >
           <div className="flex items-baseline">
 
@@ -222,14 +227,14 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
             <motion.span
               className="font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] leading-none"
               style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{
                 opacity: 1,
                 y: 0,
                 x: isSplit ? '-0.15em' : 0,
                 color: meetColor,
               }}
-              transition={smooth}
+              transition={{ ...smooth, opacity: { duration: 1.8, ease } }}
             >
               Meet
             </motion.span>
@@ -252,10 +257,10 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                       fontSize: 'clamp(2.2rem, 5.5vw, 5rem)',
                       color: rollingWordColor,
                     }}
-                    initial={{ y: '120%', opacity: 0, filter: 'blur(6px)' }}
+                    initial={{ y: '110%', opacity: 0, filter: 'blur(8px)' }}
                     animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
-                    transition={{ duration: 0.7, ease }}
+                    exit={{ y: '-110%', opacity: 0, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.8, ease }}
                   >
                     {words[wordIndex]}
                   </motion.span>
@@ -264,10 +269,10 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                     key="ra"
                     className="font-[family-name:var(--font-playfair)] font-medium tracking-[-0.03em] text-[#3B82F6] leading-none"
                     style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)' }}
-                    initial={phase === 'rejoin' ? { y: '120%', opacity: 0, filter: 'blur(6px)' } : false}
+                    initial={phase === 'rejoin' ? { y: '110%', opacity: 0, filter: 'blur(8px)' } : false}
                     animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                    exit={{ y: '-120%', opacity: 0, filter: 'blur(6px)' }}
-                    transition={{ duration: 0.7, ease }}
+                    exit={{ y: '-110%', opacity: 0, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.8, ease }}
                   >
                     ra
                   </motion.span>
@@ -285,7 +290,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
               opacity: isRejoined ? 0 : 1,
               backgroundColor: dividerColor,
             }}
-            transition={smooth}
+            transition={{ ...smooth, opacity: { duration: 0.8, ease } }}
           />
 
           {/* Tagline */}
@@ -293,9 +298,10 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
             className="text-center mt-5 text-[13px] tracking-[0.08em]"
             animate={{
               opacity: isSplit || isRolling ? 0.6 : 0,
+              y: isSplit || isRolling ? 0 : 6,
               color: step >= 4 ? '#CBD5E1' : '#94A3B8',
             }}
-            transition={smooth}
+            transition={{ ...smooth, y: { duration: 1, ease } }}
           >
             Networking, with intention.
           </motion.p>
@@ -308,60 +314,65 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
               className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1.8, delay: 0.5, ease }}
+              transition={{ duration: 2, delay: 0.4, ease }}
             >
               {/* Nav logo */}
               <motion.p
                 className="absolute top-8 left-1/2 -translate-x-1/2 font-[family-name:var(--font-playfair)] text-[22px] font-semibold"
-                initial={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.2, ease }}
+                transition={{ duration: 1.2, delay: 1, ease }}
               >
                 <span className="text-white">Meet</span>
                 <span className="text-[#60A5FA]">ra</span>
               </motion.p>
 
               <motion.p
-                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/70 mb-6"
-                initial={{ opacity: 0, y: 12 }}
+                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-6"
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.8, ease }}
+                transition={{ duration: 1.2, delay: 0.7, ease }}
               >
                 Join the waitlist
               </motion.p>
 
               <motion.h1
                 className="font-[family-name:var(--font-playfair)] text-[clamp(2rem,5vw,4.5rem)] font-medium text-white tracking-[-0.025em] leading-[1.08] max-w-3xl"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.2, delay: 1, ease }}
+                transition={{ duration: 1.4, delay: 0.9, ease }}
               >
                 Meet the right people<br />at every event.
               </motion.h1>
 
               <motion.p
-                className="mt-6 text-[15px] text-white/35 max-w-md leading-relaxed"
-                initial={{ opacity: 0, y: 14 }}
+                className="mt-6 text-[15px] text-white/30 max-w-md leading-relaxed"
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.4, ease }}
+                transition={{ duration: 1.2, delay: 1.3, ease }}
               >
                 Every event has the right person for you. Meetra finds them.
               </motion.p>
 
+              {/* Scroll indicator */}
               <motion.div
                 className="absolute bottom-10 flex flex-col items-center gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 2.4, ease }}
+                transition={{ duration: 1.2, delay: 2.2, ease }}
               >
                 <motion.div
                   animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-[18px] h-7 rounded-full border border-white/15 flex items-start justify-center pt-1.5"
+                  transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-[18px] h-7 rounded-full border border-white/12 flex items-start justify-center pt-1.5"
                 >
-                  <div className="w-[3px] h-[5px] rounded-full bg-white/30" />
+                  <motion.div
+                    className="w-[3px] h-[5px] rounded-full bg-white/25"
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                  />
                 </motion.div>
-                <span className="text-[10px] text-white/20 tracking-[0.2em] uppercase">Scroll</span>
+                <span className="text-[10px] text-white/15 tracking-[0.2em] uppercase">Scroll</span>
               </motion.div>
             </motion.div>
           )}
