@@ -1,9 +1,7 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-
-const ease = [0.22, 1, 0.36, 1] as const;
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const steps = [
   { num: '01', text: 'Upload your resume — our AI learns who you should meet.' },
@@ -13,60 +11,88 @@ const steps = [
 
 export default function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+
+  // Image zoom: starts at 1, slowly zooms to 1.15 as user scrolls
+  const imgScale = useTransform(scrollYProgress, [0.0, 0.8], [1, 1.2]);
+
+  // Darken overlay as text appears
+  const overlayOp = useTransform(scrollYProgress, [0.15, 0.35], [0.2, 0.55]);
+
+  // Label
+  const labelOp = useTransform(scrollYProgress, [0.2, 0.32], [0, 1]);
+  const labelY = useTransform(scrollYProgress, [0.2, 0.32], [12, 0]);
+
+  // Heading
+  const headOp = useTransform(scrollYProgress, [0.25, 0.38], [0, 1]);
+  const headY = useTransform(scrollYProgress, [0.25, 0.38], [16, 0]);
+
+  // Steps staggered
+  const s1Op = useTransform(scrollYProgress, [0.32, 0.42], [0, 1]);
+  const s1Y = useTransform(scrollYProgress, [0.32, 0.42], [14, 0]);
+  const s2Op = useTransform(scrollYProgress, [0.37, 0.47], [0, 1]);
+  const s2Y = useTransform(scrollYProgress, [0.37, 0.47], [14, 0]);
+  const s3Op = useTransform(scrollYProgress, [0.42, 0.52], [0, 1]);
+  const s3Y = useTransform(scrollYProgress, [0.42, 0.52], [14, 0]);
+
+  const stepAnims = [
+    { op: s1Op, y: s1Y },
+    { op: s2Op, y: s2Y },
+    { op: s3Op, y: s3Y },
+  ];
 
   return (
-    <section ref={ref} className="bg-[#0A0F1C] border-t border-white/[0.06] py-24 sm:py-32 px-6 sm:px-10">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <div ref={ref} className="relative h-screen overflow-hidden">
+      {/* Full-bleed image with scroll zoom */}
+      <motion.div
+        className="absolute inset-0 z-0 origin-center"
+        style={{ scale: imgScale }}
+      >
+        <img
+          src="/connect.jpg"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </motion.div>
 
-        {/* Image */}
-        <motion.div
-          className="relative aspect-[4/3] rounded-2xl overflow-hidden"
-          initial={{ opacity: 0, y: 24 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, ease }}
-        >
-          <img
-            src="/connect.jpg"
-            alt="People networking at an event"
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1C]/50 via-transparent to-transparent" />
-        </motion.div>
+      {/* Dark overlay — intensifies as text appears */}
+      <motion.div
+        className="absolute inset-0 z-[1] bg-[#0A0F1C]"
+        style={{ opacity: overlayOp }}
+      />
 
-        {/* Steps */}
-        <div>
+      {/* Text content */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="px-8 sm:px-14 max-w-xl">
           <motion.p
-            className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/50 mb-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease }}
+            className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-4"
+            style={{ opacity: labelOp, y: labelY }}
           >
             How it works
           </motion.p>
+
           <motion.h2
             className="font-[family-name:var(--font-playfair)] text-[clamp(1.6rem,3.5vw,2.5rem)] font-medium text-white tracking-[-0.02em] leading-[1.2] mb-10"
-            initial={{ opacity: 0, y: 16 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 1, delay: 0.1, ease }}
+            style={{ opacity: headOp, y: headY }}
           >
-            Three steps. Zero awkwardness.
+            Three steps.<br />Zero awkwardness.
           </motion.h2>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             {steps.map((step, i) => (
               <motion.div
                 key={step.num}
                 className="flex gap-4 items-start"
-                initial={{ opacity: 0, y: 14 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.7, delay: 0.2 + i * 0.1, ease }}
+                style={{ opacity: stepAnims[i].op, y: stepAnims[i].y }}
               >
-                <span className="text-[12px] font-mono text-[#60A5FA]/40 mt-1 shrink-0">
+                <span className="text-[12px] font-mono text-[#60A5FA]/40 mt-0.5 shrink-0">
                   {step.num}
                 </span>
-                <p className="text-[15px] text-white/50 leading-relaxed">
+                <p className="text-[15px] text-white/60 leading-relaxed">
                   {step.text}
                 </p>
               </motion.div>
@@ -74,6 +100,6 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
