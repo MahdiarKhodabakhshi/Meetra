@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import Link from 'next/link';
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const { scrollY } = useScroll();
+  const navBg = useTransform(scrollY, [0, 80], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.92)']);
+  const navBorder = useTransform(scrollY, [0, 80], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.04)']);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -18,45 +16,44 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-      style={{
-        backgroundColor: scrolled ? 'rgba(11, 15, 26, 0.85)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-      }}
+      style={{ backgroundColor: navBg, borderBottomColor: navBorder }}
+      className="fixed top-0 inset-x-0 z-50 backdrop-blur-2xl border-b"
     >
-      <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <a href="/waitlist" className="flex items-center gap-1 text-xl font-bold tracking-tight">
-          <span
-            className="inline-block w-2 h-2 rounded-full mr-0.5"
-            style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)' }}
-          />
-          <span className="text-[var(--wl-text)]">Meetra</span>
-        </a>
+      <div className="mx-auto max-w-7xl flex items-center justify-between px-6 sm:px-10 h-[72px]">
+        <motion.span
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease }}
+          className="font-[family-name:var(--font-playfair)] text-[22px] font-semibold tracking-[-0.01em] text-[#0F172A]"
+        >
+          Meetra
+        </motion.span>
 
-        {/* Right side */}
-        <div className="flex items-center gap-6">
+        <motion.div
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease }}
+          className="flex items-center gap-2"
+        >
           <button
             onClick={() => scrollTo('how-it-works')}
-            className="hidden sm:block text-sm text-[var(--wl-text-muted)] hover:text-[var(--wl-text)] transition-colors"
+            className="hidden sm:block text-[13px] text-[#64748B] hover:text-[#0F172A] transition-colors px-4 py-2"
           >
             How it works
           </button>
+          <Link
+            href="/login"
+            className="text-[13px] text-[#64748B] hover:text-[#0F172A] transition-colors px-4 py-2"
+          >
+            Sign in
+          </Link>
           <button
             onClick={() => scrollTo('waitlist-form')}
-            className="text-sm font-semibold px-5 py-2 rounded-lg transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
-              color: 'white',
-            }}
+            className="text-[13px] bg-[#0F172A] text-white px-5 py-2.5 rounded-full hover:bg-[#1E293B] transition-all hover:shadow-lg hover:shadow-black/8"
           >
-            Join Waitlist
+            Join waitlist
           </button>
-        </div>
+        </motion.div>
       </div>
     </motion.nav>
   );
