@@ -331,7 +331,7 @@ export default function HeroIntro() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 1.4, ease }}
               >
-                AI-powered networking that tells you who to talk to, why they matter, and what to say.
+                Every event has the right person for you. Meetra finds them.
               </motion.p>
 
               <motion.div
