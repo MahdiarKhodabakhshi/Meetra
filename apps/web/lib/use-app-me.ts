@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchMe, type AppMe } from './me-api';
 
 export function useAppMe() {
@@ -9,6 +9,10 @@ export function useAppMe() {
   const { isLoaded, isSignedIn } = useUser();
   const [me, setMe] = useState<AppMe | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Stabilize getToken so it doesn't trigger re-fetches on every render.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
 
   useEffect(() => {
     let mounted = true;
@@ -24,7 +28,7 @@ export function useAppMe() {
         return;
       }
 
-      const token = await getToken();
+      const token = await getTokenRef.current();
       if (!token) {
         if (mounted) {
           setMe(null);
@@ -46,7 +50,7 @@ export function useAppMe() {
     return () => {
       mounted = false;
     };
-  }, [getToken, isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn]);
 
   return { me, loading };
 }
