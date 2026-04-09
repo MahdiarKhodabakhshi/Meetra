@@ -1,113 +1,123 @@
-/* Waitlist page design system — scoped under .wl-root */
+/* Waitlist page — aligned with homepage design system */
 
 .wl-root {
-  --wl-bg: #0B0F1A;
-  --wl-surface: #121828;
-  --wl-surface-border: rgba(255, 255, 255, 0.06);
-  --wl-text: #F1F5F9;
-  --wl-text-muted: #94A3B8;
-  --wl-gradient-from: #4F46E5;
-  --wl-gradient-to: #7C3AED;
-  --wl-accent: #8B5CF6;
-  --wl-success: #22C55E;
-  --wl-error: #EF4444;
-
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  background-color: var(--wl-bg);
-  color: var(--wl-text);
+  background-color: #fff;
+  color: #0F172A;
   min-height: 100vh;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
-/* Gradient text utility */
-.wl-gradient-text {
-  background: linear-gradient(135deg, var(--wl-gradient-from), var(--wl-gradient-to));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Primary gradient button */
-.wl-btn-gradient {
-  background: linear-gradient(135deg, var(--wl-gradient-from), var(--wl-gradient-to));
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 16px 32px;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  position: relative;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 24px rgba(79, 70, 229, 0.3);
-}
-
-.wl-btn-gradient:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 40px rgba(79, 70, 229, 0.5);
-}
-
-.wl-btn-gradient:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 0 24px rgba(79, 70, 229, 0.2);
-}
-
-/* Glass card */
-.wl-glass-card {
-  background: var(--wl-surface);
-  border: 1px solid var(--wl-surface-border);
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
-}
-
 /* Section micro-label */
 .wl-micro-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--wl-accent);
+  color: #3B82F6;
 }
 
-/* Section headline */
+/* Section headline — Playfair */
 .wl-section-headline {
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  color: var(--wl-text);
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #0F172A;
+}
+
+/* Primary CTA button */
+.wl-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0F172A;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 16px 36px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wl-btn-primary:hover {
+  background: #1E293B;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+}
+
+.wl-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ghost button */
+.wl-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #64748B;
+  border: none;
+  padding: 16px 0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.wl-btn-ghost:hover {
+  color: #0F172A;
+}
+
+/* Card */
+.wl-card {
+  background: #FAFBFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wl-card:hover {
+  border-color: #E2E8F0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
 }
 
 /* Form input */
 .wl-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--wl-surface-border);
+  background: #fff;
+  border: 1px solid #E2E8F0;
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 15px;
-  color: var(--wl-text);
+  color: #0F172A;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
   font-family: inherit;
 }
 
 .wl-input::placeholder {
-  color: var(--wl-text-muted);
-  opacity: 0.6;
+  color: #94A3B8;
 }
 
 .wl-input:focus {
-  border-color: var(--wl-accent);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-.wl-input.wl-input-error {
-  border-color: var(--wl-error);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+.wl-input-error {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Divider */
+.wl-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #E2E8F0, transparent);
 }
 
 /* Reduced motion */
