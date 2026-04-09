@@ -2,29 +2,22 @@
 
 import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 
-/**
- * The ONE "Meetra" on the page. Fixed position, z-50.
- *
- * Hero: sits at very top center (like a nav logo).
- * On scroll: descends to section 2 center, scales up, "ra" peels off,
- * "Meet" docks into "Meeting the right people".
- */
 export default function FloatingLogo({ visible }: { visible: boolean }) {
   const { scrollYProgress } = useScroll();
 
-  // Position: very top → vertically centered in viewport
-  const top = useTransform(scrollYProgress, [0.05, 0.3], ['24px', '50%']);
+  // Position: very top of page → vertically centered
+  const top = useTransform(scrollYProgress, [0.05, 0.3], ['12px', '50%']);
 
-  // Scale: nav size (22px) → headline size (~3.5rem ≈ 56px → 56/22 ≈ 2.55)
+  // Scale: nav size → headline size
   const scale = useTransform(scrollYProgress, [0.05, 0.3], [1, 2.55]);
 
-  // Horizontal: starts centered, shifts left to align "Meet" with sentence gap
-  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-4em']);
+  // Shift left more aggressively to align with "ing"
+  const xShift = useTransform(scrollYProgress, [0.05, 0.3], ['0px', '-6em']);
 
-  // "ra" peels off
-  const raOpacity = useTransform(scrollYProgress, [0.22, 0.38], [1, 0]);
-  const raXOffset = useTransform(scrollYProgress, [0.22, 0.38], [0, 24]);
-  const raBlurVal = useTransform(scrollYProgress, [0.22, 0.38], [0, 10]);
+  // "ra" peels off much slower
+  const raOpacity = useTransform(scrollYProgress, [0.28, 0.48], [1, 0]);
+  const raXOffset = useTransform(scrollYProgress, [0.28, 0.48], [0, 30]);
+  const raBlurVal = useTransform(scrollYProgress, [0.28, 0.48], [0, 12]);
   const raFilter = useMotionTemplate`blur(${raBlurVal}px)`;
 
   if (!visible) return null;
