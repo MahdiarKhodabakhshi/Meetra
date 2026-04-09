@@ -36,7 +36,10 @@ export default function EventDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const role = me?.role?.toLowerCase();
-  const isOrganizer = role === 'organizer' || role === 'admin';
+  const isEventOwner =
+    me && event && event.organizer_id === me.user_id;
+  const isAdmin = role === 'admin';
+  const canManageEvent = isEventOwner || isAdmin;
 
   useEffect(() => {
     let mounted = true;
@@ -204,7 +207,7 @@ export default function EventDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {isOrganizer && (
+          {canManageEvent && (
             <>
               {event.status === 'draft' && (
                 <Button onClick={handlePublish} loading={actionLoading}>
