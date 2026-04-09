@@ -297,15 +297,7 @@ export default function HeroIntro() {
               animate={{ opacity: 1 }}
               transition={{ duration: 1.8, delay: 0.5, ease }}
             >
-              <motion.p
-                className="absolute top-8 left-1/2 -translate-x-1/2 font-[family-name:var(--font-playfair)] text-[22px] font-semibold"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.2, ease }}
-              >
-                <span className="text-white">Meet</span>
-                <span className="text-[#60A5FA]">ra</span>
-              </motion.p>
+              {/* Nav logo — handled by FloatingLogo at page level */}
 
               <motion.p
                 className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/70 mb-6"
