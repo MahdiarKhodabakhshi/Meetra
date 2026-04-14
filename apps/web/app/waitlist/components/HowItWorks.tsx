@@ -1,89 +1,163 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const steps = [
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const pillars = [
   {
-    num: '01',
-    title: 'Tell Meetra about you',
-    desc: 'Share your background, skills, and what you\u2019re looking for \u2014 a job, a co-founder, a mentor, a collaborator, a customer. Takes under 2 minutes. You can also upload your resume or paste your LinkedIn.',
+    keyword: 'The feeling',
+    title: 'Walk into every room like you belong there.',
+    desc: 'Meetra tells you who to meet, why they matter to your goals, and exactly what to say. No more wandering. No more wasted conversations.',
+    image: '/connect.jpg',
   },
   {
-    num: '02',
-    title: 'See who matters most',
-    desc: 'When you join an event, Meetra analyzes the attendees and shows you the people most relevant to your specific goals. Not everyone \u2014 just the right ones. Each match comes with a clear reason why they matter to you.',
+    keyword: 'The edge',
+    title: 'Your next hire, investor, or co-founder is in the room.',
+    desc: 'Stop hoping you\u2019ll bump into the right person. Meetra scans every attendee and surfaces the ones who align with what you\u2019re building.',
+    image: '/newhero.png',
   },
   {
-    num: '03',
-    title: 'Approach with confidence',
-    desc: 'For every recommended person, Meetra gives you context: what they work on, where your interests overlap, and a suggested conversation angle. You walk up prepared, not guessing.',
+    keyword: 'The start',
+    title: 'Your career starts with one conversation.',
+    desc: 'First events are intimidating. Meetra removes the guesswork \u2014 you\u2019ll know who the mentors are, who\u2019s hiring, and how to introduce yourself.',
+    image: '/bottomcta.png',
   },
 ];
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15 } },
-};
-
-const stepVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
-};
-
 export default function HowItWorks() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    const idx = Math.round(el.scrollTop / el.clientHeight);
+    if (idx !== active && idx >= 0 && idx < pillars.length) {
+      setActive(idx);
+    }
+  }, [active]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
-    <section id="how-it-works" className="relative px-6 py-24 sm:py-32 lg:py-40">
-      <div className="max-w-[1200px] mx-auto">
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4 }}
-          className="wl-micro-label mb-4"
-        >
-          HOW IT WORKS
-        </motion.p>
+    <section
+      ref={scrollRef}
+      className="relative h-screen overflow-y-auto bg-[#0F172A]"
+      style={{ scrollSnapType: 'y mandatory' }}
+    >
+      {/* Background images — crossfade (fixed within this section) */}
+      <div className="sticky top-0 h-screen pointer-events-none z-0">
+        {pillars.map((p, i) => (
+          <motion.div
+            key={p.keyword}
+            initial={false}
+            animate={{ opacity: active === i ? 1 : 0 }}
+            transition={{ duration: 0.8, ease }}
+            className="absolute inset-0"
+          >
+            <img
+              src={p.image}
+              alt=""
+              className="w-full h-full object-cover"
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+            <div className="absolute inset-0 bg-[#0F172A]/70" />
+          </motion.div>
+        ))}
+      </div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="wl-section-headline max-w-2xl mb-12 lg:mb-16"
-        >
-          Three steps. Better conversations. Real results.
-        </motion.h2>
+      {/* Scroll-snap panels — each one is a full viewport */}
+      {pillars.map((_, i) => (
+        <div
+          key={i}
+          className="h-screen relative z-10"
+          style={{ scrollSnapAlign: 'start', marginTop: i === 0 ? '-100vh' : 0 }}
+        />
+      ))}
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          {steps.map((s) => (
-            <motion.div key={s.num} variants={stepVariants} className="wl-glass-card p-8">
-              <span
-                className="wl-gradient-text text-4xl font-bold tracking-tight block mb-4"
-              >
-                {s.num}
-              </span>
-              <h3 className="font-semibold text-lg mb-3 text-[var(--wl-text)]">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-[var(--wl-text-muted)]">{s.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+      {/* Content overlay — stays fixed visually via sticky bg */}
+      <div
+        className="sticky bottom-0 h-screen z-10 pointer-events-none"
+        style={{ marginTop: `-${pillars.length * 100}vh` }}
+      >
+        <div className="h-full flex flex-col justify-center px-6 sm:px-10">
+          <div className="mx-auto max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center pointer-events-auto">
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-10 text-sm text-[var(--wl-text-muted)] opacity-60 text-center lg:text-left"
-        >
-          Coming soon: post-event follow-up support, conversation notes, and suggested follow-up
-          messages.
-        </motion.p>
+            {/* Left — heading with interactive keywords */}
+            <div>
+              <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA] mb-6">
+                Why Meetra
+              </p>
+              <h2 className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl lg:text-5xl font-medium text-white tracking-tight leading-[1.15]">
+                Built{' '}
+                <span className="text-white/40">for people who value</span>
+                <br />
+                {pillars.map((p, i) => (
+                  <span key={p.keyword}>
+                    {i > 0 && <span className="text-white/20">, </span>}
+                    <span
+                      className={`
+                        relative cursor-default transition-colors duration-300 inline-block
+                        ${active === i ? 'text-white' : 'text-white/30'}
+                      `}
+                    >
+                      {p.keyword}
+                      <span
+                        className={`
+                          absolute left-0 -bottom-1 h-[1.5px] bg-[#3B82F6] transition-all duration-500
+                          ${active === i ? 'w-full' : 'w-0'}
+                        `}
+                      />
+                    </span>
+                  </span>
+                ))}
+                <span className="text-white/20">.</span>
+              </h2>
+            </div>
+
+            {/* Right — description that swaps */}
+            <div className="lg:pl-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4, ease }}
+                >
+                  <span className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#60A5FA]/60 tabular-nums">
+                    0{active + 1}
+                  </span>
+                  <p className="mt-4 font-[family-name:var(--font-playfair)] text-xl sm:text-2xl font-medium text-white/90 tracking-tight leading-[1.4]">
+                    {pillars[active].title}
+                  </p>
+                  <p className="mt-4 text-[15px] text-white/40 leading-relaxed max-w-sm">
+                    {pillars[active].desc}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Progress dots */}
+              <div className="mt-8 flex gap-2">
+                {pillars.map((_, j) => (
+                  <div
+                    key={j}
+                    className={`h-[3px] rounded-full transition-all duration-500 ${
+                      j === active ? 'w-8 bg-[#60A5FA]/60' : 'w-3 bg-white/15'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

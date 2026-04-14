@@ -1,25 +1,25 @@
+'use client';
+
 export const dynamic = 'force-dynamic';
 
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import ProblemSection from './components/ProblemSection';
+import { useState, useRef } from 'react';
+import HeroIntro from './components/HeroIntro';
+import ProblemStatement from './components/ProblemStatement';
 import HowItWorks from './components/HowItWorks';
-import WhoIsItFor from './components/WhoIsItFor';
-import WhyMeetraSection from './components/WhyMeetra';
-import WaitlistForm from './components/WaitlistForm';
-import Footer from './components/Footer';
+import WaitlistCTA from './components/WaitlistCTA';
+import WaitlistFooter from './components/WaitlistFooter';
 
 export default function WaitlistPage() {
+  const [heroReady, setHeroReady] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
   return (
     <main>
-      <Navbar />
-      <Hero />
-      <ProblemSection />
+      <HeroIntro onHeroReady={() => setHeroReady(true)} />
+      <ProblemStatement sectionRef={sectionRef} heroReady={heroReady} />
       <HowItWorks />
-      <WhoIsItFor />
-      <WhyMeetraSection />
-      <WaitlistForm />
-      <Footer />
+      <WaitlistCTA />
+      <WaitlistFooter />
     </main>
   );
 }

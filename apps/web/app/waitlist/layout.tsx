@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './waitlist.css';
 
 const inter = Inter({
   variable: '--font-inter',
+  subsets: ['latin'],
+});
+
+const playfair = Playfair_Display({
+  variable: '--font-playfair',
   subsets: ['latin'],
 });
 
@@ -35,13 +40,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function WaitlistLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function WaitlistLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${inter.variable} wl-root`}>
+    <div className={`${inter.variable} ${playfair.variable} wl-root`}>
       {children}
     </div>
   );
