@@ -217,12 +217,12 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
               </motion.p>
 
               <motion.p
-                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-6"
+                className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/90 mb-6"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 0.5, ease }}
               >
-                Join the waitlist
+                AI-POWERED EVENT NETWORKING
               </motion.p>
 
               <motion.h1
@@ -231,16 +231,16 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.2, delay: 0.7, ease }}
               >
-                Meet the right people<br />at every event.
+                Meet the Right People<br />at Every Event.
               </motion.h1>
 
               <motion.p
-                className="mt-6 text-[15px] text-white/30 max-w-md leading-relaxed"
+                className="mt-6 text-[15px] text-white/50 max-w-3xl leading-relaxed"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 1.1, ease }}
               >
-                Every event has the right person for you. Meetra finds them.
+                Join the Meetra waitlist for early access to AI-powered event networking that helps attendees find relevant people, understand why each match matters, and prepare better conversations.
               </motion.p>
 
               {/* CTA */}

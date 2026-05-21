@@ -56,12 +56,12 @@ export default function WaitlistCTA() {
         </motion.h2>
 
         <motion.p
-          className="mt-5 text-[15px] text-white/25 leading-relaxed max-w-md mx-auto"
+          className="mt-5 text-[15px] text-white/25 leading-relaxed max-w-xl mx-auto"
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1, delay: 0.25, ease }}
         >
-          Join the waitlist and we&apos;ll let you know when it&apos;s your turn. No spam, just one email when you&apos;re in.
+          Get early access to attendee matching and personalized conversation guidance that helps you find relevant people before the event starts.
         </motion.p>
 
         {/* Form */}
@@ -152,7 +152,7 @@ export default function WaitlistCTA() {
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 1, delay: 0.6, ease }}
         >
-          No credit card required · Unsubscribe anytime
+          No spam. Just one email when early access opens.
         </motion.p>
       </div>
     </section>
