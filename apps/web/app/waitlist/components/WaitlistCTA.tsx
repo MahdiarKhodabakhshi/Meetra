@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { getSupabase } from '@/lib/supabase';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -20,14 +21,30 @@ export default function WaitlistCTA() {
       return;
     }
     setState('loading');
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setState('success');
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([{ email: email.trim().toLowerCase() }]);
+
+      if (error) {
+        if (error.code === '23505') {
+          setState('error');
+          setErrorMsg('You are already on the waitlist!');
+        } else {
+          throw error;
+        }
+      } else {
+        setState('success');
+      }
+    } catch (err) {
+      setState('error');
+      setErrorMsg('Something went wrong. Please try again.');
+    }
   };
 
   return (
     <section id="waitlist-cta" className="relative bg-[#0A0F1C] py-32 sm:py-40 overflow-hidden">
-      {/* Radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -64,7 +81,6 @@ export default function WaitlistCTA() {
           Get early access to attendee matching and personalized conversation guidance that helps you find relevant people before the event starts.
         </motion.p>
 
-        {/* Form */}
         <motion.div
           className="mt-10"
           initial={{ opacity: 0, y: 20 }}
