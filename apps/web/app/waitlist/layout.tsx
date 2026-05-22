@@ -47,3 +47,6 @@ export default function WaitlistLayout({ children }: { children: React.ReactNode
     </div>
   );
 }
+
+
+

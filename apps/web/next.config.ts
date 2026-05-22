@@ -6,7 +6,8 @@ const AUTH_API = process.env.NEXT_PUBLIC_AUTH_API_URL?.replace(/\/$/, '') || 'ht
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@meetra/shared'],
-  output: 'standalone',
+  // standalone is for Docker/Cloud Run — Vercel manages its own output format
+  output: process.env.VERCEL ? undefined : 'standalone',
   turbopack: {
     // repo root (because apps/web is nested)
     root: path.join(__dirname, '../..'),
