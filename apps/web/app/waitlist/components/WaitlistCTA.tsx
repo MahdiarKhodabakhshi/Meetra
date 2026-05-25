@@ -37,29 +37,49 @@ export default function WaitlistCTA() {
       } else {
         setState('success');
       }
-    } catch (err) {
+    } catch {
       setState('error');
       setErrorMsg('Something went wrong. Please try again.');
     }
   };
 
   return (
-    <section id="waitlist-cta" className="relative bg-[#0A0F1C] py-32 sm:py-40 overflow-hidden">
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59, 130, 246, 0.06), transparent)',
-        }}
-      />
+    <section
+      id="waitlist-cta"
+      className="relative py-32 sm:py-40 overflow-hidden bg-[#070A14]"
+    >
+      {/* Backdrop image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/bottomcta.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0F1C] via-[#0A0F1C]/90 to-[#070A14]" />
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[80vw] h-[60vw] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 60%)',
+          }}
+        />
+        <div
+          className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[60vw] h-[40vw] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(167,139,250,0.14) 0%, transparent 60%)',
+          }}
+        />
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-2xl mx-auto px-6 text-center">
         <motion.p
-          className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/50 mb-6"
+          className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#60A5FA]/60 mb-6"
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1, ease }}
         >
-          Early access
+          Early Access
         </motion.p>
 
         <motion.h2
@@ -69,16 +89,17 @@ export default function WaitlistCTA() {
           transition={{ duration: 1.2, delay: 0.1, ease }}
         >
           Be the first to<br />
-          <span className="text-white/40">experience Meetra.</span>
+          <span className="text-white/40 italic">use Meetra.</span>
         </motion.h2>
 
         <motion.p
-          className="mt-5 text-[15px] text-white/25 leading-relaxed max-w-xl mx-auto"
+          className="mt-5 text-[15px] text-white/40 leading-relaxed max-w-xl mx-auto"
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1, delay: 0.25, ease }}
         >
-          Get early access to attendee matching and personalized conversation guidance that helps you find relevant people before the event starts.
+          Early access for the people, the messages, the follow-ups, the
+          resumes. Anywhere knowing what to say is the difference.
         </motion.p>
 
         <motion.div
@@ -107,7 +128,10 @@ export default function WaitlistCTA() {
               </p>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto">
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto"
+            >
               <div className="relative flex-1 w-full">
                 <input
                   type="email"
@@ -163,7 +187,7 @@ export default function WaitlistCTA() {
         </motion.div>
 
         <motion.p
-          className="mt-12 text-[12px] text-white/15"
+          className="mt-12 text-[12px] text-white/20"
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 1, delay: 0.6, ease }}

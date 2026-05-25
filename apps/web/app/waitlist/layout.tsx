@@ -13,30 +13,31 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Meetra — Meet the Right People at Every Event',
+  title: 'Meetra · Know what to say. Land every conversation.',
   description:
-    'AI-powered networking that tells you who to talk to, why they matter, and what to say. Join the waitlist.',
+    'Meetra is the AI layer for every conversation that matters. At events, in your inbox, in follow-ups, on your resume. Join the waitlist.',
   keywords: [
+    'communication',
+    'professional messaging',
+    'follow-ups',
+    'resume',
+    'conversation AI',
     'networking',
     'events',
-    'AI matching',
-    'professional connections',
-    'career fairs',
-    'conferences',
     'waitlist',
   ],
   openGraph: {
-    title: 'Meetra — Meet the Right People at Every Event',
+    title: 'Meetra · Know what to say. Land every conversation.',
     description:
-      'AI-powered networking that tells you who to talk to, why they matter, and what to say. Join the waitlist.',
+      'Meetra is the AI layer for every conversation that matters. At events, in your inbox, in follow-ups, on your resume. Join the waitlist.',
     type: 'website',
     siteName: 'Meetra',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Meetra — Meet the Right People at Every Event',
+    title: 'Meetra · Know what to say. Land every conversation.',
     description:
-      'AI-powered networking that tells you who to talk to, why they matter, and what to say. Join the waitlist.',
+      'Meetra is the AI layer for every conversation that matters. At events, in your inbox, in follow-ups, on your resume. Join the waitlist.',
   },
 };
 

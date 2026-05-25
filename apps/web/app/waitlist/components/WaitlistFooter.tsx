@@ -25,7 +25,7 @@ export default function WaitlistFooter() {
               <span className="text-[#60A5FA]/60">ra</span>
             </span>
             <span className="text-white/10">·</span>
-            <span className="text-[12px] text-white/20">Networking, with intention</span>
+            <span className="text-[12px] text-white/30">Know what to say.</span>
           </div>
 
           {/* Links */}

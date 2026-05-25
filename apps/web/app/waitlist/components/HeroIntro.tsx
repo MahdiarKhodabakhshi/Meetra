@@ -21,7 +21,7 @@ const wordColorSteps = ['#94A3B8', '#94A3B8', '#CBD5E1', '#E2E8F0', '#F1F5F9', '
 
 type Phase = 'intro' | 'split' | 'rolling' | 'rejoin' | 'hero';
 
-export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void }) {
+export default function HeroIntro() {
   const [phase, setPhase] = useState<Phase>('intro');
   const [wordIndex, setWordIndex] = useState(0);
 
@@ -74,10 +74,9 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
     if (phase !== 'rejoin') return;
     const t = setTimeout(() => {
       setPhase('hero');
-      onHeroReady?.();
     }, 1600);
     return () => clearTimeout(t);
-  }, [phase, onHeroReady]);
+  }, [phase]);
 
   const isSplit = phase === 'split' || phase === 'rolling';
   const isRolling = phase === 'rolling';
@@ -192,7 +191,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
             }}
             transition={smooth}
           >
-            Networking, with intention.
+            Knowing exactly what to say.
           </motion.p>
         </motion.div>
 
@@ -222,7 +221,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 0.5, ease }}
               >
-                AI-POWERED EVENT NETWORKING
+                AI FOR EVERY CONVERSATION
               </motion.p>
 
               <motion.h1
@@ -231,7 +230,7 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.2, delay: 0.7, ease }}
               >
-                Meet the Right People<br />at Every Event.
+                Know what to say.<br />Land every conversation.
               </motion.h1>
 
               <motion.p
@@ -240,43 +239,8 @@ export default function HeroIntro({ onHeroReady }: { onHeroReady?: () => void })
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 1.1, ease }}
               >
-                Join the Meetra waitlist for early access to AI-powered event networking that helps attendees find relevant people, understand why each match matters, and prepare better conversations.
+                Meetra is the layer that helps you express yourself, in the room, in the inbox, in the follow-up, on the page. Less guesswork, more landed conversations.
               </motion.p>
-
-              {/* CTA */}
-              <motion.a
-                href="#waitlist-cta"
-                className="mt-10 inline-flex items-center gap-2 bg-white text-[#0F172A] px-8 py-4 rounded-full text-[14px] font-medium hover:bg-white/90 active:bg-white/80 transition-colors duration-200"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.4, ease }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('waitlist-cta')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Join the waitlist
-                <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </motion.a>
-
-              {/* Scroll indicator */}
-              <motion.div
-                className="absolute bottom-10 flex flex-col items-center gap-3"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 2, ease }}
-              >
-                <motion.div
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-[18px] h-7 rounded-full border border-white/10 flex items-start justify-center pt-1.5"
-                >
-                  <div className="w-[3px] h-[5px] rounded-full bg-white/20" />
-                </motion.div>
-                <span className="text-[10px] text-white/15 tracking-[0.2em] uppercase">Scroll</span>
-              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
