@@ -5,7 +5,10 @@
   background-color: #fff;
   color: #0F172A;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* overflow-x: hidden was breaking position: sticky inside this wrapper.
+     Use overflow-clip which prevents horizontal overflow without
+     establishing a scroll container. */
+  overflow-x: clip;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
