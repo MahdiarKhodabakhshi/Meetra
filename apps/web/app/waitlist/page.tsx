@@ -2,22 +2,16 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef } from 'react';
 import HeroIntro from './components/HeroIntro';
-import ProblemStatement from './components/ProblemStatement';
-import HowItWorks from './components/HowItWorks';
+import PinnedReveal from './components/PinnedReveal';
 import WaitlistCTA from './components/WaitlistCTA';
 import WaitlistFooter from './components/WaitlistFooter';
 
 export default function WaitlistPage() {
-  const [heroReady, setHeroReady] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-
   return (
     <main>
-      <HeroIntro onHeroReady={() => setHeroReady(true)} />
-      <ProblemStatement sectionRef={sectionRef} heroReady={heroReady} />
-      <HowItWorks />
+      <HeroIntro />
+      <PinnedReveal />
       <WaitlistCTA />
       <WaitlistFooter />
     </main>
